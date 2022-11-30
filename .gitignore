@@ -1,0 +1,6 @@
+v3-sdk/*/.DS_Store
+v3-sdk/*/.env
+v3-sdk/*/.next
+v3-sdk/*/.log
+v3-sdk/*/node_modules
+v3-sdk/*/dist
