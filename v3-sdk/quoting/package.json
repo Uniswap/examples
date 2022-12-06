@@ -1,5 +1,5 @@
 {
-  "name": "quotes",
+  "name": "quoting",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -10,6 +10,9 @@
     "@types/node": "^16.7.13",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
+    "@uniswap/sdk-core": "^3.1.0",
+    "@uniswap/v3-sdk": "^3.9.0",
+    "ethers": "^5.7.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
@@ -17,10 +20,13 @@
     "web-vitals": "^2.1.0"
   },
   "scripts": {
+    "install": "yarn --frozen-lockfile",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "build:chain": "curl -L https://foundry.paradigm.xyz | bash && foundryup && echo '\n\n***\n\nPlease start a new terminal session or source your rc file.\n\n***\n\n'",
+    "start:chain": "anvil --fork-url"
   },
   "eslintConfig": {
     "extends": [
@@ -48,6 +54,10 @@
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-react": "^7.31.11",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-typescript-sort-keys": "^2.1.0",
     "prettier": "^2.8.0"
+  },
+  "engines": {
+    "node": ">=16"
   }
 }
