@@ -78,8 +78,6 @@ function App() {
   const route = async () => {
     const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: web3Provider })
 
-    console.log('BEFORE ROUTE')
-
     const route = await router.route(
       CurrencyAmount.fromRawAmount(TOKEN_IN, TOKEN_IN_AMOUNT),
       TOKEN_OUT,
@@ -93,7 +91,7 @@ function App() {
     )
 
     const tx = {
-      data: route?.methodParameters?.calldata || '',
+      data: route?.methodParameters?.calldata,
       to: V3_SWAP_ROUTER_ADDRESS,
       value: BigNumber.from(route?.methodParameters?.value),
     }
