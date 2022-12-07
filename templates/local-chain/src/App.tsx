@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import './App.css'
 import { ethers, BigNumber } from 'ethers'
-import { AlphaRouter, ChainId } from '@uniswap/smart-order-router'
+import { AlphaRouter, ChainId, SwapType } from '@uniswap/smart-order-router'
 import { Token, TradeType, CurrencyAmount, Percent, Ether } from '@uniswap/sdk-core'
 
 // Inputs
@@ -88,7 +88,7 @@ function App() {
         recipient: MY_ADDRESS,
         slippageTolerance: new Percent(5, 100),
         deadline: Math.floor(Date.now() / 1000 + 1800),
-        // type: SwapType.SWAP_ROUTER_02,
+        type: SwapType.SWAP_ROUTER_02,
       }
     )
 
