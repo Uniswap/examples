@@ -1,5 +1,5 @@
 {
-  "name": "quoting",
+  "name": "local-chain",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -11,6 +11,7 @@
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "@uniswap/sdk-core": "^3.1.0",
+    "@uniswap/smart-order-router": "2.10.0",
     "@uniswap/v3-sdk": "^3.9.0",
     "ethers": "^5.7.2",
     "react": "^18.2.0",
@@ -20,13 +21,10 @@
     "web-vitals": "^2.1.0"
   },
   "scripts": {
-    "install": "yarn --frozen-lockfile",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "build:chain": "curl -L https://foundry.paradigm.xyz | bash && foundryup && echo '\n\n***\n\nPlease start a new terminal session or source your rc file.\n\n***\n\n'",
-    "start:chain": "anvil --fork-url"
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [
@@ -49,15 +47,14 @@
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
-    "eslint": "^8.28.0",
+    "eslint": "^8.29.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-react": "^7.31.11",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-simple-import-sort": "^8.0.0",
     "eslint-plugin-typescript-sort-keys": "^2.1.0",
+    "eslint-plugin-unused-imports": "^2.0.0",
     "prettier": "^2.8.0"
-  },
-  "engines": {
-    "node": ">=16"
   }
 }

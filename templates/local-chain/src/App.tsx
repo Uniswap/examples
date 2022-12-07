@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import './App.css'
 import { ethers, BigNumber } from 'ethers'
-import { AlphaRouter, SwapType, ChainId } from '@uniswap/smart-order-router'
+import { AlphaRouter, ChainId } from '@uniswap/smart-order-router'
 import { Token, TradeType, CurrencyAmount, Percent, Ether } from '@uniswap/sdk-core'
 
 // Inputs
@@ -35,11 +35,14 @@ export enum TxState {
   Sent = 'Success',
 }
 
-const web3Provider = new ethers.providers.JsonRpcProvider()
-const wallet = new ethers.Wallet(MY_PRIVATE_KEY, web3Provider)
+const web3Provider = new ethers.providers.JsonRpcProvider(
+  'https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721'
+)
+const localChainWeb3Provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+const wallet = new ethers.Wallet(MY_PRIVATE_KEY, localChainWeb3Provider)
 
 const getEthBalance = async () => {
-  const balance = await web3Provider.getBalance(wallet.address)
+  const balance = await localChainWeb3Provider.getBalance(wallet.address)
   return ethers.utils.formatEther(balance)
 }
 
@@ -75,6 +78,8 @@ function App() {
   const route = async () => {
     const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: web3Provider })
 
+    console.log('BEFORE ROUTE')
+
     const route = await router.route(
       CurrencyAmount.fromRawAmount(TOKEN_IN, TOKEN_IN_AMOUNT),
       TOKEN_OUT,
@@ -83,7 +88,7 @@ function App() {
         recipient: MY_ADDRESS,
         slippageTolerance: new Percent(5, 100),
         deadline: Math.floor(Date.now() / 1000 + 1800),
-        type: SwapType.SWAP_ROUTER_02,
+        // type: SwapType.SWAP_ROUTER_02,
       }
     )
 
