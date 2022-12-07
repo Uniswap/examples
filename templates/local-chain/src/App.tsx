@@ -78,6 +78,7 @@ function App() {
   const route = async () => {
     const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: web3Provider })
 
+    setTxStatus(TxState.Sending)
     const route = await router.route(
       CurrencyAmount.fromRawAmount(TOKEN_IN, TOKEN_IN_AMOUNT),
       TOKEN_OUT,
@@ -96,7 +97,6 @@ function App() {
       value: BigNumber.from(route?.methodParameters?.value),
     }
 
-    setTxStatus(TxState.Sending)
     const res = await wallet.sendTransaction(tx)
 
     const txReceipt = await res.wait()
@@ -114,8 +114,7 @@ function App() {
       <header className="App-header">
         <h3>{`Token in Balance: ${tokenInBalance}`}</h3>
         <h3>{`Token out Balance: ${tokenOutBalance}`}</h3>
-        <h3>{`Transaction Status: ${txStatus}`}</h3>
-        <button onClick={() => route()}>
+        <button onClick={() => route()} disabled={txStatus === TxState.Sending}>
           <p>Trade</p>
         </button>
       </header>
