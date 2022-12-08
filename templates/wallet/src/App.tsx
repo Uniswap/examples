@@ -61,7 +61,14 @@ const useAccounts = (provider: Web3Provider | undefined) => {
       const accounts = await provider.send('eth_requestAccounts', [])
       setAccounts(accounts)
     }
+
     getAccounts()
+    const subscription = provider.on('accountsChanged', () => {
+      getAccounts()
+    })
+    return () => {
+      subscription.removeAllListeners()
+    }
   }, [provider])
 
   return accounts

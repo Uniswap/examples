@@ -91,8 +91,6 @@ function App() {
       }
     )
 
-    const chain = await localRpcProvider.getNetwork()
-
     const tx = {
       data: route?.methodParameters?.calldata,
       to: V3_SWAP_ROUTER_ADDRESS,
