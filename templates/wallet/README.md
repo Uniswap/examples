@@ -2,7 +2,7 @@
 
 ## Wallet
 
-This example introduces the concept of **smart order-routing** and is meant to be used alongside the guides on Uniswap [docs](https://docs.uniswap.org/).
+This repository is a template for developing guides for dApps that interact with a locally deployed copy of the mainnet using a Web3 wallet.
 ## Setup
 The setup involves 2 steps:
 1. Setup and run your local copy of the mainnet with Foundry
