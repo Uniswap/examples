@@ -1,4 +1,4 @@
-# Local Chain
+# Mainnet
 
 ## Overview
 

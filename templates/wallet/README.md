@@ -1,6 +1,6 @@
 # Routing
 
-## Overview
+## Wallet
 
 This example introduces the concept of **smart order-routing** and is meant to be used alongside the guides on Uniswap [docs](https://docs.uniswap.org/).
 ## Setup
