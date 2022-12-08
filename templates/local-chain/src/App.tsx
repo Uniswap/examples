@@ -35,26 +35,26 @@ export enum TxState {
   Sent = 'Success',
 }
 
-const web3Provider = new ethers.providers.JsonRpcProvider(
+const rpcProvider = new ethers.providers.JsonRpcProvider(
   'https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721'
 )
-const localChainWeb3Provider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
-const wallet = new ethers.Wallet(MY_PRIVATE_KEY, localChainWeb3Provider)
+const localRpcProvider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
+const wallet = new ethers.Wallet(MY_PRIVATE_KEY, localRpcProvider)
 
 const getEthBalance = async () => {
-  const balance = await localChainWeb3Provider.getBalance(wallet.address)
+  const balance = await localRpcProvider.getBalance(wallet.address)
   return ethers.utils.formatEther(balance)
 }
 
 const getTokenBalance = async (token: Token) => {
-  const usdc = new ethers.Contract(token.address, erc20Abi, web3Provider)
+  const usdc = new ethers.Contract(token.address, erc20Abi, localRpcProvider)
   const balance = await usdc.balanceOf(wallet.address)
   return balance
 }
 
 const useUpdateOnBlock = (callback: () => void) => {
   useEffect(() => {
-    const subscription = web3Provider.on('block', () => {
+    const subscription = localRpcProvider.on('block', () => {
       callback()
     })
     return () => {
@@ -76,7 +76,7 @@ function App() {
   })
 
   const route = async () => {
-    const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: web3Provider })
+    const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: rpcProvider })
 
     setTxStatus(TxState.Sending)
     const route = await router.route(
@@ -90,6 +90,8 @@ function App() {
         type: SwapType.SWAP_ROUTER_02,
       }
     )
+
+    const chain = await localRpcProvider.getNetwork()
 
     const tx = {
       data: route?.methodParameters?.calldata,
