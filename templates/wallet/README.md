@@ -16,8 +16,9 @@ The setup involves 2 steps:
 4. Run `yarn start:chain --fork-url <provider_API_URL>`
 
 ### Setup and run the dApp
-1. Install the MetaMask extension and create a wallet
-2. Import a new account to your wallet using one of the outputs of the foundry init call
-3. Run `yarn install --frozen-lockfile` to install the project dependencies
-4. Run `yarn start` and navigate to your [localhost](http://localhost:3000/)
-5. Click on **Trade** and watch your currencies swap
+1. Install a wallet browser extension
+2. Configure the browser extension to connect to your local copy of the mainnet and change the chaindId to 1
+3. Import a new account to your wallet using a private key that Foundry output - eg `0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80`
+4. Run `yarn install` to install the project dependencies
+5. Run `yarn start` and navigate to your [localhost](http://localhost:3000/)
+6. Click on **Trade** and watch your currencies swap
