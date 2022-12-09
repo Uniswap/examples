@@ -63,10 +63,10 @@ const useUpdateOnBlock = (callback: () => void) => {
   }, [callback])
 }
 
-const route = async (callback: (txState: TxState) => void) => {
+const route = async (setTxState: (txState: TxState) => void) => {
   const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: rpcProvider })
 
-  callback(TxState.Sending)
+  setTxState(TxState.Sending)
   const route = await router.route(
     CurrencyAmount.fromRawAmount(TOKEN_IN, TOKEN_IN_AMOUNT),
     TOKEN_OUT,
@@ -91,16 +91,16 @@ const route = async (callback: (txState: TxState) => void) => {
 
   //tx was mined successfully == 1
   if (txReceipt.status === 1) {
-    callback(TxState.Sent)
+    setTxState(TxState.Sent)
   } else {
-    callback(TxState.Failed)
+    setTxState(TxState.Failed)
   }
 }
 
 function App() {
   const [tokenInBalance, setTokenInBalance] = useState('')
   const [tokenOutBalance, setTokenOutBalance] = useState('')
-  const [txStatus, setTxStatus] = useState<TxState>(TxState.New)
+  const [txState, setTxState] = useState<TxState>(TxState.New)
 
   useUpdateOnBlock(async () => {
     const currentTokenInBalance = await getEthBalance()
@@ -114,7 +114,7 @@ function App() {
       <header className="App-header">
         <h3>{`Token in Balance: ${tokenInBalance}`}</h3>
         <h3>{`Token out Balance: ${tokenOutBalance}`}</h3>
-        <button onClick={() => route(setTxStatus)} disabled={txStatus === TxState.Sending}>
+        <button onClick={() => route(setTxState)} disabled={txState === TxState.Sending}>
           <p>Trade</p>
         </button>
       </header>

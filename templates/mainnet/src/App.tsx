@@ -54,7 +54,7 @@ const useUpdateOnBlock = (callback: () => void) => {
   }, [callback])
 }
 
-const route = async (callback: (routeParams: string | undefined) => void) => {
+const route = async (setRouteParams: (routeParams: string | undefined) => void) => {
   const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: rpcProvider })
 
   const route = await router.route(
@@ -68,7 +68,7 @@ const route = async (callback: (routeParams: string | undefined) => void) => {
       type: SwapType.SWAP_ROUTER_02,
     }
   )
-  callback(route?.route[0].tokenPath.map((token) => token.symbol).toString())
+  setRouteParams(route?.route[0].tokenPath.map((token) => token.symbol).toString())
 }
 
 function App() {

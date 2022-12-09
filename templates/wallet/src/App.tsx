@@ -118,7 +118,7 @@ const getTokenBalance = async (token: Token, provider: Web3Provider | undefined,
 }
 
 const route = async (
-  callback: (txStatus: TxState) => void,
+  setTxState: (txState: TxState) => void,
   accounts: string[] | undefined,
   provider: Web3Provider | undefined
 ) => {
@@ -130,11 +130,11 @@ const route = async (
   const recipient = accounts[0]
 
   if (!recipient) {
-    callback(TxState.Failed)
+    setTxState(TxState.Failed)
     return
   }
 
-  callback(TxState.Sending)
+  setTxState(TxState.Sending)
   const route = await router.route(
     CurrencyAmount.fromRawAmount(TOKEN_IN, TOKEN_IN_AMOUNT),
     TOKEN_OUT,
@@ -157,14 +157,14 @@ const route = async (
   const receipt = await provider?.send('eth_sendTransaction', [tx])
 
   if (receipt) {
-    callback(TxState.Sent)
+    setTxState(TxState.Sent)
   } else {
-    callback(TxState.Failed)
+    setTxState(TxState.Failed)
   }
 }
 
 function App() {
-  const [txStatus, setTxStatus] = useState<TxState>(TxState.New)
+  const [txState, setTxState] = useState<TxState>(TxState.New)
   const [tokenInBalance, setTokenInBalance] = useState<string>()
   const [tokenOutBalance, setTokenOutBalance] = useState('')
   const provider = useProvider()
@@ -189,10 +189,10 @@ function App() {
         {provider && accounts && (
           <>
             <h3>{`Connected: ${accounts}`}</h3>
-            <h3>{`TxStatus: ${txStatus}`}</h3>
+            <h3>{`TxStatus: ${txState}`}</h3>
             <h3>{`Token in balance: ${tokenInBalance}`}</h3>
             <h3>{`Token out balance: ${tokenOutBalance}`}</h3>
-            <button onClick={() => route(setTxStatus, accounts, provider)} disabled={txStatus === TxState.Sending}>
+            <button onClick={() => route(setTxState, accounts, provider)} disabled={txState === TxState.Sending}>
               <p>Trade</p>
             </button>
           </>
