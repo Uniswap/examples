@@ -145,11 +145,12 @@ const route = async (
     from: recipient,
   }
 
-  const receipt = await provider?.send('eth_sendTransaction', [tx])
-
-  if (receipt) {
-    setTxState(TxState.Sent)
-  } else {
+  try {
+    const receipt = await provider?.send('eth_sendTransaction', [tx])
+    if (receipt) {
+      setTxState(TxState.Sent)
+    }
+  } catch (e) {
     setTxState(TxState.Failed)
   }
 }
