@@ -82,13 +82,10 @@ const connectWallet = async () => {
 
 const useUpdateOnBlock = (provider: Web3Provider | undefined, callback: () => void) => {
   useEffect(() => {
-    console.log('useUpdateOnBlock')
     if (!provider) {
       return
     }
-    console.log('useUpdateOnBlock down')
     const subscription = provider.on('block', () => {
-      console.log('useUpdateOnBlock inside')
       callback()
     })
     return () => {
@@ -165,7 +162,6 @@ function App() {
   const accounts = useAccounts(provider)
 
   useUpdateOnBlock(provider, async () => {
-    console.log('block updated')
     if (!accounts || accounts?.length < 1) {
       return
     }
