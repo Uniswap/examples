@@ -2,16 +2,8 @@ import React, { useEffect, useState } from 'react'
 import './App.css'
 import { ethers, BigNumber } from 'ethers'
 import { AlphaRouter, ChainId, SwapType } from '@uniswap/smart-order-router'
-import { Token, TradeType, CurrencyAmount, Percent, Ether } from '@uniswap/sdk-core'
-
-// Inputs
-const TOKEN_IN = Ether.onChain(ChainId.MAINNET)
-const TOKEN_IN_AMOUNT = 1000000000000000000
-const TOKEN_OUT = new Token(ChainId.MAINNET, '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', 6, 'USDC', 'USD//C')
-
-// Variables
-const MY_ADDRESS = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
-const MY_PRIVATE_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
+import { TradeType, CurrencyAmount, Percent, Currency } from '@uniswap/sdk-core'
+import { CurrentEnvironment } from './env'
 
 // Constants
 const erc20Abi = [
@@ -35,19 +27,19 @@ export enum TxState {
   Sent = 'Success',
 }
 
-const rpcProvider = new ethers.providers.JsonRpcProvider(
-  'https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721'
+const rpcProvider = new ethers.providers.JsonRpcProvider(CurrentEnvironment.mainnetRpcUrl)
+const localRpcProvider = new ethers.providers.JsonRpcProvider(CurrentEnvironment.localRpcUrl)
+const wallet = new ethers.Wallet(
+  CurrentEnvironment.privateKey,
+  CurrentEnvironment.isLocal ? localRpcProvider : rpcProvider
 )
-const localRpcProvider = new ethers.providers.JsonRpcProvider('http://localhost:8545')
-const wallet = new ethers.Wallet(MY_PRIVATE_KEY, localRpcProvider)
 
-const getEthBalance = async () => {
-  const balance = await localRpcProvider.getBalance(wallet.address)
-  return ethers.utils.formatEther(balance)
-}
+const getCurrencyBalance = async (currency: Currency) => {
+  if (currency.isNative) {
+    return ethers.utils.formatEther(await localRpcProvider.getBalance(wallet.address))
+  }
 
-const getTokenBalance = async (token: Token) => {
-  const usdc = new ethers.Contract(token.address, erc20Abi, localRpcProvider)
+  const usdc = new ethers.Contract(currency.address, erc20Abi, localRpcProvider)
   const balance = await usdc.balanceOf(wallet.address)
   return balance
 }
@@ -68,11 +60,11 @@ const route = async (setTxState: (txState: TxState) => void) => {
 
   setTxState(TxState.Sending)
   const route = await router.route(
-    CurrencyAmount.fromRawAmount(TOKEN_IN, TOKEN_IN_AMOUNT),
-    TOKEN_OUT,
+    CurrencyAmount.fromRawAmount(CurrentEnvironment.currencyIn, CurrentEnvironment.currencyInAmount),
+    CurrentEnvironment.currencyOut,
     TradeType.EXACT_INPUT,
     {
-      recipient: MY_ADDRESS,
+      recipient: CurrentEnvironment.address,
       slippageTolerance: new Percent(5, 100),
       deadline: Math.floor(Date.now() / 1000 + 1800),
       type: SwapType.SWAP_ROUTER_02,
@@ -103,9 +95,9 @@ function App() {
   const [txState, setTxState] = useState<TxState>(TxState.New)
 
   useUpdateOnBlock(async () => {
-    const currentTokenInBalance = await getEthBalance()
+    const currentTokenInBalance = await getCurrencyBalance(CurrentEnvironment.currencyIn)
     setTokenInBalance(currentTokenInBalance)
-    const currentTokenOutBalance = await getTokenBalance(TOKEN_OUT)
+    const currentTokenOutBalance = await getCurrencyBalance(CurrentEnvironment.currencyOut)
     setTokenOutBalance(currentTokenOutBalance)
   })
 

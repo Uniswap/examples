@@ -2,13 +2,9 @@ import React, { useEffect, useState } from 'react'
 import './App.css'
 import { ethers } from 'ethers'
 import { AlphaRouter, ChainId, SwapType } from '@uniswap/smart-order-router'
-import { Token, TradeType, CurrencyAmount, Percent, Ether } from '@uniswap/sdk-core'
+import { Currency, TradeType, Percent, CurrencyAmount } from '@uniswap/sdk-core'
 import { Web3Provider } from '@ethersproject/providers'
-
-// Inputs
-const TOKEN_IN = Ether.onChain(ChainId.MAINNET)
-const TOKEN_IN_AMOUNT = 1000000000000000000
-const TOKEN_OUT = new Token(ChainId.MAINNET, '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', 6, 'USDC', 'USD//C')
+import { CurrentEnvironment } from './env'
 
 // Constants
 const erc20Abi = [
@@ -32,9 +28,7 @@ export enum TxState {
   Sent = 'Success',
 }
 
-const rpcProvider = new ethers.providers.JsonRpcProvider(
-  'https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721'
-)
+const rpcProvider = new ethers.providers.JsonRpcProvider(CurrentEnvironment.mainnetRpcUrl)
 
 const useProvider = () => {
   const [provider, setProvider] = useState<ethers.providers.Web3Provider>()
@@ -88,10 +82,13 @@ const connectWallet = async () => {
 
 const useUpdateOnBlock = (provider: Web3Provider | undefined, callback: () => void) => {
   useEffect(() => {
+    console.log('useUpdateOnBlock')
     if (!provider) {
       return
     }
+    console.log('useUpdateOnBlock down')
     const subscription = provider.on('block', () => {
+      console.log('useUpdateOnBlock inside')
       callback()
     })
     return () => {
@@ -100,19 +97,16 @@ const useUpdateOnBlock = (provider: Web3Provider | undefined, callback: () => vo
   }, [callback, provider])
 }
 
-const getEthBalance = async (provider: Web3Provider | undefined, address: string) => {
+const getCurrencyBalance = async (currency: Currency, provider: Web3Provider | undefined, address: string) => {
   if (!provider) {
     return
   }
-  const balance = await provider.getBalance(address)
-  return ethers.utils.formatEther(balance)
-}
 
-const getTokenBalance = async (token: Token, provider: Web3Provider | undefined, address: string) => {
-  if (!provider) {
-    return
+  if (currency.isNative) {
+    return ethers.utils.formatEther(await provider.getBalance(address))
   }
-  const usdc = new ethers.Contract(token.address, erc20Abi, provider)
+
+  const usdc = new ethers.Contract(currency.address, erc20Abi, provider)
   const balance = await usdc.balanceOf(address)
   return balance
 }
@@ -136,8 +130,8 @@ const route = async (
 
   setTxState(TxState.Sending)
   const route = await router.route(
-    CurrencyAmount.fromRawAmount(TOKEN_IN, TOKEN_IN_AMOUNT),
-    TOKEN_OUT,
+    CurrencyAmount.fromRawAmount(CurrentEnvironment.currencyIn, CurrentEnvironment.currencyInAmount),
+    CurrentEnvironment.currencyOut,
     TradeType.EXACT_INPUT,
     {
       recipient,
@@ -171,13 +165,14 @@ function App() {
   const accounts = useAccounts(provider)
 
   useUpdateOnBlock(provider, async () => {
+    console.log('block updated')
     if (!accounts || accounts?.length < 1) {
       return
     }
     const userAddress = accounts[0]
-    const currentTokenInBalance = await getEthBalance(provider, userAddress)
+    const currentTokenInBalance = await getCurrencyBalance(CurrentEnvironment.currencyIn, provider, userAddress)
     setTokenInBalance(currentTokenInBalance)
-    const currentTokenOutBalance = await getTokenBalance(TOKEN_OUT, provider, userAddress)
+    const currentTokenOutBalance = await getCurrencyBalance(CurrentEnvironment.currencyOut, provider, userAddress)
     setTokenOutBalance(currentTokenOutBalance)
   })
 
@@ -189,7 +184,7 @@ function App() {
         {provider && accounts && (
           <>
             <h3>{`Connected: ${accounts}`}</h3>
-            <h3>{`TxStatus: ${txState}`}</h3>
+            <h3>{`TxState: ${txState}`}</h3>
             <h3>{`Token in balance: ${tokenInBalance}`}</h3>
             <h3>{`Token out balance: ${tokenOutBalance}`}</h3>
             <button onClick={() => route(setTxState, accounts, provider)} disabled={txState === TxState.Sending}>
