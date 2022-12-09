@@ -44,10 +44,10 @@ const getCurrencyBalance = async (currency: Currency) => {
   return balance
 }
 
-const useUpdateOnBlock = (callback: () => void) => {
+const useUpdateOnBlock = (callback: (blockNumber: number) => void) => {
   useEffect(() => {
-    const subscription = localRpcProvider.on('block', () => {
-      callback()
+    const subscription = localRpcProvider.on('block', (blockNumber: number) => {
+      callback(blockNumber)
     })
     return () => {
       subscription.removeAllListeners()
@@ -93,17 +93,20 @@ function App() {
   const [tokenInBalance, setTokenInBalance] = useState<string>()
   const [tokenOutBalance, setTokenOutBalance] = useState<string>()
   const [txState, setTxState] = useState<TxState>(TxState.New)
+  const [blockNumber, setBlockNumber] = useState<number>(0)
 
-  useUpdateOnBlock(async () => {
+  useUpdateOnBlock(async (blockNumber: number) => {
     const currentTokenInBalance = await getCurrencyBalance(CurrentEnvironment.currencyIn)
     setTokenInBalance(currentTokenInBalance)
     const currentTokenOutBalance = await getCurrencyBalance(CurrentEnvironment.currencyOut)
     setTokenOutBalance(currentTokenOutBalance)
+    setBlockNumber(blockNumber)
   })
 
   return (
     <div className="App">
       <header className="App-header">
+        <h3>{`Building Block number: ${blockNumber + 1}`}</h3>
         <h3>{`Token in Balance: ${tokenInBalance}`}</h3>
         <h3>{`Token out Balance: ${tokenOutBalance}`}</h3>
         <button onClick={() => route(setTxState)} disabled={txState === TxState.Sending}>
