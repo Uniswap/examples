@@ -24,6 +24,7 @@ const V3_SWAP_ROUTER_ADDRESS = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45'
 export enum TxState {
   Failed = 'Failed',
   New = 'New',
+  Rejected = 'Rejected',
   Sending = 'Sending',
   Sent = 'Success',
 }
@@ -149,9 +150,11 @@ const route = async (
     const receipt = await provider?.send('eth_sendTransaction', [tx])
     if (receipt) {
       setTxState(TxState.Sent)
+    } else {
+      setTxState(TxState.Failed)
     }
   } catch (e) {
-    setTxState(TxState.Failed)
+    setTxState(TxState.Rejected)
   }
 }
 
