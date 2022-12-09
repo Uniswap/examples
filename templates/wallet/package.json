@@ -25,7 +25,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "install:chain": "curl -L https://foundry.paradigm.xyz | bash && foundryup && clear && exec zsh",
+    "install:chain": "curl -L https://foundry.paradigm.xyz | bash && clear && echo $0 | exec && foundryup",
     "start:chain": "anvil --fork-url"
   },
   "eslintConfig": {
