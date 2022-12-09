@@ -80,13 +80,13 @@ const connectWallet = async () => {
   return accounts
 }
 
-const useUpdateOnBlock = (provider: Web3Provider | undefined, callback: () => void) => {
+const useUpdateOnBlock = (provider: Web3Provider | undefined, callback: (blockNumber: number) => void) => {
   useEffect(() => {
     if (!provider) {
       return
     }
-    const subscription = provider.on('block', () => {
-      callback()
+    const subscription = provider.on('block', (blockNumber: number) => {
+      callback(blockNumber)
     })
     return () => {
       subscription.removeAllListeners()
@@ -158,10 +158,11 @@ function App() {
   const [txState, setTxState] = useState<TxState>(TxState.New)
   const [tokenInBalance, setTokenInBalance] = useState<string>()
   const [tokenOutBalance, setTokenOutBalance] = useState<string>()
+  const [blockNumber, setBlockNumber] = useState<number>(0)
   const provider = useProvider()
   const accounts = useAccounts(provider)
 
-  useUpdateOnBlock(provider, async () => {
+  useUpdateOnBlock(provider, async (blockNumber: number) => {
     if (!accounts || accounts?.length < 1) {
       return
     }
@@ -170,6 +171,7 @@ function App() {
     setTokenInBalance(currentTokenInBalance)
     const currentTokenOutBalance = await getCurrencyBalance(CurrentEnvironment.currencyOut, provider, userAddress)
     setTokenOutBalance(currentTokenOutBalance)
+    setBlockNumber(blockNumber)
   })
 
   return (
@@ -180,6 +182,7 @@ function App() {
         {provider && accounts && (
           <>
             <h3>{`Connected: ${accounts}`}</h3>
+            <h3>{`Building Block number: ${blockNumber + 1}`}</h3>
             <h3>{`TxState: ${txState}`}</h3>
             <h3>{`Token in balance: ${tokenInBalance}`}</h3>
             <h3>{`Token out balance: ${tokenOutBalance}`}</h3>
