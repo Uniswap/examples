@@ -26,4 +26,4 @@ const ProdEnvironment: Environment = {
   mainnetRpcUrl: 'https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721',
 }
 
-export const CurrentEnvironment = ProdEnvironment
+export const CurrentEnvironment = LocalEnvironment

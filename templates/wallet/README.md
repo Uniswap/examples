@@ -20,7 +20,7 @@ To configure between these two, set `CurrentEnvironment` to the correct environm
 
 ### Setup and run the dApp
 1. Install a wallet browser extension
-2. Configure the browser extension to connect to your local copy of the mainnet and change the chainId to 1
+2. Change your browser's extension chain to **Localhost 8545**
 3. Import a new account to your wallet using a private key that Foundry output - eg `0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80`
 4. Run `yarn install` to install the project dependencies
 5. Run `yarn start` and navigate to your [localhost](http://localhost:3000/)
