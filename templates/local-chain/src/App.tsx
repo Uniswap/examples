@@ -31,7 +31,7 @@ const V3_SWAP_ROUTER_ADDRESS = '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45'
 export enum TxState {
   Failed = 'Failed',
   New = 'New',
-  Sending = 'Signing',
+  Sending = 'Sending',
   Sent = 'Success',
 }
 
@@ -98,8 +98,8 @@ const route = async (setTxState: (txState: TxState) => void) => {
 }
 
 function App() {
-  const [tokenInBalance, setTokenInBalance] = useState('')
-  const [tokenOutBalance, setTokenOutBalance] = useState('')
+  const [tokenInBalance, setTokenInBalance] = useState<string>()
+  const [tokenOutBalance, setTokenOutBalance] = useState<string>()
   const [txState, setTxState] = useState<TxState>(TxState.New)
 
   useUpdateOnBlock(async () => {
