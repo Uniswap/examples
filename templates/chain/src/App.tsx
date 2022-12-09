@@ -36,17 +36,17 @@ const wallet = new ethers.Wallet(
 
 const getCurrencyBalance = async (currency: Currency) => {
   if (currency.isNative) {
-    return ethers.utils.formatEther(await localRpcProvider.getBalance(wallet.address))
+    return ethers.utils.formatEther(await wallet.provider.getBalance(wallet.address))
   }
 
-  const usdc = new ethers.Contract(currency.address, erc20Abi, localRpcProvider)
+  const usdc = new ethers.Contract(currency.address, erc20Abi, wallet.provider)
   const balance = await usdc.balanceOf(wallet.address)
   return balance
 }
 
 const useUpdateOnBlock = (callback: (blockNumber: number) => void) => {
   useEffect(() => {
-    const subscription = localRpcProvider.on('block', (blockNumber: number) => {
+    const subscription = wallet.provider.on('block', (blockNumber: number) => {
       callback(blockNumber)
     })
     return () => {

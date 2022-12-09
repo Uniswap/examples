@@ -16,7 +16,7 @@ To configure between these two, set `CurrentEnvironment` to the correct environm
 1. Create an API key using any of the [Ethereum API providers](https://docs.ethers.io/v5/api/providers/) and grab the respective RPC URL, eg `https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721`
 2. Set that as the value of `mainnetRpcUrl` inside the [environment setup](./src/env.ts) file for both environments.
 3. **Skip if not running local copy of chain** - Run `yarn install:chain` to download and install Foundry
-4. **Skip if not running local copy of chain** - Run `yarn start:chain --fork-url <provider_API_URL>`
+4. **Skip if not running local copy of chain** - Run `yarn start:chain <provider_API_URL>`
 
 ### Setup and run the dApp
 1. Install a wallet browser extension
