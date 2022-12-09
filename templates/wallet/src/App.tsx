@@ -117,6 +117,52 @@ const getTokenBalance = async (token: Token, provider: Web3Provider | undefined,
   return balance
 }
 
+const route = async (
+  callback: (txStatus: TxState) => void,
+  accounts: string[] | undefined,
+  provider: Web3Provider | undefined
+) => {
+  if (!accounts || accounts?.length < 1 || !provider) {
+    return
+  }
+
+  const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: rpcProvider })
+  const recipient = accounts[0]
+
+  if (!recipient) {
+    callback(TxState.Failed)
+    return
+  }
+
+  callback(TxState.Sending)
+  const route = await router.route(
+    CurrencyAmount.fromRawAmount(TOKEN_IN, TOKEN_IN_AMOUNT),
+    TOKEN_OUT,
+    TradeType.EXACT_INPUT,
+    {
+      recipient,
+      slippageTolerance: new Percent(5, 100),
+      deadline: Math.floor(Date.now() / 1000 + 1800),
+      type: SwapType.SWAP_ROUTER_02,
+    }
+  )
+
+  const tx = {
+    data: route?.methodParameters?.calldata,
+    to: V3_SWAP_ROUTER_ADDRESS,
+    value: route?.methodParameters?.value,
+    from: recipient,
+  }
+
+  const receipt = await provider?.send('eth_sendTransaction', [tx])
+
+  if (receipt) {
+    callback(TxState.Sent)
+  } else {
+    callback(TxState.Failed)
+  }
+}
+
 function App() {
   const [txStatus, setTxStatus] = useState<TxState>(TxState.New)
   const [tokenInBalance, setTokenInBalance] = useState<string>()
@@ -135,48 +181,6 @@ function App() {
     setTokenOutBalance(currentTokenOutBalance)
   })
 
-  const route = async () => {
-    if (!accounts || accounts?.length < 1 || !provider) {
-      return
-    }
-
-    const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: rpcProvider })
-    const recipient = accounts[0]
-
-    if (!recipient) {
-      setTxStatus(TxState.Failed)
-      return
-    }
-
-    setTxStatus(TxState.Sending)
-    const route = await router.route(
-      CurrencyAmount.fromRawAmount(TOKEN_IN, TOKEN_IN_AMOUNT),
-      TOKEN_OUT,
-      TradeType.EXACT_INPUT,
-      {
-        recipient,
-        slippageTolerance: new Percent(5, 100),
-        deadline: Math.floor(Date.now() / 1000 + 1800),
-        type: SwapType.SWAP_ROUTER_02,
-      }
-    )
-
-    const tx = {
-      data: route?.methodParameters?.calldata,
-      to: V3_SWAP_ROUTER_ADDRESS,
-      value: route?.methodParameters?.value,
-      from: recipient,
-    }
-
-    const receipt = await provider?.send('eth_sendTransaction', [tx])
-
-    if (receipt) {
-      setTxStatus(TxState.Sent)
-    } else {
-      setTxStatus(TxState.Failed)
-    }
-  }
-
   return (
     <div className="App">
       <header className="App-header">
@@ -188,7 +192,7 @@ function App() {
             <h3>{`TxStatus: ${txStatus}`}</h3>
             <h3>{`Token in balance: ${tokenInBalance}`}</h3>
             <h3>{`Token out balance: ${tokenOutBalance}`}</h3>
-            <button onClick={() => route()} disabled={txStatus === TxState.Sending}>
+            <button onClick={() => route(setTxStatus, accounts, provider)} disabled={txStatus === TxState.Sending}>
               <p>Trade</p>
             </button>
           </>

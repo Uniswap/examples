@@ -63,6 +63,40 @@ const useUpdateOnBlock = (callback: () => void) => {
   }, [callback])
 }
 
+const route = async (callback: (txState: TxState) => void) => {
+  const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: rpcProvider })
+
+  callback(TxState.Sending)
+  const route = await router.route(
+    CurrencyAmount.fromRawAmount(TOKEN_IN, TOKEN_IN_AMOUNT),
+    TOKEN_OUT,
+    TradeType.EXACT_INPUT,
+    {
+      recipient: MY_ADDRESS,
+      slippageTolerance: new Percent(5, 100),
+      deadline: Math.floor(Date.now() / 1000 + 1800),
+      type: SwapType.SWAP_ROUTER_02,
+    }
+  )
+
+  const tx = {
+    data: route?.methodParameters?.calldata,
+    to: V3_SWAP_ROUTER_ADDRESS,
+    value: BigNumber.from(route?.methodParameters?.value),
+  }
+
+  const res = await wallet.sendTransaction(tx)
+
+  const txReceipt = await res.wait()
+
+  //tx was mined successfully == 1
+  if (txReceipt.status === 1) {
+    callback(TxState.Sent)
+  } else {
+    callback(TxState.Failed)
+  }
+}
+
 function App() {
   const [tokenInBalance, setTokenInBalance] = useState('')
   const [tokenOutBalance, setTokenOutBalance] = useState('')
@@ -75,46 +109,12 @@ function App() {
     setTokenOutBalance(currentTokenOutBalance)
   })
 
-  const route = async () => {
-    const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: rpcProvider })
-
-    setTxStatus(TxState.Sending)
-    const route = await router.route(
-      CurrencyAmount.fromRawAmount(TOKEN_IN, TOKEN_IN_AMOUNT),
-      TOKEN_OUT,
-      TradeType.EXACT_INPUT,
-      {
-        recipient: MY_ADDRESS,
-        slippageTolerance: new Percent(5, 100),
-        deadline: Math.floor(Date.now() / 1000 + 1800),
-        type: SwapType.SWAP_ROUTER_02,
-      }
-    )
-
-    const tx = {
-      data: route?.methodParameters?.calldata,
-      to: V3_SWAP_ROUTER_ADDRESS,
-      value: BigNumber.from(route?.methodParameters?.value),
-    }
-
-    const res = await wallet.sendTransaction(tx)
-
-    const txReceipt = await res.wait()
-
-    //tx was mined successfully == 1
-    if (txReceipt.status === 1) {
-      setTxStatus(TxState.Sent)
-    } else {
-      setTxStatus(TxState.Failed)
-    }
-  }
-
   return (
     <div className="App">
       <header className="App-header">
         <h3>{`Token in Balance: ${tokenInBalance}`}</h3>
         <h3>{`Token out Balance: ${tokenOutBalance}`}</h3>
-        <button onClick={() => route()} disabled={txStatus === TxState.Sending}>
+        <button onClick={() => route(setTxStatus)} disabled={txStatus === TxState.Sending}>
           <p>Trade</p>
         </button>
       </header>

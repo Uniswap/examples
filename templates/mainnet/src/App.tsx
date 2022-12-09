@@ -54,6 +54,23 @@ const useUpdateOnBlock = (callback: () => void) => {
   }, [callback])
 }
 
+const route = async (callback: (routeParams: string | undefined) => void) => {
+  const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: rpcProvider })
+
+  const route = await router.route(
+    CurrencyAmount.fromRawAmount(TOKEN_IN, TOKEN_IN_AMOUNT),
+    TOKEN_OUT,
+    TradeType.EXACT_INPUT,
+    {
+      recipient: MY_ADDRESS,
+      slippageTolerance: new Percent(5, 100),
+      deadline: Math.floor(Date.now() / 1000 + 1800),
+      type: SwapType.SWAP_ROUTER_02,
+    }
+  )
+  callback(route?.route[0].tokenPath.map((token) => token.symbol).toString())
+}
+
 function App() {
   const [tokenInBalance, setTokenInBalance] = useState<string>()
   const [tokenOutBalance, setTokenOutBalance] = useState<string>()
@@ -66,29 +83,12 @@ function App() {
     setTokenOutBalance(currentTokenOutBalance)
   })
 
-  const route = async () => {
-    const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: rpcProvider })
-
-    const route = await router.route(
-      CurrencyAmount.fromRawAmount(TOKEN_IN, TOKEN_IN_AMOUNT),
-      TOKEN_OUT,
-      TradeType.EXACT_INPUT,
-      {
-        recipient: MY_ADDRESS,
-        slippageTolerance: new Percent(5, 100),
-        deadline: Math.floor(Date.now() / 1000 + 1800),
-        type: SwapType.SWAP_ROUTER_02,
-      }
-    )
-    setRouteParams(route?.route[0].tokenPath.map((token) => token.symbol).toString())
-  }
-
   return (
     <div className="App">
       <header className="App-header">
         <h3>{`Token in Balance: ${tokenInBalance}`}</h3>
         <h3>{`Token out Balance: ${tokenOutBalance}`}</h3>
-        <button onClick={() => route()}>
+        <button onClick={() => route(setRouteParams)}>
           <p>Route Order</p>
         </button>
         <p>{routeParams}</p>
