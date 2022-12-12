@@ -7,6 +7,7 @@ import { Currency } from '@uniswap/sdk-core'
 // Sets if the example should run locally or on chain
 export enum ChainEnvironment {
   LOCAL,
+  WALLET_EXTENSION,
   PRODUCTION,
 }
 
@@ -31,7 +32,8 @@ export interface ExampleConfig {
 // Configurations
 
 // Shared information between both configuration environments
-const BaseConfig = {
+export const CurrentConfig: ExampleConfig = {
+  env: ChainEnvironment.LOCAL,
   rpc: {
     local: 'http://localhost:8545',
     mainnet: 'https://mainnet.infura.io/v3/7b37a3c5c10b47c18473128c2e3bd155',
@@ -46,15 +48,3 @@ const BaseConfig = {
     tokenOut: USDC_TOKEN,
   },
 }
-
-const LocalConfig: ExampleConfig = {
-  env: ChainEnvironment.LOCAL,
-  ...BaseConfig,
-}
-
-const ProdConfig: ExampleConfig = {
-  env: ChainEnvironment.PRODUCTION,
-  ...BaseConfig,
-}
-
-export const CurrentConfig = LocalConfig

@@ -6,23 +6,11 @@ import { TradeType, CurrencyAmount, Percent } from '@uniswap/sdk-core'
 import { ChainEnvironment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
 import { V3_SWAP_ROUTER_ADDRESS } from '../libs/addresses'
+import { connectWallet, rpcProvider, sendTransaction, TransactionState, wallet, windowProvider } from '../libs/provider'
+import { Web3Provider } from '@ethersproject/providers'
+import { providers } from 'ethers'
 
-export enum TransactionState {
-  Failed = 'Failed',
-  New = 'New',
-  Sending = 'Sending',
-  Success = 'Success',
-}
-
-// Set up providers and wallet
-const rpcProvider = new ethers.providers.JsonRpcProvider(CurrentConfig.rpc.mainnet)
-const localRpcProvider = new ethers.providers.JsonRpcProvider(CurrentConfig.rpc.local)
-const wallet = new ethers.Wallet(
-  CurrentConfig.wallet.privateKey,
-  CurrentConfig.env == ChainEnvironment.LOCAL ? localRpcProvider : rpcProvider
-)
-
-const route = async (setTxState: (txState: TransactionState) => void) => {
+const route = async (account: string, setTxState: (txState: TransactionState) => void) => {
   const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: rpcProvider })
 
   setTxState(TransactionState.Sending)
@@ -41,21 +29,18 @@ const route = async (setTxState: (txState: TransactionState) => void) => {
     }
   )
 
-  const transaction = {
+  const res = await sendTransaction({
     data: route?.methodParameters?.calldata,
     to: V3_SWAP_ROUTER_ADDRESS,
-    value: BigNumber.from(route?.methodParameters?.value),
-  }
+    value:
+      CurrentConfig.env !== ChainEnvironment.WALLET_EXTENSION
+        ? route?.methodParameters?.value
+        : BigNumber.from(route?.methodParameters?.value),
+    from: account,
+    gasLimit: 300000,
+  })
 
-  const res = await wallet.sendTransaction(transaction)
-  const txReceipt = await res.wait()
-
-  // Transaction was successful if status === 1
-  if (txReceipt.status === 1) {
-    setTxState(TransactionState.Success)
-  } else {
-    setTxState(TransactionState.Failed)
-  }
+  setTxState(res)
 }
 
 function Example() {
@@ -64,26 +49,50 @@ function Example() {
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
-  const updateWalletState = async (blockNumber: number) => {
-    setTokenInBalance(await getCurrencyBalance(wallet, CurrentConfig.currencies.tokenIn))
-    setTokenOutBalance(await getCurrencyBalance(wallet, CurrentConfig.currencies.tokenOut))
-    setBlockNumber(blockNumber)
+  const [account, setAccount] = useState<string>()
+
+  const onConnectWallet = async () => {
+    const account = await connectWallet()
+    setAccount(account[0])
+    refreshBalances(windowProvider, account[0])
   }
 
+  // Update wallet state given a block number
+  const refreshBalances = async (provider: Web3Provider | providers.Provider, address: string) => {
+    setTokenInBalance(await getCurrencyBalance(provider, address, CurrentConfig.currencies.tokenIn))
+    setTokenOutBalance(await getCurrencyBalance(provider, address, CurrentConfig.currencies.tokenOut))
+  }
+
+  // Listen for new blocks and update the wallet
   useEffect(() => {
-    const subscription = wallet.provider.on('block', updateWalletState)
+    const blockProvider = CurrentConfig.env !== ChainEnvironment.WALLET_EXTENSION ? wallet.provider : windowProvider
+    const subscription = blockProvider.on('block', async (blockNumber: number) => {
+      if (CurrentConfig.env !== ChainEnvironment.WALLET_EXTENSION) {
+        refreshBalances(wallet.provider, wallet.address)
+      } else {
+        if (account) {
+          refreshBalances(windowProvider, account)
+        }
+      }
+      setBlockNumber(blockNumber)
+    })
     return () => {
       subscription.removeAllListeners()
     }
-  })
+  }, [account])
 
   return (
     <div className="App">
       <header className="App-header">
-        <h3>{`Building Block number: ${blockNumber + 1}`}</h3>
-        <h3>{`Token in Balance: ${tokenInBalance}`}</h3>
-        <h3>{`Token out Balance: ${tokenOutBalance}`}</h3>
-        <button onClick={() => route(setTxState)} disabled={txState === TransactionState.Sending}>
+        {account}
+        <button onClick={onConnectWallet}>Connect Wallet</button>
+        <h3>{`Block Number: ${blockNumber + 1}`}</h3>
+        <h3>{`Transaction State: ${txState}`}</h3>
+        <h3>{`Token In (ETH) Balance: ♦${tokenInBalance}`}</h3>
+        <h3>{`Token Out (USDC) Balance: $${tokenOutBalance}`}</h3>
+        <button
+          onClick={() => route(account ?? wallet.address, setTxState)}
+          disabled={txState === TransactionState.Sending}>
           <p>Trade</p>
         </button>
       </header>
