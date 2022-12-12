@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import './App.css'
 import { ethers } from 'ethers'
 import { AlphaRouter, ChainId, SwapType } from '@uniswap/smart-order-router'
@@ -45,31 +45,7 @@ const useProvider = () => {
   return provider
 }
 
-const useAccounts = (provider: Web3Provider | undefined) => {
-  const [accounts, setAccounts] = useState<string[]>()
-
-  useEffect(() => {
-    if (!provider) {
-      return
-    }
-    const getAccounts = async () => {
-      const accounts = await provider.send('eth_requestAccounts', [])
-      setAccounts(accounts)
-    }
-
-    getAccounts()
-    const subscription = provider.on('accountsChanged', () => {
-      getAccounts()
-    })
-    return () => {
-      subscription.removeAllListeners()
-    }
-  }, [provider])
-
-  return accounts
-}
-
-const connectWallet = async () => {
+const connectWallet = async (callback: (accounts: string[]) => void) => {
   if (!window.ethereum) {
     return
   }
@@ -78,7 +54,8 @@ const connectWallet = async () => {
 
   const provider = new ethers.providers.Web3Provider(ethereum)
   const accounts = await provider.send('eth_requestAccounts', [])
-  return accounts
+  callback(accounts)
+  return
 }
 
 const useUpdateOnBlock = (provider: Web3Provider | undefined, callback: (blockNumber: number) => void) => {
@@ -86,6 +63,7 @@ const useUpdateOnBlock = (provider: Web3Provider | undefined, callback: (blockNu
     if (!provider) {
       return
     }
+
     const subscription = provider.on('block', (blockNumber: number) => {
       callback(blockNumber)
     })
@@ -144,6 +122,7 @@ const route = async (
     to: V3_SWAP_ROUTER_ADDRESS,
     value: route?.methodParameters?.value,
     from: recipient,
+    gasLimit: 300000,
   }
 
   try {
@@ -163,26 +142,52 @@ function App() {
   const [tokenInBalance, setTokenInBalance] = useState<string>()
   const [tokenOutBalance, setTokenOutBalance] = useState<string>()
   const [blockNumber, setBlockNumber] = useState<number>(0)
+  const [accounts, setAccounts] = useState<string[]>()
   const provider = useProvider()
-  const accounts = useAccounts(provider)
 
-  useUpdateOnBlock(provider, async (blockNumber: number) => {
+  const updateBalances = useCallback(
+    async (accounts: string[] | undefined) => {
+      if (!accounts || accounts?.length < 1) {
+        return
+      }
+      const userAddress = accounts[0]
+      const currentTokenInBalance = await getCurrencyBalance(CurrentEnvironment.currencyIn, provider, userAddress)
+      setTokenInBalance(currentTokenInBalance)
+      const currentTokenOutBalance = await getCurrencyBalance(CurrentEnvironment.currencyOut, provider, userAddress)
+      setTokenOutBalance(currentTokenOutBalance)
+    },
+    [provider]
+  )
+
+  const onNewBlock = async (blockNumber: number) => {
     if (!accounts || accounts?.length < 1) {
       return
     }
-    const userAddress = accounts[0]
-    const currentTokenInBalance = await getCurrencyBalance(CurrentEnvironment.currencyIn, provider, userAddress)
-    setTokenInBalance(currentTokenInBalance)
-    const currentTokenOutBalance = await getCurrencyBalance(CurrentEnvironment.currencyOut, provider, userAddress)
-    setTokenOutBalance(currentTokenOutBalance)
+    updateBalances(accounts)
     setBlockNumber(blockNumber)
-  })
+  }
+  useUpdateOnBlock(provider, onNewBlock)
+
+  const onAccountsChanged = async (accounts: string[]) => {
+    if (!accounts || accounts?.length < 1) {
+      return
+    }
+    updateBalances(accounts)
+    setAccounts(accounts)
+  }
 
   return (
     <div className="App">
       <header className="App-header">
         {!provider && <h3>Please install a Wallet!</h3>}
-        {provider && !accounts && <button onClick={() => connectWallet()}>Connect Wallet</button>}
+        {provider && !accounts && (
+          <button
+            onClick={() => {
+              connectWallet(onAccountsChanged)
+            }}>
+            Connect Wallet
+          </button>
+        )}
         {provider && accounts && (
           <>
             <h3>{`Connected: ${accounts}`}</h3>
