@@ -79,7 +79,11 @@ const route = async (setTxState: (txState: TxState) => void) => {
 
   const res = await wallet.sendTransaction(tx)
 
+  console.log('txHash', res.hash)
+
   const txReceipt = await res.wait()
+
+  console.log('txReceipt', txReceipt)
 
   //tx was mined successfully == 1
   if (txReceipt.status === 1) {

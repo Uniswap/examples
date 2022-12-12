@@ -26,7 +26,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "install:chain": "curl -L https://foundry.paradigm.xyz | bash && clear && echo $0 | exec && foundryup",
-    "start:chain": "anvil --fork-url"
+    "start:chain": "anvil --block-time 10 --fork-url"
   },
   "eslintConfig": {
     "extends": [
