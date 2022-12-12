@@ -3,7 +3,7 @@ import './Example.css'
 import { ethers, BigNumber } from 'ethers'
 import { AlphaRouter, ChainId, SwapType } from '@uniswap/smart-order-router'
 import { TradeType, CurrencyAmount, Percent } from '@uniswap/sdk-core'
-import { ChainEnvironment, CurrentConfig } from '../config'
+import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
 import { V3_SWAP_ROUTER_ADDRESS } from '../libs/addresses'
 import { connectWallet, rpcProvider, sendTransaction, TransactionState, wallet, windowProvider } from '../libs/provider'
@@ -33,7 +33,7 @@ const route = async (account: string, setTxState: (txState: TransactionState) =>
     data: route?.methodParameters?.calldata,
     to: V3_SWAP_ROUTER_ADDRESS,
     value:
-      CurrentConfig.env !== ChainEnvironment.WALLET_EXTENSION
+      CurrentConfig.env !== Environment.WALLET_EXTENSION
         ? route?.methodParameters?.value
         : BigNumber.from(route?.methodParameters?.value),
     from: account,
@@ -65,9 +65,9 @@ function Example() {
 
   // Listen for new blocks and update the wallet
   useEffect(() => {
-    const blockProvider = CurrentConfig.env !== ChainEnvironment.WALLET_EXTENSION ? wallet.provider : windowProvider
+    const blockProvider = CurrentConfig.env !== Environment.WALLET_EXTENSION ? wallet.provider : windowProvider
     const subscription = blockProvider.on('block', async (blockNumber: number) => {
-      if (CurrentConfig.env !== ChainEnvironment.WALLET_EXTENSION) {
+      if (CurrentConfig.env !== Environment.WALLET_EXTENSION) {
         refreshBalances(wallet.provider, wallet.address)
       } else {
         if (account) {

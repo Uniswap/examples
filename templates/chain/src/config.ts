@@ -2,10 +2,8 @@
 import { ETH_TOKEN, USDC_TOKEN } from './libs/currency'
 import { Currency } from '@uniswap/sdk-core'
 
-// Types
-
 // Sets if the example should run locally or on chain
-export enum ChainEnvironment {
+export enum Environment {
   LOCAL,
   WALLET_EXTENSION,
   PRODUCTION,
@@ -13,7 +11,7 @@ export enum ChainEnvironment {
 
 // Inputs that configure this example to run
 export interface ExampleConfig {
-  env: ChainEnvironment
+  env: Environment
   rpc: {
     local: string
     mainnet: string
@@ -33,7 +31,7 @@ export interface ExampleConfig {
 
 // Shared information between both configuration environments
 export const CurrentConfig: ExampleConfig = {
-  env: ChainEnvironment.LOCAL,
+  env: Environment.LOCAL,
   rpc: {
     local: 'http://localhost:8545',
     mainnet: 'https://mainnet.infura.io/v3/7b37a3c5c10b47c18473128c2e3bd155',

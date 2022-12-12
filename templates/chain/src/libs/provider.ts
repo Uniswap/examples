@@ -1,9 +1,10 @@
 import { ethers, providers } from 'ethers'
-import { ChainEnvironment, CurrentConfig } from '../config'
+import { Environment, CurrentConfig } from '../config'
 
 // Set up providers and wallet
 export const rpcProvider = new ethers.providers.JsonRpcProvider(CurrentConfig.rpc.mainnet)
 export const localRpcProvider = new ethers.providers.JsonRpcProvider(CurrentConfig.rpc.local)
+
 export const wallet = createWallet(localRpcProvider, rpcProvider)
 export const windowProvider = createWindowProvider()
 
@@ -12,7 +13,7 @@ export const windowProvider = createWindowProvider()
 export function createWallet(localProvider: providers.Provider, productionProvider: providers.Provider): ethers.Wallet {
   const wallet = new ethers.Wallet(
     CurrentConfig.wallet.privateKey,
-    CurrentConfig.env == ChainEnvironment.LOCAL ? localProvider : productionProvider
+    CurrentConfig.env == Environment.LOCAL ? localProvider : productionProvider
   )
   return wallet
 }
@@ -43,7 +44,7 @@ export enum TransactionState {
 }
 
 export async function sendTransaction(transaction: ethers.providers.TransactionRequest): Promise<TransactionState> {
-  if (CurrentConfig.env !== ChainEnvironment.WALLET_EXTENSION) {
+  if (CurrentConfig.env !== Environment.WALLET_EXTENSION) {
     const res = await wallet.sendTransaction(transaction)
     const txReceipt = await res.wait()
 
