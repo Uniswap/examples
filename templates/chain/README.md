@@ -3,6 +3,7 @@
 ## Overview
 
 This repository is a template for developing guides for dApps that interact with a locally deployed copy of the mainnet or the mainnet.
+
 ## Setup
 This application can be configured to interact with:
 1. A locally deployed mainnet fork
