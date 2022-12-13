@@ -1,6 +1,6 @@
 ## Overview
 
-This is a template for dApp development guides that interact with the blockchain, abstracting local, mainnet, and a wallet connection
+This is a template for dApp development guides that includes running against mainnet, locally, and using a wallet connection.
 
 ## Configuration
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
 import { ethers } from 'ethers'
 import { AlphaRouter, ChainId, SwapType } from '@uniswap/smart-order-router'
@@ -7,7 +7,7 @@ import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
 import { V3_SWAP_ROUTER_ADDRESS } from '../libs/addresses'
 import {
-  connectWallet,
+  connectBrowserExtensionWallet,
   getMainnetProvider,
   getProvider,
   getWalletAddress,
@@ -25,10 +25,10 @@ async function route(): Promise<TransactionState> {
 
   const route = await router.route(
     CurrencyAmount.fromRawAmount(
-      CurrentConfig.currencies.tokenIn,
+      CurrentConfig.currencies.in,
       ethers.utils.parseEther(CurrentConfig.currencies.amountIn.toString()).toString()
     ),
-    CurrentConfig.currencies.tokenOut,
+    CurrentConfig.currencies.out,
     TradeType.EXACT_INPUT,
     {
       recipient: CurrentConfig.wallet.address,
@@ -57,27 +57,27 @@ function Example() {
 
   // Event Handlers
 
-  const onConnectWallet = async () => {
-    await connectWallet()
+  const onConnectWallet = useCallback(async () => {
+    await connectBrowserExtensionWallet()
     if (getWalletAddress()) {
       refreshBalances()
     }
-  }
+  }, [])
 
-  const onTrade = async () => {
+  const onTrade = useCallback(async () => {
     setTxState(TransactionState.Sending)
     setTxState(await route())
-  }
+  }, [])
 
   // Update wallet state given a block number
-  const refreshBalances = async () => {
+  const refreshBalances = useCallback(async () => {
     const provider = getProvider()
     const address = getWalletAddress()
     if (address && provider) {
-      setTokenInBalance(await getCurrencyBalance(provider, address, CurrentConfig.currencies.tokenIn))
-      setTokenOutBalance(await getCurrencyBalance(provider, address, CurrentConfig.currencies.tokenOut))
+      setTokenInBalance(await getCurrencyBalance(provider, address, CurrentConfig.currencies.in))
+      setTokenOutBalance(await getCurrencyBalance(provider, address, CurrentConfig.currencies.out))
     }
-  }
+  }, [])
 
   // Listen for new blocks and update the wallet
   useEffect(() => {

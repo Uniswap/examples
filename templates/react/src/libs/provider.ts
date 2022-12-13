@@ -3,12 +3,10 @@ import { Environment, CurrentConfig } from '../config'
 import { BaseProvider } from '@ethersproject/providers'
 
 // Single copies of provider and wallet
-const rpcProvider = new ethers.providers.JsonRpcProvider(CurrentConfig.rpc.mainnet)
-const localRpcProvider = new ethers.providers.JsonRpcProvider(CurrentConfig.rpc.local)
+const mainnetProvider = new ethers.providers.JsonRpcProvider(CurrentConfig.rpc.mainnet)
+const wallet = createWallet()
 
-const wallet = createWallet(localRpcProvider, rpcProvider)
-
-const windowProvider = createWindowProvider()
+const browserExtensionProvider = createBrowserExtensionProvider()
 let walletExtensionAddress: string | null = null
 
 // Interfaces
@@ -24,11 +22,11 @@ export enum TransactionState {
 // Provider and Wallet Functions
 
 export function getMainnetProvider(): BaseProvider {
-  return rpcProvider
+  return mainnetProvider
 }
 
 export function getProvider(): providers.Provider | null {
-  return CurrentConfig.env === Environment.WALLET_EXTENSION ? windowProvider : wallet.provider
+  return CurrentConfig.env === Environment.WALLET_EXTENSION ? browserExtensionProvider : wallet.provider
 }
 
 export function getWalletAddress(): string | null {
@@ -44,7 +42,7 @@ export async function sendTransaction(transaction: ethers.providers.TransactionR
   }
 }
 
-export async function connectWallet() {
+export async function connectBrowserExtensionWallet() {
   if (!window.ethereum) {
     return null
   }
@@ -62,15 +60,15 @@ export async function connectWallet() {
 
 // Internal Functionality
 
-function createWallet(localProvider: providers.Provider, productionProvider: providers.Provider): ethers.Wallet {
-  const wallet = new ethers.Wallet(
-    CurrentConfig.wallet.privateKey,
-    CurrentConfig.env == Environment.LOCAL ? localProvider : productionProvider
-  )
-  return wallet
+function createWallet(): ethers.Wallet {
+  let provider = mainnetProvider
+  if (CurrentConfig.env == Environment.LOCAL) {
+    provider = new ethers.providers.JsonRpcProvider(CurrentConfig.rpc.local)
+  }
+  return new ethers.Wallet(CurrentConfig.wallet.privateKey, provider)
 }
 
-function createWindowProvider(): ethers.providers.Web3Provider | null {
+function createBrowserExtensionProvider(): ethers.providers.Web3Provider | null {
   try {
     return new ethers.providers.Web3Provider(window?.ethereum, 'any')
   } catch (e) {
@@ -84,7 +82,7 @@ async function sendTransactionViaExtension(
   transaction: ethers.providers.TransactionRequest
 ): Promise<TransactionState> {
   try {
-    const receipt = await windowProvider?.send('eth_sendTransaction', [transaction])
+    const receipt = await browserExtensionProvider?.send('eth_sendTransaction', [transaction])
     if (receipt) {
       return TransactionState.Sent
     } else {
@@ -99,10 +97,10 @@ async function sendTransactionViaExtension(
 async function sendTransactionViaWallet(transaction: ethers.providers.TransactionRequest): Promise<TransactionState> {
   transaction.value = BigNumber.from(transaction.value)
   const res = await wallet.sendTransaction(transaction)
-  const txReceipt = await res.wait()
+  const receipt = await res.wait()
 
   // Transaction was successful if status === 1
-  if (txReceipt.status === 1) {
+  if (receipt.status === 1) {
     return TransactionState.Sent
   } else {
     return TransactionState.Failed

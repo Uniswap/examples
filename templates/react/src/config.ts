@@ -20,9 +20,9 @@ export interface ExampleConfig {
     privateKey: string
   }
   currencies: {
-    tokenIn: Currency
+    in: Currency
     amountIn: number
-    tokenOut: Currency
+    out: Currency
   }
 }
 
@@ -39,8 +39,8 @@ export const CurrentConfig: ExampleConfig = {
     privateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
   },
   currencies: {
-    tokenIn: Ether.onChain(SupportedChainId.MAINNET),
+    in: Ether.onChain(SupportedChainId.MAINNET),
     amountIn: 1,
-    tokenOut: USDC_TOKEN,
+    out: USDC_TOKEN,
   },
 }

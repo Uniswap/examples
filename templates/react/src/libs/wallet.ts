@@ -3,21 +3,8 @@
 import { Currency } from '@uniswap/sdk-core'
 import { ethers } from 'ethers'
 import { providers } from 'ethers'
+import { ERC20_WALLET_ABI } from './abis'
 import { toReadableAmount } from './conversion'
-
-// ABI for wallet information
-const ERC20_WALLET_ABI = [
-  // Read-Only Functions
-  'function balanceOf(address owner) view returns (uint256)',
-  'function decimals() view returns (uint8)',
-  'function symbol() view returns (string)',
-
-  // Authenticated Functions
-  'function transfer(address to, uint amount) returns (bool)',
-
-  // Events
-  'event Transfer(address indexed from, address indexed to, uint amount)',
-]
 
 export async function getCurrencyBalance(
   provider: providers.Provider,
