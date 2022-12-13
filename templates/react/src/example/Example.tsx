@@ -49,11 +49,26 @@ async function route(): Promise<TransactionState> {
   return res
 }
 
-function Example() {
+const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
+  useEffect(() => {
+    const subscription = getProvider()?.on('block', callback)
+    return () => {
+      subscription?.removeAllListeners()
+    }
+  })
+}
+
+const Example = () => {
   const [tokenInBalance, setTokenInBalance] = useState<string>()
   const [tokenOutBalance, setTokenOutBalance] = useState<string>()
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
+
+  // Listen for new blocks and update the wallet
+  useOnBlockUpdated(async (blockNumber: number) => {
+    refreshBalances()
+    setBlockNumber(blockNumber)
+  })
 
   // Update wallet state given a block number
   const refreshBalances = useCallback(async () => {
@@ -64,17 +79,6 @@ function Example() {
       setTokenOutBalance(await getCurrencyBalance(provider, address, CurrentConfig.currencies.out))
     }
   }, [])
-
-  // Listen for new blocks and update the wallet
-  useEffect(() => {
-    const subscription = getProvider()?.on('block', async (blockNumber: number) => {
-      refreshBalances()
-      setBlockNumber(blockNumber)
-    })
-    return () => {
-      subscription?.removeAllListeners()
-    }
-  }, [refreshBalances])
 
   // Event Handlers
 
