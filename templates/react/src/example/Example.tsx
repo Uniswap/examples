@@ -79,8 +79,7 @@ function Example() {
   // Event Handlers
 
   const onConnectWallet = useCallback(async () => {
-    await connectBrowserExtensionWallet()
-    if (getWalletAddress()) {
+    if (await connectBrowserExtensionWallet()) {
       refreshBalances()
     }
   }, [refreshBalances])
@@ -97,7 +96,7 @@ function Example() {
           <h1 className="error">Please install a wallet to use this example configuration</h1>
         )}
         <h3>{`Wallet Address: ${getWalletAddress()}`}</h3>
-        {CurrentConfig.env === Environment.WALLET_EXTENSION && (
+        {CurrentConfig.env === Environment.WALLET_EXTENSION && !getWalletAddress() && (
           <button onClick={onConnectWallet}>Connect Wallet</button>
         )}
         <h3>{`Block Number: ${blockNumber + 1}`}</h3>

@@ -56,6 +56,7 @@ export async function connectBrowserExtensionWallet() {
   }
 
   walletExtensionAddress = accounts[0]
+  return walletExtensionAddress
 }
 
 // Internal Functionality
