@@ -9,7 +9,7 @@ This application can be configured to interact with:
 2. The mainnet
 3. An in-browser wallet (mainnet or configured locally)
 
-To configure between these two, set the `Environment` to the correct environment in the [example configuration](./src/config.ts) file.
+To configure between these, set the `Environment` to the correct environment in the [example configuration](./src/config.ts) file.
 
 The configuration includes control of the environment as well as inputs to the example's functionality. The rest of the code should need no modification to function.
 
