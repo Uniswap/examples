@@ -1,4 +1,4 @@
-import { ethers, providers } from 'ethers'
+import { ethers, providers, BigNumber } from 'ethers'
 import { Environment, CurrentConfig } from '../config'
 import { BaseProvider } from '@ethersproject/providers'
 
@@ -51,6 +51,7 @@ export async function sendTransaction(transaction: ethers.providers.TransactionR
     }
   } else {
     // Transacting using an ethers.Wallet
+    transaction.value = BigNumber.from(transaction.value)
     const res = await wallet.sendTransaction(transaction)
     const txReceipt = await res.wait()
 

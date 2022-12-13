@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import './Example.css'
-import { ethers, BigNumber } from 'ethers'
+import { ethers } from 'ethers'
 import { AlphaRouter, ChainId, SwapType } from '@uniswap/smart-order-router'
 import { TradeType, CurrencyAmount, Percent } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
@@ -41,10 +41,7 @@ async function route(): Promise<TransactionState> {
   const res = await sendTransaction({
     data: route?.methodParameters?.calldata,
     to: V3_SWAP_ROUTER_ADDRESS,
-    value:
-      CurrentConfig.env === Environment.WALLET_EXTENSION
-        ? route?.methodParameters?.value
-        : BigNumber.from(route?.methodParameters?.value),
+    value: route?.methodParameters?.value,
     from: address,
     gasLimit: 300000,
   })
