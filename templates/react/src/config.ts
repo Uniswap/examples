@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { USDC_TOKEN } from './libs/tokens'
 import { Currency, Ether, SupportedChainId } from '@uniswap/sdk-core'
 
