@@ -108,7 +108,9 @@ const Example = () => {
         <h3>{`Transaction State: ${txState}`}</h3>
         <h3>{`Token In (ETH) Balance: ${tokenInBalance}`}</h3>
         <h3>{`Token Out (USDC) Balance: ${tokenOutBalance}`}</h3>
-        <button onClick={onTrade} disabled={txState === TransactionState.Sending || getProvider() === null}>
+        <button
+          onClick={onTrade}
+          disabled={txState === TransactionState.Sending || getProvider() === null || CurrentConfig.rpc.mainnet === ''}>
           <p>Trade</p>
         </button>
       </header>
