@@ -6,13 +6,6 @@ import Quoter from '@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Qu
 import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 import { FeeAmount, computePoolAddress } from '@uniswap/v3-sdk'
 
-export enum TxState {
-  Failed = 'Failed',
-  New = 'New',
-  Sending = 'Sending',
-  Sent = 'Success',
-}
-
 const rpcProvider = new ethers.providers.JsonRpcProvider(CurrentEnvironment.mainnetRpcUrl)
 const localRpcProvider = new ethers.providers.JsonRpcProvider(CurrentEnvironment.localRpcUrl)
 
@@ -47,33 +40,29 @@ const getPoolConstants = async () => {
   }
 }
 
-const quote = async (setTxState: (txState: TxState) => void, setOutputAmount: (outputAmount: string) => void) => {
+const quote = async (setOutputAmount: (outputAmount: string) => void) => {
   const poolConstants = await getPoolConstants()
 
   const quotedAmountOut = await quoterContract.callStatic.quoteExactInputSingle(
     poolConstants.token0,
     poolConstants.token1,
     poolConstants.fee,
-    CurrentEnvironment.tokenInAmount,
+    CurrentEnvironment.tokenInAmount * Math.pow(10, CurrentEnvironment.tokenIn.decimals),
     0
   )
 
   setOutputAmount((quotedAmountOut / Math.pow(10, CurrentEnvironment.tokenOut.decimals)).toString())
-  setTxState(TxState.Sending)
 }
 
 function App() {
-  const [txState, setTxState] = useState<TxState>(TxState.New)
   const [outputAmount, setOutputAmount] = useState<string>()
 
   return (
     <div className="App">
       <header className="App-header">
-        <h3>{`Quote input amount: ${
-          CurrentEnvironment.tokenInAmount / Math.pow(10, CurrentEnvironment.tokenIn.decimals)
-        } ${CurrentEnvironment.tokenIn.symbol}`}</h3>
+        <h3>{`Quote input amount: ${CurrentEnvironment.tokenInAmount} ${CurrentEnvironment.tokenIn.symbol}`}</h3>
         <h3>{`Quote output amount: ${outputAmount} ${CurrentEnvironment.tokenOut.symbol}`}</h3>
-        <button onClick={() => quote(setTxState, setOutputAmount)} disabled={txState === TxState.Sending}>
+        <button onClick={() => quote(setOutputAmount)}>
           <p>Trade</p>
         </button>
       </header>
