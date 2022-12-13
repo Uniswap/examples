@@ -37,30 +37,10 @@ export function getWalletAddress(): string | null {
 
 export async function sendTransaction(transaction: ethers.providers.TransactionRequest): Promise<TransactionState> {
   if (CurrentConfig.env === Environment.WALLET_EXTENSION) {
-    // Transacting with a wallet extension via a Web3 Provider
-    try {
-      const receipt = await windowProvider?.send('eth_sendTransaction', [transaction])
-      if (receipt) {
-        return TransactionState.Sent
-      } else {
-        return TransactionState.Failed
-      }
-    } catch (e) {
-      console.log(e)
-      return TransactionState.Rejected
-    }
+    return sendTransactionViaExtension(transaction)
   } else {
-    // Transacting using an ethers.Wallet
     transaction.value = BigNumber.from(transaction.value)
-    const res = await wallet.sendTransaction(transaction)
-    const txReceipt = await res.wait()
-
-    // Transaction was successful if status === 1
-    if (txReceipt.status === 1) {
-      return TransactionState.Sent
-    } else {
-      return TransactionState.Failed
-    }
+    return sendTransactionViaWallet(transaction)
   }
 }
 
@@ -80,7 +60,7 @@ export async function connectWallet() {
   walletExtensionAddress = accounts[0]
 }
 
-// Internal Constructors
+// Internal Functionality
 
 function createWallet(localProvider: providers.Provider, productionProvider: providers.Provider): ethers.Wallet {
   const wallet = new ethers.Wallet(
@@ -90,12 +70,41 @@ function createWallet(localProvider: providers.Provider, productionProvider: pro
   return wallet
 }
 
-// TODO handle no wallet existing
 function createWindowProvider(): ethers.providers.Web3Provider | null {
   try {
     return new ethers.providers.Web3Provider(window?.ethereum, 'any')
   } catch (e) {
     console.log('No Wallet Extension Found')
     return null
+  }
+}
+
+// Transacting with a wallet extension via a Web3 Provider
+async function sendTransactionViaExtension(
+  transaction: ethers.providers.TransactionRequest
+): Promise<TransactionState> {
+  try {
+    const receipt = await windowProvider?.send('eth_sendTransaction', [transaction])
+    if (receipt) {
+      return TransactionState.Sent
+    } else {
+      return TransactionState.Failed
+    }
+  } catch (e) {
+    console.log(e)
+    return TransactionState.Rejected
+  }
+}
+
+async function sendTransactionViaWallet(transaction: ethers.providers.TransactionRequest): Promise<TransactionState> {
+  transaction.value = BigNumber.from(transaction.value)
+  const res = await wallet.sendTransaction(transaction)
+  const txReceipt = await res.wait()
+
+  // Transaction was successful if status === 1
+  if (txReceipt.status === 1) {
+    return TransactionState.Sent
+  } else {
+    return TransactionState.Failed
   }
 }
