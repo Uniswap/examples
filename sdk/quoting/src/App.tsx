@@ -8,29 +8,23 @@ import { FeeAmount, computePoolAddress } from '@uniswap/v3-sdk'
 
 const rpcProvider = new ethers.providers.JsonRpcProvider(CurrentEnvironment.mainnetRpcUrl)
 const localRpcProvider = new ethers.providers.JsonRpcProvider(CurrentEnvironment.localRpcUrl)
-
-const quoterAddress = '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6'
-const quoterContract = new ethers.Contract(
-  quoterAddress,
-  Quoter.abi,
-  CurrentEnvironment.isLocal ? localRpcProvider : rpcProvider
-)
-
-const POOL_FACTORY_ADDRESS = '0x1F98431c8aD98523631AE4a59f267346ea31F984'
-const poolAddress = computePoolAddress({
-  factoryAddress: POOL_FACTORY_ADDRESS,
-  tokenA: CurrentEnvironment.tokenIn,
-  tokenB: CurrentEnvironment.tokenOut,
-  fee: FeeAmount.MEDIUM,
-})
-
-const poolContract = new ethers.Contract(
-  poolAddress,
-  IUniswapV3PoolABI.abi,
-  CurrentEnvironment.isLocal ? localRpcProvider : rpcProvider
-)
+const POOL_FACTORY_CONTRACT_ADDRESS = '0x1F98431c8aD98523631AE4a59f267346ea31F984'
+const QUOTER_CONTRACT_ADDRESS = '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6'
 
 const getPoolConstants = async () => {
+  const currentPoolAddress = computePoolAddress({
+    factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
+    tokenA: CurrentEnvironment.tokenIn,
+    tokenB: CurrentEnvironment.tokenOut,
+    fee: FeeAmount.MEDIUM,
+  })
+
+  const poolContract = new ethers.Contract(
+    currentPoolAddress,
+    IUniswapV3PoolABI.abi,
+    CurrentEnvironment.isLocal ? localRpcProvider : rpcProvider
+  )
+
   const [token0, token1, fee] = await Promise.all([poolContract.token0(), poolContract.token1(), poolContract.fee()])
 
   return {
@@ -40,7 +34,12 @@ const getPoolConstants = async () => {
   }
 }
 
-const quote = async (setOutputAmount: (outputAmount: string) => void) => {
+const quote = async (setOutputAmount: (outputAmount: number) => void) => {
+  const quoterContract = new ethers.Contract(
+    QUOTER_CONTRACT_ADDRESS,
+    Quoter.abi,
+    CurrentEnvironment.isLocal ? localRpcProvider : rpcProvider
+  )
   const poolConstants = await getPoolConstants()
 
   const quotedAmountOut = await quoterContract.callStatic.quoteExactInputSingle(
@@ -51,11 +50,11 @@ const quote = async (setOutputAmount: (outputAmount: string) => void) => {
     0
   )
 
-  setOutputAmount((quotedAmountOut / Math.pow(10, CurrentEnvironment.tokenOut.decimals)).toString())
+  setOutputAmount(quotedAmountOut / Math.pow(10, CurrentEnvironment.tokenOut.decimals))
 }
 
 function App() {
-  const [outputAmount, setOutputAmount] = useState<string>()
+  const [outputAmount, setOutputAmount] = useState<number>()
 
   return (
     <div className="App">
