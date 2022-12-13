@@ -1,5 +1,5 @@
-import { USDC_TOKEN } from './libs/tokens'
-import { Currency, Ether, SupportedChainId } from '@uniswap/sdk-core'
+import { Currency } from '@uniswap/sdk-core'
+import { ETH, USDC_TOKEN } from './libs/constants'
 
 // Sets if the example should run locally or on chain
 export enum Environment {
@@ -39,7 +39,7 @@ export const CurrentConfig: ExampleConfig = {
     privateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
   },
   currencies: {
-    in: Ether.onChain(SupportedChainId.MAINNET),
+    in: ETH,
     amountIn: 1,
     out: USDC_TOKEN,
   },

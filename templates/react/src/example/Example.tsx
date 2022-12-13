@@ -5,7 +5,6 @@ import { AlphaRouter, ChainId, SwapType } from '@uniswap/smart-order-router'
 import { TradeType, CurrencyAmount, Percent } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
-import { V3_SWAP_ROUTER_ADDRESS } from '../libs/addresses'
 import {
   connectBrowserExtensionWallet,
   getMainnetProvider,
@@ -13,7 +12,8 @@ import {
   getWalletAddress,
   sendTransaction,
   TransactionState,
-} from '../libs/provider'
+} from '../libs/providers'
+import { V3_SWAP_ROUTER_ADDRESS } from '../libs/constants'
 
 async function route(): Promise<TransactionState> {
   const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: getMainnetProvider() })
@@ -55,20 +55,6 @@ function Example() {
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
-  // Event Handlers
-
-  const onConnectWallet = useCallback(async () => {
-    await connectBrowserExtensionWallet()
-    if (getWalletAddress()) {
-      refreshBalances()
-    }
-  }, [])
-
-  const onTrade = useCallback(async () => {
-    setTxState(TransactionState.Sending)
-    setTxState(await route())
-  }, [])
-
   // Update wallet state given a block number
   const refreshBalances = useCallback(async () => {
     const provider = getProvider()
@@ -88,6 +74,20 @@ function Example() {
     return () => {
       subscription?.removeAllListeners()
     }
+  }, [refreshBalances])
+
+  // Event Handlers
+
+  const onConnectWallet = useCallback(async () => {
+    await connectBrowserExtensionWallet()
+    if (getWalletAddress()) {
+      refreshBalances()
+    }
+  }, [refreshBalances])
+
+  const onTrade = useCallback(async () => {
+    setTxState(TransactionState.Sending)
+    setTxState(await route())
   }, [])
 
   return (

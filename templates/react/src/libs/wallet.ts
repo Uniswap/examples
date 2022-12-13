@@ -3,7 +3,7 @@
 import { Currency } from '@uniswap/sdk-core'
 import { ethers } from 'ethers'
 import { providers } from 'ethers'
-import { ERC20_WALLET_ABI } from './abis'
+import { ERC20_WALLET_ABI } from './constants'
 import { toReadableAmount } from './conversion'
 
 export async function getCurrencyBalance(
