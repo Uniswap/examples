@@ -27,9 +27,8 @@ export interface ExampleConfig {
   }
 }
 
-// Configurations
+// Example Configuration
 
-// Shared information between both configuration environments
 export const CurrentConfig: ExampleConfig = {
   env: Environment.LOCAL,
   rpc: {

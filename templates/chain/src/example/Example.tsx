@@ -6,14 +6,23 @@ import { TradeType, CurrencyAmount, Percent } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
 import { V3_SWAP_ROUTER_ADDRESS } from '../libs/addresses'
-import { connectWallet, rpcProvider, sendTransaction, TransactionState, wallet, windowProvider } from '../libs/provider'
-import { Web3Provider } from '@ethersproject/providers'
-import { providers } from 'ethers'
+import {
+  connectWallet,
+  getMainnetProvider,
+  getProvider,
+  getWalletAddress,
+  sendTransaction,
+  TransactionState,
+} from '../libs/provider'
 
-const route = async (account: string, setTxState: (txState: TransactionState) => void) => {
-  const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: rpcProvider })
+async function route(): Promise<TransactionState> {
+  const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: getMainnetProvider() })
+  const address = getWalletAddress()
 
-  setTxState(TransactionState.Sending)
+  if (!address) {
+    return TransactionState.Failed
+  }
+
   const route = await router.route(
     CurrencyAmount.fromRawAmount(
       CurrentConfig.currencies.tokenIn,
@@ -33,14 +42,14 @@ const route = async (account: string, setTxState: (txState: TransactionState) =>
     data: route?.methodParameters?.calldata,
     to: V3_SWAP_ROUTER_ADDRESS,
     value:
-      CurrentConfig.env !== Environment.WALLET_EXTENSION
+      CurrentConfig.env === Environment.WALLET_EXTENSION
         ? route?.methodParameters?.value
         : BigNumber.from(route?.methodParameters?.value),
-    from: account,
+    from: address,
     gasLimit: 300000,
   })
 
-  setTxState(res)
+  return res
 }
 
 function Example() {
@@ -49,50 +58,56 @@ function Example() {
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
-  const [account, setAccount] = useState<string>()
+  // Event Handlers
 
   const onConnectWallet = async () => {
-    const account = await connectWallet()
-    setAccount(account[0])
-    refreshBalances(windowProvider, account[0])
+    await connectWallet()
+    if (getWalletAddress()) {
+      refreshBalances()
+    }
+  }
+
+  const onTrade = async () => {
+    setTxState(TransactionState.Sending)
+    setTxState(await route())
   }
 
   // Update wallet state given a block number
-  const refreshBalances = async (provider: Web3Provider | providers.Provider, address: string) => {
-    setTokenInBalance(await getCurrencyBalance(provider, address, CurrentConfig.currencies.tokenIn))
-    setTokenOutBalance(await getCurrencyBalance(provider, address, CurrentConfig.currencies.tokenOut))
+  const refreshBalances = async () => {
+    const provider = getProvider()
+    const address = getWalletAddress()
+    if (address && provider) {
+      setTokenInBalance(await getCurrencyBalance(provider, address, CurrentConfig.currencies.tokenIn))
+      setTokenOutBalance(await getCurrencyBalance(provider, address, CurrentConfig.currencies.tokenOut))
+    }
   }
 
   // Listen for new blocks and update the wallet
   useEffect(() => {
-    const blockProvider = CurrentConfig.env !== Environment.WALLET_EXTENSION ? wallet.provider : windowProvider
-    const subscription = blockProvider.on('block', async (blockNumber: number) => {
-      if (CurrentConfig.env !== Environment.WALLET_EXTENSION) {
-        refreshBalances(wallet.provider, wallet.address)
-      } else {
-        if (account) {
-          refreshBalances(windowProvider, account)
-        }
-      }
+    const subscription = getProvider()?.on('block', async (blockNumber: number) => {
+      refreshBalances()
       setBlockNumber(blockNumber)
     })
     return () => {
-      subscription.removeAllListeners()
+      subscription?.removeAllListeners()
     }
-  }, [account])
+  }, [])
 
   return (
     <div className="App">
       <header className="App-header">
-        {account}
-        <button onClick={onConnectWallet}>Connect Wallet</button>
+        {CurrentConfig.env === Environment.WALLET_EXTENSION && getProvider() === null && (
+          <h1 className="error">Please install a wallet to use this example configuration</h1>
+        )}
+        <h3>{`Wallet Address: ${getWalletAddress()}`}</h3>
+        {CurrentConfig.env === Environment.WALLET_EXTENSION && (
+          <button onClick={onConnectWallet}>Connect Wallet</button>
+        )}
         <h3>{`Block Number: ${blockNumber + 1}`}</h3>
         <h3>{`Transaction State: ${txState}`}</h3>
         <h3>{`Token In (ETH) Balance: ♦${tokenInBalance}`}</h3>
         <h3>{`Token Out (USDC) Balance: $${tokenOutBalance}`}</h3>
-        <button
-          onClick={() => route(account ?? wallet.address, setTxState)}
-          disabled={txState === TransactionState.Sending}>
+        <button onClick={onTrade} disabled={txState === TransactionState.Sending || getProvider() === null}>
           <p>Trade</p>
         </button>
       </header>

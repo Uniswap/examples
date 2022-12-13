@@ -2,7 +2,6 @@
 
 import { Currency } from '@uniswap/sdk-core'
 import { ethers } from 'ethers'
-import { Web3Provider } from '@ethersproject/providers'
 import { providers } from 'ethers'
 
 // ABI for wallet information
@@ -20,7 +19,7 @@ const ERC20_WALLET_ABI = [
 ]
 
 export async function getCurrencyBalance(
-  provider: Web3Provider | providers.Provider,
+  provider: providers.Provider,
   address: string,
   currency: Currency
 ): Promise<string> {
