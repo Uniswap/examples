@@ -3,6 +3,7 @@
 import { Currency } from '@uniswap/sdk-core'
 import { ethers } from 'ethers'
 import { providers } from 'ethers'
+import { toReadableAmount } from './conversion'
 
 // ABI for wallet information
 const ERC20_WALLET_ABI = [
@@ -34,5 +35,5 @@ export async function getCurrencyBalance(
   const decimals: number = await walletContract.decimals()
 
   // Format with proper units (approximate)
-  return (balance / Math.pow(10, decimals)).toString()
+  return toReadableAmount(balance, decimals).toString()
 }
