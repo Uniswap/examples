@@ -92,8 +92,9 @@ function Example() {
   return (
     <div className="App">
       <header className="App-header">
+        {CurrentConfig.rpc.mainnet === '' && <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>}
         {CurrentConfig.env === Environment.WALLET_EXTENSION && getProvider() === null && (
-          <h1 className="error">Please install a wallet to use this example configuration</h1>
+          <h2 className="error">Please install a wallet to use this example configuration</h2>
         )}
         <h3>{`Wallet Address: ${getWalletAddress()}`}</h3>
         {CurrentConfig.env === Environment.WALLET_EXTENSION && !getWalletAddress() && (
