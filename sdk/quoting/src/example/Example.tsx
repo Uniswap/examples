@@ -10,7 +10,7 @@ import { POOL_FACTORY_CONTRACT_ADDRESS, QUOTER_CONTRACT_ADDRESS } from '../libs/
 import { getProvider, getWalletAddress, connectBrowserExtensionWallet } from '../libs/providers'
 import { toReadableAmount, fromReadableAmount } from '../libs/conversion'
 
-const getPoolConstants = async () => {
+const getPoolConstants = async (): Promise<{ token0: string; token1: string; fee: string }> => {
   const provider = getProvider()
   if (!provider) {
     throw new Error('Provider not found')
@@ -23,7 +23,6 @@ const getPoolConstants = async () => {
   })
 
   const poolContract = new ethers.Contract(currentPoolAddress, IUniswapV3PoolABI.abi, provider)
-
   const [token0, token1, fee] = await Promise.all([poolContract.token0(), poolContract.token1(), poolContract.fee()])
 
   return {
@@ -54,8 +53,6 @@ const quote = async (setOutputAmount: (outputAmount: number) => void) => {
 
 function App() {
   const [outputAmount, setOutputAmount] = useState<number>()
-
-  // Event Handlers
 
   const onConnectWallet = useCallback(async () => {
     await connectBrowserExtensionWallet()

@@ -42,7 +42,7 @@ export async function sendTransaction(transaction: ethers.providers.TransactionR
   }
 }
 
-export async function connectBrowserExtensionWallet() {
+export async function connectBrowserExtensionWallet(): Promise<string | null | undefined> {
   if (!window.ethereum) {
     return null
   }
