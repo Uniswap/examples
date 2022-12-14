@@ -1,11 +1,10 @@
-import { Currency } from '@uniswap/sdk-core'
+import { Token } from '@uniswap/sdk-core'
 import { FeeAmount } from '@uniswap/v3-sdk'
 import { USDC_TOKEN, WETH_TOKEN } from './libs/constants'
 
 // Sets if the example should run locally or on chain
 export enum Environment {
   LOCAL,
-  WALLET_EXTENSION,
   PRODUCTION,
 }
 
@@ -16,14 +15,10 @@ export interface ExampleConfig {
     local: string
     mainnet: string
   }
-  wallet: {
-    address: string
-    privateKey: string
-  }
-  currencies: {
-    in: Currency
+  tokens: {
+    in: Token
     amountIn: number
-    out: Currency
+    out: Token
     fee: number
   }
 }
@@ -31,16 +26,12 @@ export interface ExampleConfig {
 // Example Configuration
 
 export const CurrentConfig: ExampleConfig = {
-  env: Environment.LOCAL,
+  env: Environment.PRODUCTION,
   rpc: {
     local: 'http://localhost:8545',
     mainnet: '',
   },
-  wallet: {
-    address: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
-    privateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
-  },
-  currencies: {
+  tokens: {
     in: USDC_TOKEN,
     amountIn: 1000,
     out: WETH_TOKEN,
