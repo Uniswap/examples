@@ -13,8 +13,8 @@ import { toReadableAmount, fromReadableAmount } from '../libs/conversion'
 const getPoolConstants = async (): Promise<{ token0: string; token1: string; fee: number }> => {
   const currentPoolAddress = computePoolAddress({
     factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
-    tokenA: CurrentConfig.tokens.in as Token,
-    tokenB: CurrentConfig.tokens.out as Token,
+    tokenA: CurrentConfig.tokens.in,
+    tokenB: CurrentConfig.tokens.out,
     fee: CurrentConfig.tokens.fee,
   })
 
