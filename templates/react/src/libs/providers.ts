@@ -3,7 +3,9 @@ import { Environment, CurrentConfig } from '../config'
 import { BaseProvider } from '@ethersproject/providers'
 
 // Single copies of provider and wallet
-const mainnetProvider = new ethers.providers.JsonRpcProvider(CurrentConfig.rpc.mainnet)
+const mainnetProvider = new ethers.providers.JsonRpcProvider(
+  CurrentConfig.rpc.mainnet
+)
 const wallet = createWallet()
 
 const browserExtensionProvider = createBrowserExtensionProvider()
@@ -26,14 +28,20 @@ export function getMainnetProvider(): BaseProvider {
 }
 
 export function getProvider(): providers.Provider | null {
-  return CurrentConfig.env === Environment.WALLET_EXTENSION ? browserExtensionProvider : wallet.provider
+  return CurrentConfig.env === Environment.WALLET_EXTENSION
+    ? browserExtensionProvider
+    : wallet.provider
 }
 
 export function getWalletAddress(): string | null {
-  return CurrentConfig.env === Environment.WALLET_EXTENSION ? walletExtensionAddress : wallet.address
+  return CurrentConfig.env === Environment.WALLET_EXTENSION
+    ? walletExtensionAddress
+    : wallet.address
 }
 
-export async function sendTransaction(transaction: ethers.providers.TransactionRequest): Promise<TransactionState> {
+export async function sendTransaction(
+  transaction: ethers.providers.TransactionRequest
+): Promise<TransactionState> {
   if (CurrentConfig.env === Environment.WALLET_EXTENSION) {
     return sendTransactionViaExtension(transaction)
   } else {
@@ -83,7 +91,10 @@ async function sendTransactionViaExtension(
   transaction: ethers.providers.TransactionRequest
 ): Promise<TransactionState> {
   try {
-    const receipt = await browserExtensionProvider?.send('eth_sendTransaction', [transaction])
+    const receipt = await browserExtensionProvider?.send(
+      'eth_sendTransaction',
+      [transaction]
+    )
     if (receipt) {
       return TransactionState.Sent
     } else {
@@ -95,7 +106,9 @@ async function sendTransactionViaExtension(
   }
 }
 
-async function sendTransactionViaWallet(transaction: ethers.providers.TransactionRequest): Promise<TransactionState> {
+async function sendTransactionViaWallet(
+  transaction: ethers.providers.TransactionRequest
+): Promise<TransactionState> {
   transaction.value = BigNumber.from(transaction.value)
   const res = await wallet.sendTransaction(transaction)
   const receipt = await res.wait()
