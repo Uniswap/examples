@@ -1,5 +1,5 @@
 {
-  "name": "template",
+  "name": "quoting",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -7,7 +7,6 @@
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "@uniswap/sdk-core": "^3.1.0",
-    "@uniswap/smart-order-router": "^3.0.6",
     "@uniswap/v3-sdk": "^3.9.0",
     "ethers": "^5.7.2",
     "react": "^18.2.0",
