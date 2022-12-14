@@ -32,3 +32,8 @@ export const ERC20_WALLET_ABI = [
   // Events
   'event Transfer(address indexed from, address indexed to, uint amount)',
 ]
+
+// Transactions
+
+export const MAX_FEE_PER_GAS = 100000000000
+export const MAX_PRIORITY_FEE_PER_GAS = 100000000000
