@@ -3,14 +3,14 @@ import './Example.css'
 import { ethers } from 'ethers'
 import { Token } from '@uniswap/sdk-core'
 import { CurrentConfig, Environment } from '../config'
-import { FeeAmount, computePoolAddress } from '@uniswap/v3-sdk'
+import { computePoolAddress } from '@uniswap/v3-sdk'
 import Quoter from '@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json'
 import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 import { POOL_FACTORY_CONTRACT_ADDRESS, QUOTER_CONTRACT_ADDRESS } from '../libs/constants'
 import { getProvider, getWalletAddress, connectBrowserExtensionWallet } from '../libs/providers'
 import { toReadableAmount, fromReadableAmount } from '../libs/conversion'
 
-const getPoolConstants = async (): Promise<{ token0: string; token1: string; fee: string }> => {
+const getPoolConstants = async (): Promise<{ token0: string; token1: string; fee: number }> => {
   const provider = getProvider()
   if (!provider) {
     throw new Error('Provider not found')
@@ -19,7 +19,7 @@ const getPoolConstants = async (): Promise<{ token0: string; token1: string; fee
     factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
     tokenA: CurrentConfig.currencies.in as Token,
     tokenB: CurrentConfig.currencies.out as Token,
-    fee: FeeAmount.MEDIUM,
+    fee: CurrentConfig.currencies.fee,
   })
 
   const poolContract = new ethers.Contract(currentPoolAddress, IUniswapV3PoolABI.abi, provider)
