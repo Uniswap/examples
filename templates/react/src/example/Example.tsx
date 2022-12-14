@@ -43,7 +43,8 @@ async function route(): Promise<TransactionState> {
     to: V3_SWAP_ROUTER_ADDRESS,
     value: route?.methodParameters?.value,
     from: address,
-    gasLimit: 300000,
+    maxFeePerGas: '1000000000',
+    maxPriorityFeePerGas: '1000000000',
   })
 
   return res

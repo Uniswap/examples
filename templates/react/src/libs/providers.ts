@@ -97,8 +97,11 @@ async function sendTransactionViaExtension(
 
 async function sendTransactionViaWallet(transaction: ethers.providers.TransactionRequest): Promise<TransactionState> {
   transaction.value = BigNumber.from(transaction.value)
+  console.log('Sending Transaction', transaction)
   const res = await wallet.sendTransaction(transaction)
+  console.log('Transaction Sent', res)
   const receipt = await res.wait()
+  console.log('Transaction Receipt', receipt)
 
   // Transaction was successful if status === 1
   if (receipt.status === 1) {

@@ -29,10 +29,10 @@ export interface ExampleConfig {
 // Example Configuration
 
 export const CurrentConfig: ExampleConfig = {
-  env: Environment.LOCAL,
+  env: Environment.WALLET_EXTENSION,
   rpc: {
     local: 'http://localhost:8545',
-    mainnet: '',
+    mainnet: 'https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721',
   },
   wallet: {
     address: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
