@@ -13,7 +13,7 @@ import {
   sendTransaction,
   TransactionState,
 } from '../libs/providers'
-import { V3_SWAP_ROUTER_ADDRESS } from '../libs/constants'
+import { V3_SWAP_ROUTER_ADDRESS, MAX_FEE_PER_GAS, MAX_PRIORITY_FEE_PER_GAS } from '../libs/constants'
 
 async function route(): Promise<TransactionState> {
   const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: getMainnetProvider() })
@@ -43,8 +43,8 @@ async function route(): Promise<TransactionState> {
     to: V3_SWAP_ROUTER_ADDRESS,
     value: route?.methodParameters?.value,
     from: address,
-    maxFeePerGas: '1000000000',
-    maxPriorityFeePerGas: '1000000000',
+    maxFeePerGas: MAX_FEE_PER_GAS,
+    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
   })
 
   return res
