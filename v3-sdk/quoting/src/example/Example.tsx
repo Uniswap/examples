@@ -51,7 +51,7 @@ const quote = async (): Promise<number> => {
   return toReadableAmount(quotedAmountOut, CurrentConfig.tokens.out.decimals)
 }
 
-function App() {
+const Example = () => {
   const [outputAmount, setOutputAmount] = useState<number>()
 
   const onTrade = useCallback(async () => {
@@ -72,4 +72,4 @@ function App() {
   )
 }
 
-export default App
+export default Example
