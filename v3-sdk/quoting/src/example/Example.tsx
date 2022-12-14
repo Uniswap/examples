@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react'
 import './Example.css'
 import { ethers } from 'ethers'
-import { Token } from '@uniswap/sdk-core'
 import { CurrentConfig } from '../config'
 import { computePoolAddress } from '@uniswap/v3-sdk'
 import Quoter from '@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json'
@@ -13,8 +12,8 @@ import { toReadableAmount, fromReadableAmount } from '../libs/conversion'
 const getPoolConstants = async (): Promise<{ token0: string; token1: string; fee: number }> => {
   const currentPoolAddress = computePoolAddress({
     factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
-    tokenA: CurrentConfig.tokens.in as Token,
-    tokenB: CurrentConfig.tokens.out as Token,
+    tokenA: CurrentConfig.tokens.in,
+    tokenB: CurrentConfig.tokens.out,
     fee: CurrentConfig.tokens.fee,
   })
 
