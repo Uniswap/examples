@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react'
 import './Example.css'
 import { ethers } from 'ethers'
-import { Token } from '@uniswap/sdk-core'
 import { CurrentConfig } from '../config'
 import { computePoolAddress } from '@uniswap/v3-sdk'
 import Quoter from '@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json'
