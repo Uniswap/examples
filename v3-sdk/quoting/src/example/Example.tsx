@@ -46,7 +46,7 @@ const quote = async (): Promise<number> => {
 const Example = () => {
   const [outputAmount, setOutputAmount] = useState<number>()
 
-  const onTrade = useCallback(async () => {
+  const onQuote = useCallback(async () => {
     setOutputAmount(await quote())
   }, [])
 
@@ -56,8 +56,8 @@ const Example = () => {
         {CurrentConfig.rpc.mainnet === '' && <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>}
         <h3>{`Quote input amount: ${CurrentConfig.tokens.amountIn} ${CurrentConfig.tokens.in.symbol}`}</h3>
         <h3>{`Quote output amount: ${outputAmount} ${CurrentConfig.tokens.out.symbol}`}</h3>
-        <button onClick={onTrade}>
-          <p>Trade</p>
+        <button onClick={onQuote}>
+          <p>Quote</p>
         </button>
       </header>
     </div>
