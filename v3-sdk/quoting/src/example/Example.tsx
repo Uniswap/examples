@@ -11,10 +11,6 @@ import { getProvider } from '../libs/providers'
 import { toReadableAmount, fromReadableAmount } from '../libs/conversion'
 
 const getPoolConstants = async (): Promise<{ token0: string; token1: string; fee: number }> => {
-  const provider = getProvider()
-  if (!provider) {
-    throw new Error('Provider not found')
-  }
   const currentPoolAddress = computePoolAddress({
     factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
     tokenA: CurrentConfig.tokens.in as Token,
@@ -22,7 +18,7 @@ const getPoolConstants = async (): Promise<{ token0: string; token1: string; fee
     fee: CurrentConfig.tokens.fee,
   })
 
-  const poolContract = new ethers.Contract(currentPoolAddress, IUniswapV3PoolABI.abi, provider)
+  const poolContract = new ethers.Contract(currentPoolAddress, IUniswapV3PoolABI.abi, getProvider())
   const [token0, token1, fee] = await Promise.all([poolContract.token0(), poolContract.token1(), poolContract.fee()])
 
   return {
@@ -33,11 +29,7 @@ const getPoolConstants = async (): Promise<{ token0: string; token1: string; fee
 }
 
 const quote = async (): Promise<number> => {
-  const provider = getProvider()
-  if (!provider) {
-    throw new Error('Provider not found')
-  }
-  const quoterContract = new ethers.Contract(QUOTER_CONTRACT_ADDRESS, Quoter.abi, provider)
+  const quoterContract = new ethers.Contract(QUOTER_CONTRACT_ADDRESS, Quoter.abi, getProvider())
   const poolConstants = await getPoolConstants()
 
   const quotedAmountOut = await quoterContract.callStatic.quoteExactInputSingle(
