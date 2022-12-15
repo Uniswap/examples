@@ -13,10 +13,17 @@ import {
   sendTransaction,
   TransactionState,
 } from '../libs/providers'
-import { V3_SWAP_ROUTER_ADDRESS, MAX_FEE_PER_GAS, MAX_PRIORITY_FEE_PER_GAS } from '../libs/constants'
+import {
+  V3_SWAP_ROUTER_ADDRESS,
+  MAX_FEE_PER_GAS,
+  MAX_PRIORITY_FEE_PER_GAS,
+} from '../libs/constants'
 
 async function route(): Promise<TransactionState> {
-  const router = new AlphaRouter({ chainId: ChainId.MAINNET, provider: getMainnetProvider() })
+  const router = new AlphaRouter({
+    chainId: ChainId.MAINNET,
+    provider: getMainnetProvider(),
+  })
   const address = getWalletAddress()
 
   if (!address) {
@@ -26,7 +33,9 @@ async function route(): Promise<TransactionState> {
   const route = await router.route(
     CurrencyAmount.fromRawAmount(
       CurrentConfig.currencies.in,
-      ethers.utils.parseEther(CurrentConfig.currencies.amountIn.toString()).toString()
+      ethers.utils
+        .parseEther(CurrentConfig.currencies.amountIn.toString())
+        .toString()
     ),
     CurrentConfig.currencies.out,
     TradeType.EXACT_INPUT,
@@ -76,8 +85,16 @@ const Example = () => {
     const provider = getProvider()
     const address = getWalletAddress()
     if (address && provider) {
-      setTokenInBalance(await getCurrencyBalance(provider, address, CurrentConfig.currencies.in))
-      setTokenOutBalance(await getCurrencyBalance(provider, address, CurrentConfig.currencies.out))
+      setTokenInBalance(
+        await getCurrencyBalance(provider, address, CurrentConfig.currencies.in)
+      )
+      setTokenOutBalance(
+        await getCurrencyBalance(
+          provider,
+          address,
+          CurrentConfig.currencies.out
+        )
+      )
     }
   }, [])
 
@@ -97,21 +114,33 @@ const Example = () => {
   return (
     <div className="App">
       <header className="App-header">
-        {CurrentConfig.rpc.mainnet === '' && <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>}
-        {CurrentConfig.env === Environment.WALLET_EXTENSION && getProvider() === null && (
-          <h2 className="error">Please install a wallet to use this example configuration</h2>
+        {CurrentConfig.rpc.mainnet === '' && (
+          <h2 className="error">
+            Please set your mainnet RPC URL in config.ts
+          </h2>
         )}
+        {CurrentConfig.env === Environment.WALLET_EXTENSION &&
+          getProvider() === null && (
+            <h2 className="error">
+              Please install a wallet to use this example configuration
+            </h2>
+          )}
         <h3>{`Wallet Address: ${getWalletAddress()}`}</h3>
-        {CurrentConfig.env === Environment.WALLET_EXTENSION && !getWalletAddress() && (
-          <button onClick={onConnectWallet}>Connect Wallet</button>
-        )}
+        {CurrentConfig.env === Environment.WALLET_EXTENSION &&
+          !getWalletAddress() && (
+            <button onClick={onConnectWallet}>Connect Wallet</button>
+          )}
         <h3>{`Block Number: ${blockNumber + 1}`}</h3>
         <h3>{`Transaction State: ${txState}`}</h3>
         <h3>{`Token In (ETH) Balance: ${tokenInBalance}`}</h3>
         <h3>{`Token Out (USDC) Balance: ${tokenOutBalance}`}</h3>
         <button
           onClick={onTrade}
-          disabled={txState === TransactionState.Sending || getProvider() === null || CurrentConfig.rpc.mainnet === ''}>
+          disabled={
+            txState === TransactionState.Sending ||
+            getProvider() === null ||
+            CurrentConfig.rpc.mainnet === ''
+          }>
           <p>Trade</p>
         </button>
       </header>
