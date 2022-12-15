@@ -59,4 +59,6 @@ export const ERC20_ABI = [
 export const ERC721_ABI = [
   // Read-Only Functions
   'function balanceOf(address _owner) view returns (uint256)',
+  'function tokenOfOwnerByIndex(address _owner, uint256 _index)view returns (uint256)',
+  'function tokenURI(uint256 tokenId) view returns (string memory)',
 ]

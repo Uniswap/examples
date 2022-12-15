@@ -33,7 +33,7 @@ export async function getAssetBalance(
   provider: providers.Provider,
   address: string,
   contractAddress: string
-): Promise<string> {
+): Promise<number[]> {
   // Get currency otherwise
   const assetContract = new ethers.Contract(
     contractAddress,
@@ -42,6 +42,15 @@ export async function getAssetBalance(
   )
   const balance: number = await assetContract.balanceOf(address)
 
+  const tokenIds = []
+  for (let i = 0; i < balance; i++) {
+    const tokenOfOwnerByIndex: number = await assetContract.tokenOfOwnerByIndex(
+      address,
+      i
+    )
+    tokenIds.push(tokenOfOwnerByIndex)
+  }
+
   // Format with proper units (approximate)
-  return balance.toString()
+  return tokenIds
 }

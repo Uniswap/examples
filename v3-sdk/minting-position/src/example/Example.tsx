@@ -112,9 +112,6 @@ async function mintPosition(): Promise<TransactionState> {
   const poolConstants = await getPoolConstants()
   const poolState = await getPullCurrentState()
 
-  console.log('poolConstants', poolConstants)
-  console.log('poolState', poolState)
-
   const USDC_WETH_POOL = new Pool(
     CurrentConfig.tokens.in,
     CurrentConfig.tokens.out,
@@ -135,8 +132,6 @@ async function mintPosition(): Promise<TransactionState> {
       poolConstants.tickSpacing * 2,
   })
 
-  console.log('position', position)
-
   const { calldata, value } = NonfungiblePositionManager.addCallParameters(
     position,
     {
@@ -145,9 +140,6 @@ async function mintPosition(): Promise<TransactionState> {
       slippageTolerance: new Percent(50, 10_000),
     }
   )
-
-  console.log('calldata', calldata)
-  console.log('value', value)
 
   const currencyInContract = new ethers.Contract(
     CurrentConfig.tokens.in.address,
@@ -161,8 +153,6 @@ async function mintPosition(): Promise<TransactionState> {
     wallet
   )
 
-  console.log('daiApproval', 'BEFORE')
-
   const daiApproval = await currencyInContract.approve(
     NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
     1000000000000
@@ -172,11 +162,7 @@ async function mintPosition(): Promise<TransactionState> {
     1000000000000
   )
 
-  console.log('daiApproval', daiApproval)
-  console.log('usdcApproval', usdcApproval)
-
   if (!daiApproval || !usdcApproval) {
-    console.log('no approval')
     return TransactionState.Failed
   }
 
@@ -187,30 +173,18 @@ async function mintPosition(): Promise<TransactionState> {
     from: address,
   }
 
-  let gasLimit
-  try {
-    gasLimit = await provider?.estimateGas(txn)
-  } catch (e) {
-    console.log('e', e)
-  }
+  const gasLimit = await provider?.estimateGas(txn)
 
   if (!gasLimit) {
     throw new Error('No gas limit')
   }
 
-  console.log('gasLimit', gasLimit.toString())
-
-  console.log('down here')
-
   const res = await sendTransaction({
     ...txn,
-    // gasLimit: gasLimit.mul(120).div(100),
-    gasLimit: 30000000,
+    gasLimit: gasLimit.mul(120).div(100),
     maxFeePerGas: MAX_FEE_PER_GAS,
     maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
   })
-
-  console.log('res', res)
 
   return res
 }
@@ -227,7 +201,7 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 const Example = () => {
   const [tokenInBalance, setTokenInBalance] = useState<string>()
   const [tokenOutBalance, setTokenOutBalance] = useState<string>()
-  const [assetBalance, setAssetBalance] = useState<string>()
+  const [positionIds, setPositionIds] = useState<number[]>()
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
@@ -248,7 +222,7 @@ const Example = () => {
       setTokenOutBalance(
         await getCurrencyBalance(provider, address, CurrentConfig.tokens.out)
       )
-      setAssetBalance(
+      setPositionIds(
         await getAssetBalance(
           provider,
           address,
@@ -294,7 +268,7 @@ const Example = () => {
         <h3>{`Transaction State: ${txState}`}</h3>
         <h3>{`Token In ${CurrentConfig.tokens.in.symbol} Balance: ${tokenInBalance}`}</h3>
         <h3>{`Token Out ${CurrentConfig.tokens.out.symbol} Balance: ${tokenOutBalance}`}</h3>
-        <h3>{`Assets Balance: ${assetBalance}`}</h3>
+        <h3>{`Position Ids: ${positionIds}`}</h3>
         <button
           onClick={() => onMintPosition()}
           disabled={
