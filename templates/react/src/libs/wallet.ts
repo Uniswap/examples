@@ -17,7 +17,11 @@ export async function getCurrencyBalance(
   }
 
   // Get currency otherwise
-  const walletContract = new ethers.Contract(currency.address, ERC20_WALLET_ABI, provider)
+  const walletContract = new ethers.Contract(
+    currency.address,
+    ERC20_WALLET_ABI,
+    provider
+  )
   const balance: number = await walletContract.balanceOf(address)
   const decimals: number = await walletContract.decimals()
 
