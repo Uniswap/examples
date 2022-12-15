@@ -123,7 +123,7 @@ async function mintPosition(): Promise<TransactionState> {
 
   const position = new Position({
     pool: USDC_WETH_POOL,
-    liquidity: '1',
+    liquidity: CurrentConfig.tokens.liquidity,
     tickLower:
       nearestUsableTick(poolState.tick, poolConstants.tickSpacing) -
       poolConstants.tickSpacing * 2,
@@ -166,27 +166,18 @@ async function mintPosition(): Promise<TransactionState> {
     return TransactionState.Failed
   }
 
-  const txn = {
+  const transaction = {
     data: calldata,
     to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
     value: value,
     from: address,
-  }
-
-  const gasLimit = await provider?.estimateGas(txn)
-
-  if (!gasLimit) {
-    throw new Error('No gas limit')
-  }
-
-  const res = await sendTransaction({
-    ...txn,
-    gasLimit: gasLimit.mul(120).div(100),
+    gasLimit: 30000000,
     maxFeePerGas: MAX_FEE_PER_GAS,
     maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  })
+  }
 
-  return res
+  await sendTransaction(transaction)
+  return TransactionState.Sent
 }
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {

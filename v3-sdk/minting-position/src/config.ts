@@ -25,6 +25,7 @@ export interface ExampleConfig {
     amountIn: number
     out: Token
     fee: FeeAmount
+    liquidity: number
   }
 }
 
@@ -46,5 +47,6 @@ export const CurrentConfig: ExampleConfig = {
     amountIn: 1000,
     out: DAI_TOKEN,
     fee: FeeAmount.LOW,
+    liquidity: 10,
   },
 }
