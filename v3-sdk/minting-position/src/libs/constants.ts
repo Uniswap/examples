@@ -27,6 +27,14 @@ export const USDC_TOKEN = new Token(
   'USD//C'
 )
 
+export const DAI_TOKEN = new Token(
+  SupportedChainId.MAINNET,
+  '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+  18,
+  'DAI',
+  'Dai Stablecoin'
+)
+
 // Transactions
 
 export const MAX_FEE_PER_GAS = '100000000000'
@@ -34,7 +42,7 @@ export const MAX_PRIORITY_FEE_PER_GAS = '100000000000'
 
 // ABI's
 
-export const ERC20_WALLET_ABI = [
+export const ERC20_ABI = [
   // Read-Only Functions
   'function balanceOf(address owner) view returns (uint256)',
   'function decimals() view returns (uint8)',
@@ -42,7 +50,13 @@ export const ERC20_WALLET_ABI = [
 
   // Authenticated Functions
   'function transfer(address to, uint amount) returns (bool)',
+  'function approve(address _spender, uint256 _value) returns (bool)',
 
   // Events
   'event Transfer(address indexed from, address indexed to, uint amount)',
+]
+
+export const ERC721_ABI = [
+  // Read-Only Functions
+  'function balanceOf(address _owner) view returns (uint256)',
 ]

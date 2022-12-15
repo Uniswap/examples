@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
-import { ethers } from 'ethers'
+import { ethers, Wallet } from 'ethers'
 import {
   Pool,
   computePoolAddress,
@@ -10,7 +10,7 @@ import {
 } from '@uniswap/v3-sdk'
 import { Percent } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
-import { getCurrencyBalance } from '../libs/wallet'
+import { getCurrencyBalance, getAssetBalance } from '../libs/wallet'
 import {
   connectBrowserExtensionWallet,
   getProvider,
@@ -24,6 +24,7 @@ import {
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+  ERC20_ABI,
 } from '../libs/constants'
 
 const getPoolConstants = async (): Promise<{
@@ -101,13 +102,18 @@ const getPullCurrentState = async (): Promise<{
 
 async function mintPosition(): Promise<TransactionState> {
   const address = getWalletAddress()
-
-  if (!address) {
+  const provider = getProvider()
+  if (!address || !provider) {
     return TransactionState.Failed
   }
 
+  const wallet = new Wallet(CurrentConfig.wallet.privateKey, provider)
+
   const poolConstants = await getPoolConstants()
   const poolState = await getPullCurrentState()
+
+  console.log('poolConstants', poolConstants)
+  console.log('poolState', poolState)
 
   const USDC_WETH_POOL = new Pool(
     CurrentConfig.tokens.in,
@@ -120,7 +126,7 @@ async function mintPosition(): Promise<TransactionState> {
 
   const position = new Position({
     pool: USDC_WETH_POOL,
-    liquidity: poolState.liquidity.div(10000).toString(),
+    liquidity: '1',
     tickLower:
       nearestUsableTick(poolState.tick, poolConstants.tickSpacing) -
       poolConstants.tickSpacing * 2,
@@ -143,6 +149,37 @@ async function mintPosition(): Promise<TransactionState> {
   console.log('calldata', calldata)
   console.log('value', value)
 
+  const currencyInContract = new ethers.Contract(
+    CurrentConfig.tokens.in.address,
+    ERC20_ABI,
+    wallet
+  )
+
+  const currencyOutContract = new ethers.Contract(
+    CurrentConfig.tokens.out.address,
+    ERC20_ABI,
+    wallet
+  )
+
+  console.log('daiApproval', 'BEFORE')
+
+  const daiApproval = await currencyInContract.approve(
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+    1000000000000
+  )
+  const usdcApproval = await currencyOutContract.approve(
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+    1000000000000
+  )
+
+  console.log('daiApproval', daiApproval)
+  console.log('usdcApproval', usdcApproval)
+
+  if (!daiApproval || !usdcApproval) {
+    console.log('no approval')
+    return TransactionState.Failed
+  }
+
   const txn = {
     data: calldata,
     to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
@@ -150,7 +187,6 @@ async function mintPosition(): Promise<TransactionState> {
     from: address,
   }
 
-  const provider = getProvider()
   let gasLimit
   try {
     gasLimit = await provider?.estimateGas(txn)
@@ -174,6 +210,8 @@ async function mintPosition(): Promise<TransactionState> {
     maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
   })
 
+  console.log('res', res)
+
   return res
 }
 
@@ -189,6 +227,7 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 const Example = () => {
   const [tokenInBalance, setTokenInBalance] = useState<string>()
   const [tokenOutBalance, setTokenOutBalance] = useState<string>()
+  const [assetBalance, setAssetBalance] = useState<string>()
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
@@ -208,6 +247,13 @@ const Example = () => {
       )
       setTokenOutBalance(
         await getCurrencyBalance(provider, address, CurrentConfig.tokens.out)
+      )
+      setAssetBalance(
+        await getAssetBalance(
+          provider,
+          address,
+          NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
+        )
       )
     }
   }, [])
@@ -248,6 +294,7 @@ const Example = () => {
         <h3>{`Transaction State: ${txState}`}</h3>
         <h3>{`Token In ${CurrentConfig.tokens.in.symbol} Balance: ${tokenInBalance}`}</h3>
         <h3>{`Token Out ${CurrentConfig.tokens.out.symbol} Balance: ${tokenOutBalance}`}</h3>
+        <h3>{`Assets Balance: ${assetBalance}`}</h3>
         <button
           onClick={() => onMintPosition()}
           disabled={

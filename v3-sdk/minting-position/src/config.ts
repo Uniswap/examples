@@ -1,6 +1,6 @@
 import { Token } from '@uniswap/sdk-core'
 import { FeeAmount } from '@uniswap/v3-sdk'
-import { WETH_TOKEN, USDC_TOKEN } from './libs/constants'
+import { DAI_TOKEN, USDC_TOKEN } from './libs/constants'
 
 // Sets if the example should run locally or on chain
 export enum Environment {
@@ -31,7 +31,7 @@ export interface ExampleConfig {
 // Example Configuration
 
 export const CurrentConfig: ExampleConfig = {
-  env: Environment.PRODUCTION,
+  env: Environment.LOCAL,
   rpc: {
     local: 'http://localhost:8545',
     mainnet: 'https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721',
@@ -44,7 +44,7 @@ export const CurrentConfig: ExampleConfig = {
   tokens: {
     in: USDC_TOKEN,
     amountIn: 1000,
-    out: WETH_TOKEN,
+    out: DAI_TOKEN,
     fee: FeeAmount.LOW,
   },
 }
