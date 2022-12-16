@@ -68,7 +68,7 @@ const getPoolConstants = async (): Promise<{
   }
 }
 
-const getPoolCurrentState = async (): Promise<{
+const getCurrentPoolState = async (): Promise<{
   sqrtPriceX96: ethers.BigNumber
   liquidity: ethers.BigNumber
   tick: number
@@ -130,7 +130,7 @@ async function mintPosition(): Promise<TransactionState> {
 
   // get pool data
   const poolConstants = await getPoolConstants()
-  const poolState = await getPoolCurrentState()
+  const poolState = await getCurrentPoolState()
 
   // create Pool abstraction
   const USDC_DAI_POOL = new Pool(
