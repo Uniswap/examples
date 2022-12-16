@@ -125,6 +125,7 @@ async function mintPosition(): Promise<TransactionState> {
     return TransactionState.Failed
   }
 
+  // get pool data
   const poolConstants = await getPoolConstants()
   const poolState = await getPoolCurrentState()
 
