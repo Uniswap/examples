@@ -61,7 +61,8 @@ export async function getPositionIds(
 export async function getTokenTransferApprovals(
   provider: ethers.providers.Provider,
   tokenAddress: string,
-  fromAddress: string
+  fromAddress: string,
+  toAddress: string
 ): Promise<TransactionState> {
   if (!provider) {
     console.log('No Provider Found')
@@ -72,7 +73,7 @@ export async function getTokenTransferApprovals(
     const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
 
     const transaction = await tokenContract.populateTransaction.approve(
-      NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+      toAddress,
       AMOUNT_TO_APPROVE
     )
 

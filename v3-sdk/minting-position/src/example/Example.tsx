@@ -113,12 +113,14 @@ async function mintPosition(): Promise<TransactionState> {
   const tokenInApproval = await getTokenTransferApprovals(
     provider,
     CurrentConfig.tokens.in.address,
-    address
+    address,
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
   )
   const tokenOutApproval = await getTokenTransferApprovals(
     provider,
     CurrentConfig.tokens.out.address,
-    address
+    address,
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
   )
 
   if (
