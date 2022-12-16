@@ -17,9 +17,9 @@ import {
 import {
   connectBrowserExtensionWallet,
   getProvider,
-  getWalletAddress,
   TransactionState,
   sendTransaction,
+  getWalletAddress,
 } from '../libs/providers'
 import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 import {
@@ -104,12 +104,15 @@ const getPullCurrentState = async (): Promise<{
 }
 
 async function getTokenTransferApprovals(
-  tokenAddress: string
+  tokenAddress: string,
+  fromAddress: string
 ): Promise<TransactionState> {
   const provider = getProvider()
+
   if (!provider) {
     return TransactionState.Failed
   }
+
   const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
 
   const transaction = await tokenContract.populateTransaction.approve(
@@ -117,16 +120,30 @@ async function getTokenTransferApprovals(
     1000000000000
   )
 
-  console.log(transaction)
-
-  const approval = await sendTransaction(transaction)
+  const approval = await sendTransaction({
+    ...transaction,
+    gasLimit: 3_000_000,
+    from: fromAddress,
+  })
   return approval
 }
 
 async function mintPosition(): Promise<TransactionState> {
   const address = getWalletAddress()
-  const provider = getProvider()
-  if (!address || !provider) {
+  if (!address) {
+    return TransactionState.Failed
+  }
+  // Give approval to the contract to transfer tokens
+  const tokenInApproval = await getTokenTransferApprovals(
+    CurrentConfig.tokens.in.address,
+    address
+  )
+  const tokenOutApproval = await getTokenTransferApprovals(
+    CurrentConfig.tokens.out.address,
+    address
+  )
+
+  if (!tokenInApproval || !tokenOutApproval) {
     return TransactionState.Failed
   }
 
@@ -161,18 +178,6 @@ async function mintPosition(): Promise<TransactionState> {
       slippageTolerance: new Percent(50, 10_000),
     }
   )
-
-  // Give approval to the contract to transfer tokens
-  const tokenInApproval = await getTokenTransferApprovals(
-    CurrentConfig.tokens.in.address
-  )
-  const tokenOutApproval = await getTokenTransferApprovals(
-    CurrentConfig.tokens.out.address
-  )
-
-  if (!tokenInApproval || !tokenOutApproval) {
-    return TransactionState.Failed
-  }
 
   const transaction = {
     data: calldata,
