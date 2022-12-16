@@ -106,13 +106,12 @@ async function mintPosition(): Promise<TransactionState> {
   if (!address || !provider) {
     return TransactionState.Failed
   }
-
   const wallet = new Wallet(CurrentConfig.wallet.privateKey, provider)
 
   const poolConstants = await getPoolConstants()
   const poolState = await getPullCurrentState()
 
-  const USDC_WETH_POOL = new Pool(
+  const USDC_DAI_POOL = new Pool(
     CurrentConfig.tokens.in,
     CurrentConfig.tokens.out,
     poolConstants.fee,
@@ -122,7 +121,7 @@ async function mintPosition(): Promise<TransactionState> {
   )
 
   const position = new Position({
-    pool: USDC_WETH_POOL,
+    pool: USDC_DAI_POOL,
     liquidity: CurrentConfig.tokens.liquidity,
     tickLower:
       nearestUsableTick(poolState.tick, poolConstants.tickSpacing) -
