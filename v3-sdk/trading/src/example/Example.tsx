@@ -1,122 +1,84 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import './Example.css'
-import { ethers } from 'ethers'
-import { CurrentConfig } from '../config'
-import { computePoolAddress, Pool, Route, Trade } from '@uniswap/v3-sdk'
-import Quoter from '@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json'
-import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
+import { CurrentConfig, Environment } from '../config'
 import {
-  POOL_FACTORY_CONTRACT_ADDRESS,
-  QUOTER_CONTRACT_ADDRESS,
-} from '../libs/constants'
-import { getProvider } from '../libs/providers'
-import { fromReadableAmount, displayTrade } from '../libs/utils'
-import { BigintIsh, Token, TradeType, CurrencyAmount } from '@uniswap/sdk-core'
+  connectBrowserExtensionWallet,
+  getProvider,
+  getWalletAddress,
+  TransactionState,
+} from '../libs/providers'
+import { displayTrade } from '../libs/utils'
+import { getCurrencyBalance } from '../libs/wallet'
+import { createTrade, executeTrade, TokenTrade } from '../trading'
 
-const getPoolAddress = () => {
-  return computePoolAddress({
-    factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
-    tokenA: CurrentConfig.tokens.in,
-    tokenB: CurrentConfig.tokens.out,
-    fee: CurrentConfig.tokens.fee,
+const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
+  useEffect(() => {
+    const subscription = getProvider()?.on('block', callback)
+    return () => {
+      subscription?.removeAllListeners()
+    }
   })
-}
-
-const getPoolState = async (): Promise<{
-  liquidity: BigintIsh
-  sqrtPriceX96: BigintIsh
-  tick: number
-}> => {
-  const poolContract = new ethers.Contract(
-    getPoolAddress(),
-    IUniswapV3PoolABI.abi,
-    getProvider()!
-  )
-
-  const [liquidity, slot] = await Promise.all([
-    poolContract.liquidity(),
-    poolContract.slot0(),
-  ])
-
-  return {
-    liquidity,
-    sqrtPriceX96: slot[0],
-    tick: slot[1],
-  }
-}
-
-const quote = async (): Promise<number> => {
-  const quoterContract = new ethers.Contract(
-    QUOTER_CONTRACT_ADDRESS,
-    Quoter.abi,
-    getProvider()!
-  )
-
-  const quotedAmountOut = await quoterContract.callStatic.quoteExactInputSingle(
-    CurrentConfig.tokens.in.address,
-    CurrentConfig.tokens.out.address,
-    CurrentConfig.tokens.fee,
-    fromReadableAmount(
-      CurrentConfig.tokens.amountIn,
-      CurrentConfig.tokens.in.decimals
-    ),
-    0
-  )
-
-  return quotedAmountOut
-}
-
-const getTrade = async (
-  quotedAmountOut: number
-): Promise<Trade<Token, Token, TradeType>> => {
-  const poolState = await getPoolState()
-  const pool = new Pool(
-    CurrentConfig.tokens.in,
-    CurrentConfig.tokens.out,
-    CurrentConfig.tokens.fee,
-    poolState.sqrtPriceX96,
-    poolState.liquidity,
-    poolState.tick
-  )
-
-  const swapRoute = new Route(
-    [pool],
-    CurrentConfig.tokens.in,
-    CurrentConfig.tokens.out
-  )
-
-  const uncheckedTrade = Trade.createUncheckedTrade({
-    route: swapRoute,
-    inputAmount: CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.in,
-      fromReadableAmount(
-        CurrentConfig.tokens.amountIn,
-        CurrentConfig.tokens.in.decimals
-      )
-    ),
-    outputAmount: CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.out,
-      quotedAmountOut
-    ),
-    tradeType: TradeType.EXACT_INPUT,
-  })
-
-  return uncheckedTrade
 }
 
 const Example = () => {
-  const [trade, setTrade] = useState<Trade<Token, Token, TradeType>>()
+  const [trade, setTrade] = useState<TokenTrade>()
+  const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
+
+  const [tokenInBalance, setTokenInBalance] = useState<string>()
+  const [tokenOutBalance, setTokenOutBalance] = useState<string>()
+  const [blockNumber, setBlockNumber] = useState<number>(0)
+
+  // Listen for new blocks and update the wallet
+  useOnBlockUpdated(async (blockNumber: number) => {
+    refreshBalances()
+    setBlockNumber(blockNumber)
+  })
+
+  // Update wallet state given a block number
+  const refreshBalances = useCallback(async () => {
+    const provider = getProvider()
+    const address = getWalletAddress()
+    if (address && provider) {
+      setTokenInBalance(
+        await getCurrencyBalance(provider, address, CurrentConfig.tokens.in)
+      )
+      setTokenOutBalance(
+        await getCurrencyBalance(provider, address, CurrentConfig.tokens.out)
+      )
+    }
+  }, [])
+
+  // Event Handlers
+
+  const onConnectWallet = useCallback(async () => {
+    if (await connectBrowserExtensionWallet()) {
+      refreshBalances()
+    }
+  }, [refreshBalances])
 
   const onCreateTrade = useCallback(async () => {
-    const outputAmount = await quote()
-    setTrade(await getTrade(outputAmount))
+    refreshBalances()
+    setTrade(await createTrade())
   }, [])
+
+  const onTrade = useCallback(async () => {
+    if (trade) {
+      // getWETH()
+      setTxState(await executeTrade(trade))
+    }
+  }, [trade])
 
   return (
     <div className="App">
       {CurrentConfig.rpc.mainnet === '' && (
         <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>
       )}
+      {CurrentConfig.env === Environment.WALLET_EXTENSION &&
+        getProvider() === null && (
+          <h2 className="error">
+            Please install a wallet to use this example configuration
+          </h2>
+        )}
       <h3>
         Trading {CurrentConfig.tokens.amountIn} {CurrentConfig.tokens.in.symbol}{' '}
         for {CurrentConfig.tokens.out.symbol}
@@ -124,6 +86,25 @@ const Example = () => {
       <h3>{trade && `Constructed Trade: ${displayTrade(trade)}`}</h3>
       <button onClick={onCreateTrade}>
         <p>Create Trade</p>
+      </button>
+      <h3>{`Wallet Address: ${getWalletAddress()}`}</h3>
+      {CurrentConfig.env === Environment.WALLET_EXTENSION &&
+        !getWalletAddress() && (
+          <button onClick={onConnectWallet}>Connect Wallet</button>
+        )}
+      <h3>{`Block Number: ${blockNumber + 1}`}</h3>
+      <h3>{`Transaction State: ${txState}`}</h3>
+      <h3>{`${CurrentConfig.tokens.in.symbol} Balance: ${tokenInBalance}`}</h3>
+      <h3>{`${CurrentConfig.tokens.out.symbol} Balance: ${tokenOutBalance}`}</h3>
+      <button
+        onClick={onTrade}
+        disabled={
+          trade === undefined ||
+          txState === TransactionState.Sending ||
+          getProvider() === null ||
+          CurrentConfig.rpc.mainnet === ''
+        }>
+        <p>Trade</p>
       </button>
     </div>
   )

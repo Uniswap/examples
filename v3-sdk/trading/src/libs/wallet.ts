@@ -26,5 +26,5 @@ export async function getCurrencyBalance(
   const decimals: number = await walletContract.decimals()
 
   // Format with proper units (approximate)
-  return toReadableAmount(balance, decimals).toString()
+  return toReadableAmount(balance, decimals)
 }

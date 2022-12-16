@@ -31,7 +31,7 @@ export interface ExampleConfig {
 // Example Configuration
 
 export const CurrentConfig: ExampleConfig = {
-  env: Environment.MAINNET,
+  env: Environment.LOCAL,
   rpc: {
     local: 'http://localhost:8545',
     mainnet: 'https://mainnet.infura.io/v3/7b37a3c5c10b47c18473128c2e3bd155',
@@ -42,9 +42,9 @@ export const CurrentConfig: ExampleConfig = {
       '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
   },
   tokens: {
-    in: USDC_TOKEN,
-    amountIn: 1000,
-    out: WETH_TOKEN,
+    in: WETH_TOKEN,
+    amountIn: 0.1,
+    out: USDC_TOKEN,
     fee: FeeAmount.MEDIUM,
   },
 }

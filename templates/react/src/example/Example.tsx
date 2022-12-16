@@ -129,8 +129,8 @@ const Example = () => {
         )}
       <h3>{`Block Number: ${blockNumber + 1}`}</h3>
       <h3>{`Transaction State: ${txState}`}</h3>
-      <h3>{`Token In (ETH) Balance: ${tokenInBalance}`}</h3>
-      <h3>{`Token Out (USDC) Balance: ${tokenOutBalance}`}</h3>
+      <h3>{`Token In (${CurrentConfig.currencies.in.symbol}) Balance: ${tokenInBalance}`}</h3>
+      <h3>{`Token Out (${CurrentConfig.currencies.out.symbol}) Balance: ${tokenOutBalance}`}</h3>
       <button
         onClick={onTrade}
         disabled={

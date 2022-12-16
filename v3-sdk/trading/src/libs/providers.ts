@@ -6,7 +6,7 @@ import { BaseProvider } from '@ethersproject/providers'
 const mainnetProvider = new ethers.providers.JsonRpcProvider(
   CurrentConfig.rpc.mainnet
 )
-const wallet = createWallet()
+export const wallet = createWallet()
 
 const browserExtensionProvider = createBrowserExtensionProvider()
 let walletExtensionAddress: string | null = null
@@ -45,7 +45,9 @@ export async function sendTransaction(
   if (CurrentConfig.env === Environment.WALLET_EXTENSION) {
     return sendTransactionViaExtension(transaction)
   } else {
-    transaction.value = BigNumber.from(transaction.value)
+    if (transaction.value) {
+      transaction.value = BigNumber.from(transaction.value)
+    }
     return sendTransactionViaWallet(transaction)
   }
 }
@@ -109,7 +111,6 @@ async function sendTransactionViaExtension(
 async function sendTransactionViaWallet(
   transaction: ethers.providers.TransactionRequest
 ): Promise<TransactionState> {
-  transaction.value = BigNumber.from(transaction.value)
   const res = await wallet.sendTransaction(transaction)
   const receipt = await res.wait()
 
