@@ -10,7 +10,7 @@ import {
   QUOTER_CONTRACT_ADDRESS,
 } from '../libs/constants'
 import { getProvider } from '../libs/providers'
-import { toReadableAmount, fromReadableAmount } from '../libs/conversion'
+import { toReadableAmount, fromReadableAmount } from '../libs/utils'
 
 const getPoolConstants = async (): Promise<{
   token0: string
@@ -73,18 +73,14 @@ const Example = () => {
 
   return (
     <div className="App">
-      <header className="App-header">
-        {CurrentConfig.rpc.mainnet === '' && (
-          <h2 className="error">
-            Please set your mainnet RPC URL in config.ts
-          </h2>
-        )}
-        <h3>{`Quote input amount: ${CurrentConfig.tokens.amountIn} ${CurrentConfig.tokens.in.symbol}`}</h3>
-        <h3>{`Quote output amount: ${outputAmount} ${CurrentConfig.tokens.out.symbol}`}</h3>
-        <button onClick={onQuote}>
-          <p>Quote</p>
-        </button>
-      </header>
+      {CurrentConfig.rpc.mainnet === '' && (
+        <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>
+      )}
+      <h3>{`Quote input amount: ${CurrentConfig.tokens.amountIn} ${CurrentConfig.tokens.in.symbol}`}</h3>
+      <h3>{`Quote output amount: ${outputAmount} ${CurrentConfig.tokens.out.symbol}`}</h3>
+      <button onClick={onQuote}>
+        <p>Quote</p>
+      </button>
     </div>
   )
 }
