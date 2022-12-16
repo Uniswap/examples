@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
-import { ethers, Signer, Wallet } from 'ethers'
+import { ethers } from 'ethers'
 import {
   Pool,
   computePoolAddress,
@@ -103,13 +103,23 @@ const getPullCurrentState = async (): Promise<{
   }
 }
 
-async function getTokenTransferApprovals(tokenAddress: string, signer: Signer) {
-  const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer)
+async function getTokenTransferApprovals(
+  tokenAddress: string
+): Promise<TransactionState> {
+  const provider = getProvider()
+  if (!provider) {
+    return TransactionState.Failed
+  }
+  const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
 
-  const approval = await tokenContract.approve(
+  const transaction = await tokenContract.populateTransaction.approve(
     NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
     1000000000000
   )
+
+  console.log(transaction)
+
+  const approval = await sendTransaction(transaction)
   return approval
 }
 
@@ -119,8 +129,6 @@ async function mintPosition(): Promise<TransactionState> {
   if (!address || !provider) {
     return TransactionState.Failed
   }
-  // TODO: make it work for both options
-  const wallet = new Wallet(CurrentConfig.wallet.privateKey, provider)
 
   const poolConstants = await getPoolConstants()
   const poolState = await getPullCurrentState()
@@ -156,12 +164,10 @@ async function mintPosition(): Promise<TransactionState> {
 
   // Give approval to the contract to transfer tokens
   const tokenInApproval = await getTokenTransferApprovals(
-    CurrentConfig.tokens.in.address,
-    wallet
+    CurrentConfig.tokens.in.address
   )
   const tokenOutApproval = await getTokenTransferApprovals(
-    CurrentConfig.tokens.out.address,
-    wallet
+    CurrentConfig.tokens.out.address
   )
 
   if (!tokenInApproval || !tokenOutApproval) {

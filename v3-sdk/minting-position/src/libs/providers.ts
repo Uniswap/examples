@@ -45,7 +45,6 @@ export async function sendTransaction(
   if (CurrentConfig.env === Environment.WALLET_EXTENSION) {
     return sendTransactionViaExtension(transaction)
   } else {
-    transaction.value = BigNumber.from(transaction.value)
     return sendTransactionViaWallet(transaction)
   }
 }
@@ -109,7 +108,9 @@ async function sendTransactionViaExtension(
 async function sendTransactionViaWallet(
   transaction: ethers.providers.TransactionRequest
 ): Promise<TransactionState> {
-  transaction.value = BigNumber.from(transaction.value)
+  if (transaction.value) {
+    transaction.value = BigNumber.from(transaction.value)
+  }
   const txRes = await wallet.sendTransaction(transaction)
 
   let receipt = null

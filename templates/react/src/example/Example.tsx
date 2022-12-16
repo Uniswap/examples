@@ -4,7 +4,7 @@ import { ethers } from 'ethers'
 import { AlphaRouter, ChainId, SwapType } from '@uniswap/smart-order-router'
 import { TradeType, CurrencyAmount, Percent } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
-import { getCurrencyBalance } from '../libs/wallet'
+import { getCurrencyBalance } from '../libs/balance'
 import {
   connectBrowserExtensionWallet,
   getMainnetProvider,
