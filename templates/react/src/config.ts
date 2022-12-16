@@ -5,7 +5,7 @@ import { ETH, USDC_TOKEN } from './libs/constants'
 export enum Environment {
   LOCAL,
   WALLET_EXTENSION,
-  PRODUCTION,
+  MAINNET,
 }
 
 // Inputs that configure this example to run

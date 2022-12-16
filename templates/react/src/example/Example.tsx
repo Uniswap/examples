@@ -113,37 +113,33 @@ const Example = () => {
 
   return (
     <div className="App">
-      <header className="App-header">
-        {CurrentConfig.rpc.mainnet === '' && (
+      {CurrentConfig.rpc.mainnet === '' && (
+        <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>
+      )}
+      {CurrentConfig.env === Environment.WALLET_EXTENSION &&
+        getProvider() === null && (
           <h2 className="error">
-            Please set your mainnet RPC URL in config.ts
+            Please install a wallet to use this example configuration
           </h2>
         )}
-        {CurrentConfig.env === Environment.WALLET_EXTENSION &&
-          getProvider() === null && (
-            <h2 className="error">
-              Please install a wallet to use this example configuration
-            </h2>
-          )}
-        <h3>{`Wallet Address: ${getWalletAddress()}`}</h3>
-        {CurrentConfig.env === Environment.WALLET_EXTENSION &&
-          !getWalletAddress() && (
-            <button onClick={onConnectWallet}>Connect Wallet</button>
-          )}
-        <h3>{`Block Number: ${blockNumber + 1}`}</h3>
-        <h3>{`Transaction State: ${txState}`}</h3>
-        <h3>{`Token In (ETH) Balance: ${tokenInBalance}`}</h3>
-        <h3>{`Token Out (USDC) Balance: ${tokenOutBalance}`}</h3>
-        <button
-          onClick={onTrade}
-          disabled={
-            txState === TransactionState.Sending ||
-            getProvider() === null ||
-            CurrentConfig.rpc.mainnet === ''
-          }>
-          <p>Trade</p>
-        </button>
-      </header>
+      <h3>{`Wallet Address: ${getWalletAddress()}`}</h3>
+      {CurrentConfig.env === Environment.WALLET_EXTENSION &&
+        !getWalletAddress() && (
+          <button onClick={onConnectWallet}>Connect Wallet</button>
+        )}
+      <h3>{`Block Number: ${blockNumber + 1}`}</h3>
+      <h3>{`Transaction State: ${txState}`}</h3>
+      <h3>{`Token In (ETH) Balance: ${tokenInBalance}`}</h3>
+      <h3>{`Token Out (USDC) Balance: ${tokenOutBalance}`}</h3>
+      <button
+        onClick={onTrade}
+        disabled={
+          txState === TransactionState.Sending ||
+          getProvider() === null ||
+          CurrentConfig.rpc.mainnet === ''
+        }>
+        <p>Trade</p>
+      </button>
     </div>
   )
 }
