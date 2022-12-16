@@ -30,12 +30,7 @@ import {
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
 } from '../libs/constants'
 
-const getPoolConstants = async (): Promise<{
-  token0: string
-  token1: string
-  fee: number
-  tickSpacing: number
-}> => {
+const getPoolContract = async (): Promise<ethers.Contract> => {
   const provider = getProvider()
   if (!provider) {
     throw new Error('No provider')
@@ -48,11 +43,21 @@ const getPoolConstants = async (): Promise<{
     fee: CurrentConfig.tokens.fee,
   })
 
-  const poolContract = new ethers.Contract(
+  return new ethers.Contract(
     currentPoolAddress,
     IUniswapV3PoolABI.abi,
     provider
   )
+}
+
+const getPoolConstants = async (): Promise<{
+  token0: string
+  token1: string
+  fee: number
+  tickSpacing: number
+}> => {
+  const poolContract = await getPoolContract()
+
   const [token0, token1, fee, tickSpacing] = await Promise.all([
     poolContract.token0(),
     poolContract.token1(),
@@ -73,23 +78,7 @@ const getCurrentPoolState = async (): Promise<{
   liquidity: ethers.BigNumber
   tick: number
 }> => {
-  const provider = getProvider()
-  if (!provider) {
-    throw new Error('No provider')
-  }
-
-  const currentPoolAddress = computePoolAddress({
-    factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
-    tokenA: CurrentConfig.tokens.in,
-    tokenB: CurrentConfig.tokens.out,
-    fee: CurrentConfig.tokens.fee,
-  })
-
-  const poolContract = new ethers.Contract(
-    currentPoolAddress,
-    IUniswapV3PoolABI.abi,
-    provider
-  )
+  const poolContract = await getPoolContract()
 
   const [liquidity, slot] = await Promise.all([
     poolContract.liquidity(),
