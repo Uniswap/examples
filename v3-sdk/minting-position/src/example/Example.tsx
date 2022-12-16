@@ -13,7 +13,7 @@ import { Environment, CurrentConfig } from '../config'
 import {
   getCurrencyBalance,
   getPositionIds,
-  didGetTokenTransferApprovals,
+  getTokenTransferApprovals,
 } from '../libs/contracts'
 import {
   connectBrowserExtensionWallet,
@@ -110,18 +110,21 @@ async function mintPosition(): Promise<TransactionState> {
     return TransactionState.Failed
   }
   // Give approval to the contract to transfer tokens
-  const tokenInApproval = await didGetTokenTransferApprovals(
+  const tokenInApproval = await getTokenTransferApprovals(
     provider,
     CurrentConfig.tokens.in.address,
     address
   )
-  const tokenOutApproval = await didGetTokenTransferApprovals(
+  const tokenOutApproval = await getTokenTransferApprovals(
     provider,
     CurrentConfig.tokens.out.address,
     address
   )
 
-  if (!tokenInApproval || !tokenOutApproval) {
+  if (
+    tokenInApproval !== TransactionState.Sent ||
+    tokenOutApproval !== TransactionState.Sent
+  ) {
     return TransactionState.Failed
   }
 

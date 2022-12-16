@@ -8,7 +8,7 @@ import {
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
   AMOUNT_TO_APPROVE,
 } from './constants'
-import { sendTransaction } from './providers'
+import { sendTransaction, TransactionState } from './providers'
 
 export async function getCurrencyBalance(
   provider: ethers.providers.Provider,
@@ -58,25 +58,32 @@ export async function getPositionIds(
   return tokenIds
 }
 
-export async function didGetTokenTransferApprovals(
+export async function getTokenTransferApprovals(
   provider: ethers.providers.Provider,
   tokenAddress: string,
   fromAddress: string
-): Promise<boolean> {
+): Promise<TransactionState> {
   if (!provider) {
-    return false
+    console.log('No Provider Found')
+    return TransactionState.Failed
   }
 
-  const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
+  try {
+    const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
 
-  const transaction = await tokenContract.populateTransaction.approve(
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    AMOUNT_TO_APPROVE
-  )
+    const transaction = await tokenContract.populateTransaction.approve(
+      NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+      AMOUNT_TO_APPROVE
+    )
 
-  await sendTransaction({
-    ...transaction,
-    from: fromAddress,
-  })
-  return true
+    await sendTransaction({
+      ...transaction,
+      from: fromAddress,
+    })
+  } catch (e) {
+    console.error(e)
+    return TransactionState.Failed
+  }
+
+  return TransactionState.Sent
 }
