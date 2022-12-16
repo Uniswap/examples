@@ -31,6 +31,7 @@ export const DAI_TOKEN = new Token(
 
 export const MAX_FEE_PER_GAS = '100000000000'
 export const MAX_PRIORITY_FEE_PER_GAS = '100000000000'
+export const AMOUNT_TO_APPROVE = 1000000000000
 
 // ABI's
 

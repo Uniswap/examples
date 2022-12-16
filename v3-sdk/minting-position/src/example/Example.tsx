@@ -12,8 +12,9 @@ import { Percent } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import {
   getCurrencyBalance,
-  getPosition as getPositionIds,
-} from '../libs/wallet'
+  getPositionIds,
+  didGetTokenTransferApprovals,
+} from '../libs/contracts'
 import {
   connectBrowserExtensionWallet,
   getProvider,
@@ -27,7 +28,6 @@ import {
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-  ERC20_ABI,
 } from '../libs/constants'
 
 const getPoolConstants = async (): Promise<{
@@ -68,7 +68,7 @@ const getPoolConstants = async (): Promise<{
   }
 }
 
-const getPullCurrentState = async (): Promise<{
+const getPoolCurrentState = async (): Promise<{
   sqrtPriceX96: ethers.BigNumber
   liquidity: ethers.BigNumber
   tick: number
@@ -103,42 +103,20 @@ const getPullCurrentState = async (): Promise<{
   }
 }
 
-async function getTokenTransferApprovals(
-  tokenAddress: string,
-  fromAddress: string
-): Promise<TransactionState> {
-  const provider = getProvider()
-
-  if (!provider) {
-    return TransactionState.Failed
-  }
-
-  const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
-
-  const transaction = await tokenContract.populateTransaction.approve(
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    1000000000000
-  )
-
-  const approval = await sendTransaction({
-    ...transaction,
-    gasLimit: 3_000_000,
-    from: fromAddress,
-  })
-  return approval
-}
-
 async function mintPosition(): Promise<TransactionState> {
   const address = getWalletAddress()
-  if (!address) {
+  const provider = getProvider()
+  if (!address || !provider) {
     return TransactionState.Failed
   }
   // Give approval to the contract to transfer tokens
-  const tokenInApproval = await getTokenTransferApprovals(
+  const tokenInApproval = await didGetTokenTransferApprovals(
+    provider,
     CurrentConfig.tokens.in.address,
     address
   )
-  const tokenOutApproval = await getTokenTransferApprovals(
+  const tokenOutApproval = await didGetTokenTransferApprovals(
+    provider,
     CurrentConfig.tokens.out.address,
     address
   )
@@ -148,8 +126,9 @@ async function mintPosition(): Promise<TransactionState> {
   }
 
   const poolConstants = await getPoolConstants()
-  const poolState = await getPullCurrentState()
+  const poolState = await getPoolCurrentState()
 
+  // create Pool abstraction
   const USDC_DAI_POOL = new Pool(
     CurrentConfig.tokens.in,
     CurrentConfig.tokens.out,
@@ -159,6 +138,7 @@ async function mintPosition(): Promise<TransactionState> {
     poolState.tick
   )
 
+  // create Position abstraction
   const position = new Position({
     pool: USDC_DAI_POOL,
     liquidity: CurrentConfig.tokens.liquidity,
@@ -170,6 +150,7 @@ async function mintPosition(): Promise<TransactionState> {
       poolConstants.tickSpacing * 2,
   })
 
+  // get calldata for minting a position
   const { calldata, value } = NonfungiblePositionManager.addCallParameters(
     position,
     {
@@ -179,12 +160,12 @@ async function mintPosition(): Promise<TransactionState> {
     }
   )
 
+  // build transaction
   const transaction = {
     data: calldata,
     to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
     value: value,
     from: address,
-    gasLimit: 3_000_000,
     maxFeePerGas: MAX_FEE_PER_GAS,
     maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
   }

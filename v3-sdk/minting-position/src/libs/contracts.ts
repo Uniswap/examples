@@ -2,12 +2,16 @@
 
 import { Currency } from '@uniswap/sdk-core'
 import { ethers } from 'ethers'
-import { providers } from 'ethers'
 import { ERC20_ABI, NONFUNGIBLEPOSITIONMANAGER_ABI } from './constants'
 import { toReadableAmount } from './conversion'
+import {
+  NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+  AMOUNT_TO_APPROVE,
+} from './constants'
+import { sendTransaction } from './providers'
 
 export async function getCurrencyBalance(
-  provider: providers.Provider,
+  provider: ethers.providers.Provider,
   address: string,
   currency: Currency
 ): Promise<string> {
@@ -29,8 +33,8 @@ export async function getCurrencyBalance(
   return toReadableAmount(balance, decimals).toString()
 }
 
-export async function getPosition(
-  provider: providers.Provider,
+export async function getPositionIds(
+  provider: ethers.providers.Provider,
   address: string,
   contractAddress: string
 ): Promise<number[]> {
@@ -52,4 +56,27 @@ export async function getPosition(
   }
 
   return tokenIds
+}
+
+export async function didGetTokenTransferApprovals(
+  provider: ethers.providers.Provider,
+  tokenAddress: string,
+  fromAddress: string
+): Promise<boolean> {
+  if (!provider) {
+    return false
+  }
+
+  const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
+
+  const transaction = await tokenContract.populateTransaction.approve(
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+    AMOUNT_TO_APPROVE
+  )
+
+  await sendTransaction({
+    ...transaction,
+    from: fromAddress,
+  })
+  return true
 }
