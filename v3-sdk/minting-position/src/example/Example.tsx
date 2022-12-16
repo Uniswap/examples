@@ -184,7 +184,7 @@ async function mintPosition(): Promise<TransactionState> {
     to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
     value: value,
     from: address,
-    gasLimit: 30000000,
+    gasLimit: 3_000_000,
     maxFeePerGas: MAX_FEE_PER_GAS,
     maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
   }
