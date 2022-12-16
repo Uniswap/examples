@@ -3,7 +3,7 @@
 import { Currency } from '@uniswap/sdk-core'
 import { ethers } from 'ethers'
 import { providers } from 'ethers'
-import { ERC20_ABI, ERC721_ABI } from './constants'
+import { ERC20_ABI, NONFUNGIBLEPOSITIONMANAGER_ABI } from './constants'
 import { toReadableAmount } from './conversion'
 
 export async function getCurrencyBalance(
@@ -29,28 +29,27 @@ export async function getCurrencyBalance(
   return toReadableAmount(balance, decimals).toString()
 }
 
-export async function getAssetBalance(
+export async function getPosition(
   provider: providers.Provider,
   address: string,
   contractAddress: string
 ): Promise<number[]> {
   // Get currency otherwise
-  const assetContract = new ethers.Contract(
+  const positionContract = new ethers.Contract(
     contractAddress,
-    ERC721_ABI,
+    NONFUNGIBLEPOSITIONMANAGER_ABI,
     provider
   )
-  const balance: number = await assetContract.balanceOf(address)
+  // Get number of positions
+  const balance: number = await positionContract.balanceOf(address)
 
+  // Get all positions
   const tokenIds = []
   for (let i = 0; i < balance; i++) {
-    const tokenOfOwnerByIndex: number = await assetContract.tokenOfOwnerByIndex(
-      address,
-      i
-    )
+    const tokenOfOwnerByIndex: number =
+      await positionContract.tokenOfOwnerByIndex(address, i)
     tokenIds.push(tokenOfOwnerByIndex)
   }
 
-  // Format with proper units (approximate)
   return tokenIds
 }

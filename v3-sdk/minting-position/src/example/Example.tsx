@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
-import { ethers, Wallet } from 'ethers'
+import { ethers, Signer, Wallet } from 'ethers'
 import {
   Pool,
   computePoolAddress,
@@ -10,7 +10,10 @@ import {
 } from '@uniswap/v3-sdk'
 import { Percent } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
-import { getCurrencyBalance, getAssetBalance } from '../libs/wallet'
+import {
+  getCurrencyBalance,
+  getPosition as getPositionIds,
+} from '../libs/wallet'
 import {
   connectBrowserExtensionWallet,
   getProvider,
@@ -100,12 +103,23 @@ const getPullCurrentState = async (): Promise<{
   }
 }
 
+async function getTokenTransferApprovals(tokenAddress: string, signer: Signer) {
+  const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer)
+
+  const approval = await tokenContract.approve(
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+    1000000000000
+  )
+  return approval
+}
+
 async function mintPosition(): Promise<TransactionState> {
   const address = getWalletAddress()
   const provider = getProvider()
   if (!address || !provider) {
     return TransactionState.Failed
   }
+  // TODO: make it work for both options
   const wallet = new Wallet(CurrentConfig.wallet.privateKey, provider)
 
   const poolConstants = await getPoolConstants()
@@ -140,28 +154,17 @@ async function mintPosition(): Promise<TransactionState> {
     }
   )
 
-  const currencyInContract = new ethers.Contract(
+  // Give approval to the contract to transfer tokens
+  const tokenInApproval = await getTokenTransferApprovals(
     CurrentConfig.tokens.in.address,
-    ERC20_ABI,
     wallet
   )
-
-  const currencyOutContract = new ethers.Contract(
+  const tokenOutApproval = await getTokenTransferApprovals(
     CurrentConfig.tokens.out.address,
-    ERC20_ABI,
     wallet
   )
 
-  const daiApproval = await currencyInContract.approve(
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    1000000000000
-  )
-  const usdcApproval = await currencyOutContract.approve(
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    1000000000000
-  )
-
-  if (!daiApproval || !usdcApproval) {
+  if (!tokenInApproval || !tokenOutApproval) {
     return TransactionState.Failed
   }
 
@@ -213,7 +216,7 @@ const Example = () => {
         await getCurrencyBalance(provider, address, CurrentConfig.tokens.out)
       )
       setPositionIds(
-        await getAssetBalance(
+        await getPositionIds(
           provider,
           address,
           NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
