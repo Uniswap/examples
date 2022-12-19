@@ -39,14 +39,14 @@ export type TokenTrade = Trade<Token, Token, TradeType>
 // Trading Functions
 
 export async function createTrade(): Promise<TokenTrade> {
-  const poolState = await getPoolState()
+  const poolInfo = await getPoolInfo()
   const pool = new Pool(
     CurrentConfig.tokens.in,
     CurrentConfig.tokens.out,
     CurrentConfig.tokens.fee,
-    poolState.sqrtPriceX96,
-    poolState.liquidity,
-    poolState.tick
+    poolInfo.sqrtPriceX96,
+    poolInfo.liquidity,
+    poolInfo.tick
   )
 
   const swapRoute = new Route(
@@ -139,7 +139,7 @@ async function quote(): Promise<number> {
   return quotedAmountOut
 }
 
-async function getPoolState(): Promise<{
+async function getPoolInfo(): Promise<{
   liquidity: BigintIsh
   sqrtPriceX96: BigintIsh
   tick: number
