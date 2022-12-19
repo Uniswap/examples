@@ -14,7 +14,7 @@ import {
   Trade,
 } from '@uniswap/v3-sdk'
 import { ethers } from 'ethers'
-import { CurrentConfig, Environment } from './config'
+import { CurrentConfig } from './config'
 import {
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
@@ -28,7 +28,6 @@ import {
   sendTransaction,
   TransactionState,
 } from './libs/providers'
-import { wrapETH } from './libs/wallet'
 import { fromReadableAmount } from './libs/utils'
 
 import Quoter from '@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json'
@@ -78,21 +77,14 @@ export async function createTrade(): Promise<TokenTrade> {
 export async function executeTrade(
   trade: TokenTrade
 ): Promise<TransactionState> {
-  await wrapETH(1)
-
-  if (CurrentConfig.env === Environment.WALLET_EXTENSION) {
-    return TransactionState.Failed
-  }
-
   const walletAddress = getWalletAddress()
-
   if (!walletAddress) {
     throw new Error('Cannot execute a trade without a connected wallet')
   }
 
   const options: SwapOptions = {
-    slippageTolerance: new Percent('500', '10000'), // 50 bips, or 0.50%
-    deadline: Math.floor(Date.now() / 1000) + 60 * 5, // 5 minutes from the current Unix time
+    slippageTolerance: new Percent(500, 10000), // 50 bips, or 0.50%
+    deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from the current Unix time
     recipient: walletAddress,
   }
 
@@ -147,7 +139,7 @@ async function getPoolInfo(): Promise<{
   const provider = getProvider()
 
   if (!provider) {
-    throw new Error('Provider required to get pool state')
+    throw new Error('Provider required to get pool info')
   }
 
   const poolContract = new ethers.Contract(

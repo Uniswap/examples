@@ -8,7 +8,7 @@ import {
   TransactionState,
 } from '../libs/providers'
 import { displayTrade } from '../libs/utils'
-import { getCurrencyBalance } from '../libs/wallet'
+import { getCurrencyBalance, wrapETH } from '../libs/wallet'
 import { createTrade, executeTrade, TokenTrade } from '../trading'
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
@@ -96,6 +96,11 @@ const Example = () => {
       <h3>{`Transaction State: ${txState}`}</h3>
       <h3>{`${CurrentConfig.tokens.in.symbol} Balance: ${tokenInBalance}`}</h3>
       <h3>{`${CurrentConfig.tokens.out.symbol} Balance: ${tokenOutBalance}`}</h3>
+      <button
+        onClick={() => wrapETH(100)}
+        disabled={getProvider() === null || CurrentConfig.rpc.mainnet === ''}>
+        <p>Wrap ETH</p>
+      </button>
       <button
         onClick={onTrade}
         disabled={

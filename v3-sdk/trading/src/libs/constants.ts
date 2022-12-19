@@ -33,7 +33,7 @@ export const USDC_TOKEN = new Token(
 
 // ABI's
 
-export const ERC20_WALLET_ABI = [
+export const ERC20_ABI = [
   // Read-Only Functions
   'function balanceOf(address owner) view returns (uint256)',
   'function decimals() view returns (uint8)',
