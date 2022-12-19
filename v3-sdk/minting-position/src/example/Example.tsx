@@ -10,11 +10,8 @@ import {
 } from '@uniswap/v3-sdk'
 import { Percent } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
-import {
-  getCurrencyBalance,
-  getPositionIds,
-  getTokenTransferApprovals,
-} from '../libs/contracts'
+import { getCurrencyBalance } from '../libs/balance'
+import { getPositionIds, getTokenTransferApprovals } from '../libs/positions'
 import {
   connectBrowserExtensionWallet,
   getProvider,
@@ -30,7 +27,15 @@ import {
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
 } from '../libs/constants'
 
-const getPoolContract = async (): Promise<ethers.Contract> => {
+const getPoolInfo = async (): Promise<{
+  token0: string
+  token1: string
+  fee: number
+  tickSpacing: number
+  sqrtPriceX96: ethers.BigNumber
+  liquidity: ethers.BigNumber
+  tick: number
+}> => {
   const provider = getProvider()
   if (!provider) {
     throw new Error('No provider')
@@ -43,52 +48,30 @@ const getPoolContract = async (): Promise<ethers.Contract> => {
     fee: CurrentConfig.tokens.fee,
   })
 
-  return new ethers.Contract(
+  const poolContract = new ethers.Contract(
     currentPoolAddress,
     IUniswapV3PoolABI.abi,
     provider
   )
-}
 
-const getPoolConstants = async (): Promise<{
-  token0: string
-  token1: string
-  fee: number
-  tickSpacing: number
-}> => {
-  const poolContract = await getPoolContract()
-
-  const [token0, token1, fee, tickSpacing] = await Promise.all([
-    poolContract.token0(),
-    poolContract.token1(),
-    poolContract.fee(),
-    poolContract.tickSpacing(),
-  ])
+  const [token0, token1, fee, tickSpacing, liquidity, slot0] =
+    await Promise.all([
+      poolContract.token0(),
+      poolContract.token1(),
+      poolContract.fee(),
+      poolContract.tickSpacing(),
+      poolContract.liquidity(),
+      poolContract.slot0(),
+    ])
 
   return {
     token0,
     token1,
     fee,
     tickSpacing,
-  }
-}
-
-const getCurrentPoolState = async (): Promise<{
-  sqrtPriceX96: ethers.BigNumber
-  liquidity: ethers.BigNumber
-  tick: number
-}> => {
-  const poolContract = await getPoolContract()
-
-  const [liquidity, slot] = await Promise.all([
-    poolContract.liquidity(),
-    poolContract.slot0(),
-  ])
-
-  return {
     liquidity,
-    sqrtPriceX96: slot[0],
-    tick: slot[1],
+    sqrtPriceX96: slot0[0],
+    tick: slot0[1],
   }
 }
 
@@ -120,17 +103,16 @@ async function mintPosition(): Promise<TransactionState> {
   }
 
   // get pool data
-  const poolConstants = await getPoolConstants()
-  const poolState = await getCurrentPoolState()
+  const poolInfo = await getPoolInfo()
 
   // create Pool abstraction
   const USDC_DAI_POOL = new Pool(
     CurrentConfig.tokens.in,
     CurrentConfig.tokens.out,
-    poolConstants.fee,
-    poolState.sqrtPriceX96.toString(),
-    poolState.liquidity.toString(),
-    poolState.tick
+    poolInfo.fee,
+    poolInfo.sqrtPriceX96.toString(),
+    poolInfo.liquidity.toString(),
+    poolInfo.tick
   )
 
   // create Position abstraction
@@ -138,11 +120,11 @@ async function mintPosition(): Promise<TransactionState> {
     pool: USDC_DAI_POOL,
     liquidity: CurrentConfig.tokens.liquidity,
     tickLower:
-      nearestUsableTick(poolState.tick, poolConstants.tickSpacing) -
-      poolConstants.tickSpacing * 2,
+      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
+      poolInfo.tickSpacing * 2,
     tickUpper:
-      nearestUsableTick(poolState.tick, poolConstants.tickSpacing) +
-      poolConstants.tickSpacing * 2,
+      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
+      poolInfo.tickSpacing * 2,
   })
 
   // get calldata for minting a position
@@ -195,21 +177,22 @@ const Example = () => {
   const refreshBalances = useCallback(async () => {
     const provider = getProvider()
     const address = getWalletAddress()
-    if (address && provider) {
-      setTokenInBalance(
-        await getCurrencyBalance(provider, address, CurrentConfig.tokens.in)
-      )
-      setTokenOutBalance(
-        await getCurrencyBalance(provider, address, CurrentConfig.tokens.out)
-      )
-      setPositionIds(
-        await getPositionIds(
-          provider,
-          address,
-          NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-        )
-      )
+    if (!provider || !address) {
+      throw new Error('No provider or address')
     }
+    setTokenInBalance(
+      await getCurrencyBalance(provider, address, CurrentConfig.tokens.in)
+    )
+    setTokenOutBalance(
+      await getCurrencyBalance(provider, address, CurrentConfig.tokens.out)
+    )
+    setPositionIds(
+      await getPositionIds(
+        provider,
+        address,
+        NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
+      )
+    )
   }, [])
 
   // Event Handlers
