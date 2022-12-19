@@ -2,12 +2,11 @@
 
 import { Currency } from '@uniswap/sdk-core'
 import { ethers } from 'ethers'
-import { providers } from 'ethers'
-import { ERC_20_ABI } from './constants'
+import { ERC20_ABI } from './constants'
 import { toReadableAmount } from './conversion'
 
 export async function getCurrencyBalance(
-  provider: providers.Provider,
+  provider: ethers.providers.Provider,
   address: string,
   currency: Currency
 ): Promise<string> {
@@ -19,7 +18,7 @@ export async function getCurrencyBalance(
   // Get currency otherwise
   const currencyContract = new ethers.Contract(
     currency.address,
-    ERC_20_ABI,
+    ERC20_ABI,
     provider
   )
   const balance: number = await currencyContract.balanceOf(address)
