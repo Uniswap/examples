@@ -56,14 +56,15 @@ export async function createTrade(): Promise<TokenTrade> {
 
   const amountOut = await quote()
 
-  const x = fromReadableAmount(
-    CurrentConfig.tokens.amountIn,
-    CurrentConfig.tokens.in.decimals
-  )
-
   const uncheckedTrade = Trade.createUncheckedTrade({
     route: swapRoute,
-    inputAmount: CurrencyAmount.fromRawAmount(CurrentConfig.tokens.in, x),
+    inputAmount: CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.in,
+      fromReadableAmount(
+        CurrentConfig.tokens.amountIn,
+        CurrentConfig.tokens.in.decimals
+      )
+    ),
     outputAmount: CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.out,
       amountOut
