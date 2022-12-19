@@ -59,11 +59,10 @@ const Example = () => {
   const onCreateTrade = useCallback(async () => {
     refreshBalances()
     setTrade(await createTrade())
-  }, [])
+  }, [refreshBalances])
 
   const onTrade = useCallback(async () => {
     if (trade) {
-      // getWETH()
       setTxState(await executeTrade(trade))
     }
   }, [trade])
