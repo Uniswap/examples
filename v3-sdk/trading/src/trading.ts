@@ -54,7 +54,7 @@ export async function createTrade(): Promise<TokenTrade> {
     CurrentConfig.tokens.out
   )
 
-  const amountOut = await quote()
+  const amountOut = await getOutputQuote()
 
   const uncheckedTrade = Trade.createUncheckedTrade({
     route: swapRoute,
@@ -105,7 +105,7 @@ export async function executeTrade(
 
 // Helper Quoting and Pool Functions
 
-async function quote(): Promise<number> {
+async function getOutputQuote(): Promise<number> {
   const provider = getProvider()
 
   if (!provider) {
