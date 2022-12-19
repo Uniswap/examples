@@ -13,7 +13,7 @@ import {
   SwapRouter,
   Trade,
 } from '@uniswap/v3-sdk'
-import { BigNumber, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import { CurrentConfig, Environment } from './config'
 import {
   MAX_FEE_PER_GAS,
@@ -21,8 +21,6 @@ import {
   POOL_FACTORY_CONTRACT_ADDRESS,
   QUOTER_CONTRACT_ADDRESS,
   V3_SWAP_ROUTER_ADDRESS,
-  WETH_ABI,
-  WETH_CONTRACT_ADDRESS,
 } from './libs/constants'
 import {
   getProvider,
@@ -30,58 +28,15 @@ import {
   sendTransaction,
   TransactionState,
 } from './libs/providers'
+import { wrapETH } from './libs/wallet'
 import { fromReadableAmount } from './libs/utils'
 
 import Quoter from '@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json'
 import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
-import JSBI from 'jsbi'
 
 export type TokenTrade = Trade<Token, Token, TradeType>
 
 // Trading Functions
-
-export async function wrapETH(eth: number) {
-  const wethContract = new ethers.Contract(
-    WETH_CONTRACT_ADDRESS,
-    WETH_ABI,
-    getProvider()!
-  )
-
-  const transaction = {
-    data: wethContract.interface.encodeFunctionData('deposit'),
-    value: BigNumber.from(eth)
-      .mul(JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(18)).toString())
-      .toString(),
-    from: getWalletAddress()!,
-    to: WETH_CONTRACT_ADDRESS,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  }
-
-  await sendTransaction(transaction)
-}
-
-export async function unwrapETH(eth: number) {
-  const wethContract = new ethers.Contract(
-    WETH_CONTRACT_ADDRESS,
-    WETH_ABI,
-    getProvider()!
-  )
-
-  const transaction = {
-    data: wethContract.interface.encodeFunctionData('withdraw', [
-      BigNumber.from(eth)
-        .mul(JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(18)).toString())
-        .toString(),
-    ]),
-    from: getWalletAddress()!,
-    to: WETH_CONTRACT_ADDRESS,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  }
-
-  await sendTransaction(transaction)
-}
 
 export async function createTrade(): Promise<TokenTrade> {
   const poolState = await getPoolState()
@@ -123,7 +78,7 @@ export async function createTrade(): Promise<TokenTrade> {
 export async function executeTrade(
   trade: TokenTrade
 ): Promise<TransactionState> {
-  await wrapETH(10)
+  await wrapETH(1)
 
   if (CurrentConfig.env === Environment.WALLET_EXTENSION) {
     return TransactionState.Failed
