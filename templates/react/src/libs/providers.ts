@@ -116,6 +116,7 @@ async function sendTransactionViaWallet(
   if (transaction.value) {
     transaction.value = BigNumber.from(transaction.value)
   }
+
   const txRes = await wallet.sendTransaction(transaction)
   let receipt = null
 

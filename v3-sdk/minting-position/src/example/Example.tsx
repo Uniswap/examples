@@ -27,7 +27,7 @@ import {
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
 } from '../libs/constants'
 
-const getPoolInfo = async (): Promise<{
+interface PoolInfo {
   token0: string
   token1: string
   fee: number
@@ -35,7 +35,9 @@ const getPoolInfo = async (): Promise<{
   sqrtPriceX96: ethers.BigNumber
   liquidity: ethers.BigNumber
   tick: number
-}> => {
+}
+
+const getPoolInfo = async (): Promise<PoolInfo> => {
   const provider = getProvider()
   if (!provider) {
     throw new Error('No provider')

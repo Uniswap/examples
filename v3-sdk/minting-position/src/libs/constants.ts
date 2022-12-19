@@ -49,7 +49,7 @@ export const ERC20_ABI = [
   'event Transfer(address indexed from, address indexed to, uint amount)',
 ]
 
-export const NONFUNGIBLEPOSITIONMANAGER_ABI = [
+export const NONFUNGIBLE_POSITION_MANAGER_ABI = [
   // Read-Only Functions
   'function balanceOf(address _owner) view returns (uint256)',
   'function tokenOfOwnerByIndex(address _owner, uint256 _index)view returns (uint256)',

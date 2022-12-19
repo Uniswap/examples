@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { ERC20_ABI, NONFUNGIBLEPOSITIONMANAGER_ABI } from './constants'
+import { ERC20_ABI, NONFUNGIBLE_POSITION_MANAGER_ABI } from './constants'
 import { AMOUNT_TO_APPROVE } from './constants'
 import { sendTransaction, TransactionState } from './providers'
 
@@ -11,7 +11,7 @@ export async function getPositionIds(
   // Get currency otherwise
   const positionContract = new ethers.Contract(
     contractAddress,
-    NONFUNGIBLEPOSITIONMANAGER_ABI,
+    NONFUNGIBLE_POSITION_MANAGER_ABI,
     provider
   )
   // Get number of positions
