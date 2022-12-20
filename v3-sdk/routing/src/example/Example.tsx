@@ -26,7 +26,7 @@ const Example = () => {
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
-  const [route, setRoute] = useState<SwapRoute | null>()
+  const [route, setRoute] = useState<SwapRoute | null>(null)
 
   // Listen for new blocks and update the wallet
   useOnBlockUpdated(async (blockNumber: number) => {
