@@ -8,7 +8,7 @@ import {
   nearestUsableTick,
   NonfungiblePositionManager,
 } from '@uniswap/v3-sdk'
-import { CurrencyAmount, Percent } from '@uniswap/sdk-core'
+import { Percent } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/balance'
 import { getPositionIds, getTokenTransferApprovals } from '../libs/positions'
