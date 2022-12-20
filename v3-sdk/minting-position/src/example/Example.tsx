@@ -26,6 +26,7 @@ import {
   MAX_PRIORITY_FEE_PER_GAS,
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
 } from '../libs/constants'
+import { fromReadableAmount } from '../libs/conversion'
 
 interface PoolInfo {
   token0: string
@@ -117,16 +118,24 @@ async function mintPosition(): Promise<TransactionState> {
     poolInfo.tick
   )
 
-  // create Position abstraction
-  const position = new Position({
+  // create position using the maximum liquidity from input amounts
+  const position = Position.fromAmounts({
     pool: USDC_DAI_POOL,
-    liquidity: CurrentConfig.tokens.liquidity,
     tickLower:
       nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
       poolInfo.tickSpacing * 2,
     tickUpper:
       nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
       poolInfo.tickSpacing * 2,
+    amount0: fromReadableAmount(
+      CurrentConfig.tokens.amountIn,
+      CurrentConfig.tokens.in.decimals
+    ),
+    amount1: fromReadableAmount(
+      CurrentConfig.tokens.amountOut,
+      CurrentConfig.tokens.out.decimals
+    ),
+    useFullPrecision: true,
   })
 
   // get calldata for minting a position
