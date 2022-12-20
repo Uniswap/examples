@@ -2,6 +2,7 @@ import { ethers } from 'ethers'
 import {
   AlphaRouter,
   ChainId,
+  SwapOptionsSwapRouter02,
   SwapRoute,
   SwapType,
 } from '@uniswap/smart-order-router'
@@ -25,6 +26,13 @@ export async function generateRoute(): Promise<SwapRoute | null> {
     provider: getMainnetProvider(),
   })
 
+  const options: SwapOptionsSwapRouter02 = {
+    recipient: CurrentConfig.wallet.address,
+    slippageTolerance: new Percent(5, 100),
+    deadline: Math.floor(Date.now() / 1000 + 1800),
+    type: SwapType.SWAP_ROUTER_02,
+  }
+
   const route = await router.route(
     CurrencyAmount.fromRawAmount(
       CurrentConfig.currencies.in,
@@ -34,12 +42,7 @@ export async function generateRoute(): Promise<SwapRoute | null> {
     ),
     CurrentConfig.currencies.out,
     TradeType.EXACT_INPUT,
-    {
-      recipient: CurrentConfig.wallet.address,
-      slippageTolerance: new Percent(5, 100),
-      deadline: Math.floor(Date.now() / 1000 + 1800),
-      type: SwapType.SWAP_ROUTER_02,
-    }
+    options
   )
 
   return route
