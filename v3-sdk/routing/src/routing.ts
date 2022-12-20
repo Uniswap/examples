@@ -1,4 +1,3 @@
-import { ethers } from 'ethers'
 import {
   AlphaRouter,
   ChainId,
@@ -19,6 +18,7 @@ import {
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
 } from './libs/constants'
+import { fromReadableAmount } from './libs/utils'
 
 export async function generateRoute(): Promise<SwapRoute | null> {
   const router = new AlphaRouter({
@@ -36,9 +36,10 @@ export async function generateRoute(): Promise<SwapRoute | null> {
   const route = await router.route(
     CurrencyAmount.fromRawAmount(
       CurrentConfig.currencies.in,
-      ethers.utils
-        .parseEther(CurrentConfig.currencies.amountIn.toString())
-        .toString()
+      fromReadableAmount(
+        CurrentConfig.currencies.amountIn,
+        CurrentConfig.currencies.in.decimals
+      ).toString()
     ),
     CurrentConfig.currencies.out,
     TradeType.EXACT_INPUT,
