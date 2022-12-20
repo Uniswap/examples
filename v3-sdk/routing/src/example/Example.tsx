@@ -109,6 +109,12 @@ const Example = () => {
             route.quote.currency.symbol
           } using $${route.estimatedGasUsedUSD.toExact()} worth of gas`}
       </h3>
+      <h3>
+        {route &&
+          route.route
+            .map((r) => r.tokenPath.map((t) => t.symbol).join(' -> '))
+            .join(', ')}
+      </h3>
       <button
         onClick={onSwap}
         disabled={

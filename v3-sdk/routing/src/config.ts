@@ -1,5 +1,5 @@
 import { Currency } from '@uniswap/sdk-core'
-import { ETH, USDC_TOKEN } from './libs/constants'
+import { DAI_TOKEN, ETH, USDC_TOKEN } from './libs/constants'
 
 // Sets if the example should run locally or on chain
 export enum Environment {

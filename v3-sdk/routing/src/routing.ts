@@ -18,7 +18,7 @@ import {
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
 } from './libs/constants'
-import { fromReadableAmount } from './libs/utils'
+import { fromReadableAmount } from './libs/conversion'
 
 export async function generateRoute(): Promise<SwapRoute | null> {
   const router = new AlphaRouter({
