@@ -21,11 +21,11 @@ export interface ExampleConfig {
     privateKey: string
   }
   tokens: {
-    in: Token
-    amountIn: number
-    out: Token
-    amountOut: number
-    fee: FeeAmount
+    token0: Token
+    token0Amount: number
+    token1: Token
+    token1Amount: number
+    poolFee: FeeAmount
   }
 }
 
@@ -35,7 +35,7 @@ export const CurrentConfig: ExampleConfig = {
   env: Environment.LOCAL,
   rpc: {
     local: 'http://localhost:8545',
-    mainnet: '',
+    mainnet: 'https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721',
   },
   wallet: {
     address: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
@@ -43,10 +43,10 @@ export const CurrentConfig: ExampleConfig = {
       '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
   },
   tokens: {
-    in: USDC_TOKEN,
-    amountIn: 1000,
-    out: DAI_TOKEN,
-    amountOut: 1000,
-    fee: FeeAmount.LOW,
+    token0: USDC_TOKEN,
+    token0Amount: 1000,
+    token1: DAI_TOKEN,
+    token1Amount: 1000,
+    poolFee: FeeAmount.LOW,
   },
 }

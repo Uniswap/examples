@@ -46,9 +46,9 @@ const getPoolInfo = async (): Promise<PoolInfo> => {
 
   const currentPoolAddress = computePoolAddress({
     factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
-    tokenA: CurrentConfig.tokens.in,
-    tokenB: CurrentConfig.tokens.out,
-    fee: CurrentConfig.tokens.fee,
+    tokenA: CurrentConfig.tokens.token0,
+    tokenB: CurrentConfig.tokens.token1,
+    fee: CurrentConfig.tokens.poolFee,
   })
 
   const poolContract = new ethers.Contract(
@@ -87,13 +87,13 @@ async function mintPosition(): Promise<TransactionState> {
   // Give approval to the contract to transfer tokens
   const tokenInApproval = await getTokenTransferApprovals(
     provider,
-    CurrentConfig.tokens.in.address,
+    CurrentConfig.tokens.token0.address,
     address,
     NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
   )
   const tokenOutApproval = await getTokenTransferApprovals(
     provider,
-    CurrentConfig.tokens.out.address,
+    CurrentConfig.tokens.token1.address,
     address,
     NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
   )
@@ -110,8 +110,8 @@ async function mintPosition(): Promise<TransactionState> {
 
   // create Pool abstraction
   const USDC_DAI_POOL = new Pool(
-    CurrentConfig.tokens.in,
-    CurrentConfig.tokens.out,
+    CurrentConfig.tokens.token0,
+    CurrentConfig.tokens.token1,
     poolInfo.fee,
     poolInfo.sqrtPriceX96.toString(),
     poolInfo.liquidity.toString(),
@@ -128,12 +128,12 @@ async function mintPosition(): Promise<TransactionState> {
       nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
       poolInfo.tickSpacing * 2,
     amount0: fromReadableAmount(
-      CurrentConfig.tokens.amountIn,
-      CurrentConfig.tokens.in.decimals
+      CurrentConfig.tokens.token0Amount,
+      CurrentConfig.tokens.token0.decimals
     ),
     amount1: fromReadableAmount(
-      CurrentConfig.tokens.amountOut,
-      CurrentConfig.tokens.out.decimals
+      CurrentConfig.tokens.token1Amount,
+      CurrentConfig.tokens.token1.decimals
     ),
     useFullPrecision: true,
   })
@@ -192,10 +192,10 @@ const Example = () => {
       throw new Error('No provider or address')
     }
     setTokenInBalance(
-      await getCurrencyBalance(provider, address, CurrentConfig.tokens.in)
+      await getCurrencyBalance(provider, address, CurrentConfig.tokens.token0)
     )
     setTokenOutBalance(
-      await getCurrencyBalance(provider, address, CurrentConfig.tokens.out)
+      await getCurrencyBalance(provider, address, CurrentConfig.tokens.token1)
     )
     setPositionIds(
       await getPositionIds(
@@ -240,8 +240,8 @@ const Example = () => {
           )}
         <h3>{`Block Number: ${blockNumber + 1}`}</h3>
         <h3>{`Transaction State: ${txState}`}</h3>
-        <h3>{`Token In ${CurrentConfig.tokens.in.symbol} Balance: ${tokenInBalance}`}</h3>
-        <h3>{`Token Out ${CurrentConfig.tokens.out.symbol} Balance: ${tokenOutBalance}`}</h3>
+        <h3>{`Token In ${CurrentConfig.tokens.token0.symbol} Balance: ${tokenInBalance}`}</h3>
+        <h3>{`Token Out ${CurrentConfig.tokens.token1.symbol} Balance: ${tokenOutBalance}`}</h3>
         <h3>{`Position Ids: ${positionIds}`}</h3>
         <button
           onClick={() => onMintPosition()}
