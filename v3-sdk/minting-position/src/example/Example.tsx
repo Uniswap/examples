@@ -8,7 +8,7 @@ import {
   nearestUsableTick,
   NonfungiblePositionManager,
 } from '@uniswap/v3-sdk'
-import { Percent } from '@uniswap/sdk-core'
+import { CurrencyAmount, Percent } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/balance'
 import { getPositionIds, getTokenTransferApprovals } from '../libs/positions'
@@ -26,6 +26,7 @@ import {
   MAX_PRIORITY_FEE_PER_GAS,
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
 } from '../libs/constants'
+import { fromReadableAmount } from '../libs/conversion'
 
 interface PoolInfo {
   token0: string
@@ -117,17 +118,33 @@ async function mintPosition(): Promise<TransactionState> {
     poolInfo.tick
   )
 
-  // create Position abstraction
-  const position = new Position({
+  // create position abstraction
+  const position = Position.fromAmounts({
     pool: USDC_DAI_POOL,
-    liquidity: CurrentConfig.tokens.liquidity,
     tickLower:
       nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
       poolInfo.tickSpacing * 2,
     tickUpper:
       nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
       poolInfo.tickSpacing * 2,
+    amount0: CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.in,
+      fromReadableAmount(
+        CurrentConfig.tokens.amountIn,
+        CurrentConfig.tokens.in.decimals
+      )
+    ).quotient,
+    amount1: CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.out,
+      fromReadableAmount(
+        CurrentConfig.tokens.amountOut,
+        CurrentConfig.tokens.out.decimals
+      )
+    ).quotient,
+    useFullPrecision: true,
   })
+
+  console.log('position', position)
 
   // get calldata for minting a position
   const { calldata, value } = NonfungiblePositionManager.addCallParameters(
