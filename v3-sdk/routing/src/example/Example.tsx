@@ -61,15 +61,13 @@ const Example = () => {
   }, [refreshBalances])
 
   const onCreateRoute = useCallback(async () => {
-    const route = await generateRoute()
-    setRoute(route)
+    setRoute(await generateRoute())
   }, [])
 
   const onSwap = useCallback(async () => {
     if (!route) {
       return
     }
-
     setTxState(TransactionState.Sending)
     setTxState(await executeRoute(route))
   }, [route])
@@ -103,6 +101,14 @@ const Example = () => {
         }>
         <p>Create Route</p>
       </button>
+      <h3>
+        {route &&
+          `Route: ${CurrentConfig.currencies.amountIn} ${
+            CurrentConfig.currencies.in.symbol
+          } to ${route.quote.toExact()} ${
+            route.quote.currency.symbol
+          } using $${route.estimatedGasUsedUSD.toExact()} worth of gas`}
+      </h3>
       <button
         onClick={onSwap}
         disabled={
