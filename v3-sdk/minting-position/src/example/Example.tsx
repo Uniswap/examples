@@ -118,7 +118,7 @@ async function mintPosition(): Promise<TransactionState> {
     poolInfo.tick
   )
 
-  // create position abstraction
+  // create position using the maximum liquidity from input amounts
   const position = Position.fromAmounts({
     pool: USDC_DAI_POOL,
     tickLower:
@@ -127,24 +127,16 @@ async function mintPosition(): Promise<TransactionState> {
     tickUpper:
       nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
       poolInfo.tickSpacing * 2,
-    amount0: CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.in,
-      fromReadableAmount(
-        CurrentConfig.tokens.amountIn,
-        CurrentConfig.tokens.in.decimals
-      )
-    ).quotient,
-    amount1: CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.out,
-      fromReadableAmount(
-        CurrentConfig.tokens.amountOut,
-        CurrentConfig.tokens.out.decimals
-      )
-    ).quotient,
+    amount0: fromReadableAmount(
+      CurrentConfig.tokens.amountIn,
+      CurrentConfig.tokens.in.decimals
+    ),
+    amount1: fromReadableAmount(
+      CurrentConfig.tokens.amountOut,
+      CurrentConfig.tokens.out.decimals
+    ),
     useFullPrecision: true,
   })
-
-  console.log('position', position)
 
   // get calldata for minting a position
   const { calldata, value } = NonfungiblePositionManager.addCallParameters(
