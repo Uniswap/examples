@@ -14,21 +14,21 @@ import {
   Trade,
 } from '@uniswap/v3-sdk'
 import { ethers } from 'ethers'
-import { CurrentConfig } from './config'
+import { CurrentConfig } from '../config'
 import {
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
   POOL_FACTORY_CONTRACT_ADDRESS,
   QUOTER_CONTRACT_ADDRESS,
   V3_SWAP_ROUTER_ADDRESS,
-} from './libs/constants'
+} from './constants'
 import {
   getProvider,
   getWalletAddress,
   sendTransaction,
   TransactionState,
-} from './libs/providers'
-import { fromReadableAmount } from './libs/utils'
+} from './providers'
+import { fromReadableAmount } from './utils'
 
 import Quoter from '@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json'
 import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'

@@ -4,7 +4,7 @@ import { Currency } from '@uniswap/sdk-core'
 import { ethers } from 'ethers'
 import { providers } from 'ethers'
 import { ERC_20_ABI } from './constants'
-import { toReadableAmount } from './utils'
+import { toReadableAmount } from './conversion'
 
 export async function getCurrencyBalance(
   provider: providers.Provider,

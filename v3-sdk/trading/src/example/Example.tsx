@@ -9,7 +9,7 @@ import {
 } from '../libs/providers'
 import { displayTrade } from '../libs/utils'
 import { getCurrencyBalance, wrapETH } from '../libs/wallet'
-import { createTrade, executeTrade, TokenTrade } from '../trading'
+import { createTrade, executeTrade, TokenTrade } from '../libs/trading'
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   useEffect(() => {
@@ -61,11 +61,11 @@ const Example = () => {
     setTrade(await createTrade())
   }, [refreshBalances])
 
-  const onTrade = useCallback(async () => {
+  const onTrade = useCallback(async (trade: TokenTrade | undefined) => {
     if (trade) {
       setTxState(await executeTrade(trade))
     }
-  }, [trade])
+  }, [])
 
   return (
     <div className="App">
@@ -101,7 +101,7 @@ const Example = () => {
         <p>Wrap ETH</p>
       </button>
       <button
-        onClick={onTrade}
+        onClick={() => onTrade(trade)}
         disabled={
           trade === undefined ||
           txState === TransactionState.Sending ||
