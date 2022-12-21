@@ -10,7 +10,7 @@ import {
   QUOTER_CONTRACT_ADDRESS,
 } from '../libs/constants'
 import { getProvider } from '../libs/providers'
-import { toReadableAmount, fromReadableAmount } from '../libs/utils'
+import { toReadableAmount, fromReadableAmount } from '../libs/conversion'
 
 const getPoolConstants = async (): Promise<{
   token0: string
@@ -42,7 +42,7 @@ const getPoolConstants = async (): Promise<{
   }
 }
 
-const quote = async (): Promise<number> => {
+const quote = async (): Promise<string> => {
   const quoterContract = new ethers.Contract(
     QUOTER_CONTRACT_ADDRESS,
     Quoter.abi,
@@ -65,7 +65,7 @@ const quote = async (): Promise<number> => {
 }
 
 const Example = () => {
-  const [outputAmount, setOutputAmount] = useState<number>()
+  const [outputAmount, setOutputAmount] = useState<string>()
 
   const onQuote = useCallback(async () => {
     setOutputAmount(await quote())
