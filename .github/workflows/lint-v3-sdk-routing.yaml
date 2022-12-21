@@ -1,4 +1,4 @@
-name: Lint SDK Quoting
+name: Lint V3 SDK Routing
 
 on: push
 
@@ -17,9 +17,9 @@ jobs:
           node-version: 16
 
       - name: Install dependencies
-        working-directory: ./v3-sdk/quoting
+        working-directory: ./v3-sdk/routing
         run: yarn
 
       - name: Run linters
-        working-directory: ./v3-sdk/quoting
+        working-directory: ./v3-sdk/routing
         run: yarn lint
