@@ -240,8 +240,8 @@ const Example = () => {
           )}
         <h3>{`Block Number: ${blockNumber + 1}`}</h3>
         <h3>{`Transaction State: ${txState}`}</h3>
-        <h3>{`Token In ${CurrentConfig.tokens.token0.symbol} Balance: ${tokenInBalance}`}</h3>
-        <h3>{`Token Out ${CurrentConfig.tokens.token1.symbol} Balance: ${tokenOutBalance}`}</h3>
+        <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${tokenInBalance}`}</h3>
+        <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${tokenOutBalance}`}</h3>
         <h3>{`Position Ids: ${positionIds}`}</h3>
         <button
           onClick={() => onMintPosition()}

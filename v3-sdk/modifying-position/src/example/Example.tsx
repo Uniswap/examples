@@ -80,9 +80,13 @@ const getPoolInfo = async (): Promise<PoolInfo> => {
   }
 }
 
-const getPosition = async (): Promise<Position> => {
-  // pool
+const getPosition = async (
+  percentageToIncrease?: number
+): Promise<Position> => {
+  // get pool info
   const poolInfo = await getPoolInfo()
+
+  // construct pool instance
   const USDC_DAI_POOL = new Pool(
     CurrentConfig.tokens.token0,
     CurrentConfig.tokens.token1,
@@ -91,6 +95,20 @@ const getPosition = async (): Promise<Position> => {
     poolInfo.liquidity.toString(),
     poolInfo.tick
   )
+
+  let amount0 = fromReadableAmount(
+    CurrentConfig.tokens.token0Amount,
+    CurrentConfig.tokens.token0.decimals
+  )
+  let amount1 = fromReadableAmount(
+    CurrentConfig.tokens.token1Amount,
+    CurrentConfig.tokens.token1.decimals
+  )
+
+  if (percentageToIncrease) {
+    amount0 = (amount0 * percentageToIncrease) / 100
+    amount1 = (amount1 * percentageToIncrease) / 100
+  }
 
   // create position using the maximum liquidity from input amounts
   return Position.fromAmounts({
@@ -101,14 +119,8 @@ const getPosition = async (): Promise<Position> => {
     tickUpper:
       nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
       poolInfo.tickSpacing * 2,
-    amount0: fromReadableAmount(
-      CurrentConfig.tokens.token0Amount,
-      CurrentConfig.tokens.token0.decimals
-    ),
-    amount1: fromReadableAmount(
-      CurrentConfig.tokens.token1Amount,
-      CurrentConfig.tokens.token1.decimals
-    ),
+    amount0,
+    amount1,
     useFullPrecision: true,
   })
 }
@@ -164,16 +176,20 @@ async function mintPosition(): Promise<TransactionState> {
   return TransactionState.Sent
 }
 
-async function increasePosition(positionId: number): Promise<TransactionState> {
+async function addLiquidity(positionId: number): Promise<TransactionState> {
   const address = getWalletAddress()
   const provider = getProvider()
   if (!address || !provider) {
     return TransactionState.Failed
   }
 
-  // get calldata for minting a position
+  const positionToIncreaseBy = await getPosition(
+    CurrentConfig.tokens.percentageToAdd
+  )
+
+  // get calldata for increasing a position
   const { calldata, value } = NonfungiblePositionManager.addCallParameters(
-    await getPosition(),
+    positionToIncreaseBy,
     {
       deadline: Math.floor(Date.now() / 1000) + 60 * 20,
       slippageTolerance: new Percent(50, 10_000),
@@ -195,21 +211,24 @@ async function increasePosition(positionId: number): Promise<TransactionState> {
   return TransactionState.Sent
 }
 
-async function decreasePosition(positionId: number): Promise<TransactionState> {
+async function removeLiquidity(positionId: number): Promise<TransactionState> {
   const address = getWalletAddress()
   const provider = getProvider()
   if (!address || !provider) {
     return TransactionState.Failed
   }
 
+  const currentPosition = await getPosition()
+
   // get calldata for minting a position
   const { calldata, value } = NonfungiblePositionManager.removeCallParameters(
-    await getPosition(),
+    currentPosition,
     {
       deadline: Math.floor(Date.now() / 1000) + 60 * 20,
       slippageTolerance: new Percent(50, 10_000),
       tokenId: positionId,
-      liquidityPercentage: new Percent(1),
+      // percentage of liquidity to remove
+      liquidityPercentage: new Percent(CurrentConfig.tokens.percentageToRemove),
       collectOptions: {
         expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(DAI_TOKEN, 0),
         expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(USDC_TOKEN, 0),
@@ -244,7 +263,7 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 const Example = () => {
   const [tokenInBalance, setTokenInBalance] = useState<string>()
   const [tokenOutBalance, setTokenOutBalance] = useState<string>()
-  const [positionIds, setPositionIds] = useState<number[]>()
+  const [positionIds, setPositionIds] = useState<number[]>([])
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
@@ -289,14 +308,14 @@ const Example = () => {
     setTxState(await mintPosition())
   }, [])
 
-  const onIncreasePosition = useCallback(async (position: number) => {
+  const onAddLiquidity = useCallback(async (position: number) => {
     setTxState(TransactionState.Sending)
-    setTxState(await increasePosition(position))
+    setTxState(await addLiquidity(position))
   }, [])
 
-  const onDecreasePosition = useCallback(async (position: number) => {
+  const onRemoveLiquidity = useCallback(async (position: number) => {
     setTxState(TransactionState.Sending)
-    setTxState(await decreasePosition(position))
+    setTxState(await removeLiquidity(position))
   }, [])
 
   return (
@@ -320,8 +339,8 @@ const Example = () => {
           )}
         <h3>{`Block Number: ${blockNumber + 1}`}</h3>
         <h3>{`Transaction State: ${txState}`}</h3>
-        <h3>{`Token In ${CurrentConfig.tokens.token0.symbol} Balance: ${tokenInBalance}`}</h3>
-        <h3>{`Token Out ${CurrentConfig.tokens.token1.symbol} Balance: ${tokenOutBalance}`}</h3>
+        <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${tokenInBalance}`}</h3>
+        <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${tokenOutBalance}`}</h3>
         <h3>{`Position Ids: ${positionIds}`}</h3>
         <button
           className="button"
@@ -336,34 +355,28 @@ const Example = () => {
         <button
           className="button"
           onClick={() => {
-            if (!positionIds) {
-              return
-            }
-            onIncreasePosition(positionIds[positionIds?.length - 1])
+            onAddLiquidity(positionIds[positionIds.length - 1])
           }}
           disabled={
             txState === TransactionState.Sending ||
             getProvider() === null ||
             CurrentConfig.rpc.mainnet === '' ||
-            positionIds?.length === 0
+            positionIds.length === 0
           }>
-          <p>Increase Position</p>
+          <p>Add Liquidity to Position</p>
         </button>
         <button
           className="button"
           onClick={() => {
-            if (!positionIds) {
-              return
-            }
-            onDecreasePosition(positionIds[positionIds?.length - 1])
+            onRemoveLiquidity(positionIds[positionIds.length - 1])
           }}
           disabled={
             txState === TransactionState.Sending ||
             getProvider() === null ||
             CurrentConfig.rpc.mainnet === '' ||
-            positionIds?.length === 0
+            positionIds.length === 0
           }>
-          <p>Decrease Position</p>
+          <p>Remove Liquidity from Position</p>
         </button>
       </header>
     </div>

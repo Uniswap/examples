@@ -26,6 +26,8 @@ export interface ExampleConfig {
     token1: Token
     token1Amount: number
     poolFee: FeeAmount
+    percentageToRemove: number
+    percentageToAdd: number
   }
 }
 
@@ -48,5 +50,7 @@ export const CurrentConfig: ExampleConfig = {
     token1: DAI_TOKEN,
     token1Amount: 1000,
     poolFee: FeeAmount.LOW,
+    percentageToRemove: 1,
+    percentageToAdd: 0.5,
   },
 }
