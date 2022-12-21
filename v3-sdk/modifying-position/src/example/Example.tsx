@@ -80,6 +80,22 @@ const getPoolInfo = async (): Promise<PoolInfo> => {
   }
 }
 
+const getPool = async (): Promise<Pool> => {
+  const poolInfo = await getPoolInfo()
+  return new Pool(
+    CurrentConfig.tokens.token0,
+    CurrentConfig.tokens.token1,
+    poolInfo.fee,
+    poolInfo.sqrtPriceX96.toString(),
+    poolInfo.liquidity.toString(),
+    poolInfo.tick
+  )
+}
+
+const getPosition = async (): Promise<Position> => {
+  const pool = await getPool()
+  
+
 async function mintPosition(): Promise<TransactionState> {
   const address = getWalletAddress()
   const provider = getProvider()
@@ -107,18 +123,9 @@ async function mintPosition(): Promise<TransactionState> {
     return TransactionState.Failed
   }
 
-  // get pool data
+  // pool 
   const poolInfo = await getPoolInfo()
-
-  // create Pool abstraction
-  const USDC_DAI_POOL = new Pool(
-    CurrentConfig.tokens.token0,
-    CurrentConfig.tokens.token1,
-    poolInfo.fee,
-    poolInfo.sqrtPriceX96.toString(),
-    poolInfo.liquidity.toString(),
-    poolInfo.tick
-  )
+  const USDC_DAI_POOL = await getPool()
 
   // create position using the maximum liquidity from input amounts
   const position = Position.fromAmounts({
@@ -168,26 +175,6 @@ async function increasePosition(positionId: number): Promise<TransactionState> {
   const address = getWalletAddress()
   const provider = getProvider()
   if (!address || !provider) {
-    return TransactionState.Failed
-  }
-  // Give approval to the contract to transfer tokens
-  const tokenInApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.token0.address,
-    address,
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-  )
-  const tokenOutApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.token1.address,
-    address,
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-  )
-
-  if (
-    tokenInApproval !== TransactionState.Sent ||
-    tokenOutApproval !== TransactionState.Sent
-  ) {
     return TransactionState.Failed
   }
 
@@ -252,26 +239,6 @@ async function decreasePosition(positionId: number): Promise<TransactionState> {
   const address = getWalletAddress()
   const provider = getProvider()
   if (!address || !provider) {
-    return TransactionState.Failed
-  }
-  // Give approval to the contract to transfer tokens
-  const tokenInApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.token0.address,
-    address,
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-  )
-  const tokenOutApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.token1.address,
-    address,
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-  )
-
-  if (
-    tokenInApproval !== TransactionState.Sent ||
-    tokenOutApproval !== TransactionState.Sent
-  ) {
     return TransactionState.Failed
   }
 
