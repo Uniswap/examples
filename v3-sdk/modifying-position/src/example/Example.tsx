@@ -80,9 +80,10 @@ const getPoolInfo = async (): Promise<PoolInfo> => {
   }
 }
 
-const getPool = async (): Promise<Pool> => {
+const getPosition = async (): Promise<Position> => {
+  // pool
   const poolInfo = await getPoolInfo()
-  return new Pool(
+  const USDC_DAI_POOL = new Pool(
     CurrentConfig.tokens.token0,
     CurrentConfig.tokens.token1,
     poolInfo.fee,
@@ -90,11 +91,27 @@ const getPool = async (): Promise<Pool> => {
     poolInfo.liquidity.toString(),
     poolInfo.tick
   )
-}
 
-const getPosition = async (): Promise<Position> => {
-  const pool = await getPool()
-  
+  // create position using the maximum liquidity from input amounts
+  return Position.fromAmounts({
+    pool: USDC_DAI_POOL,
+    tickLower:
+      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
+      poolInfo.tickSpacing * 2,
+    tickUpper:
+      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
+      poolInfo.tickSpacing * 2,
+    amount0: fromReadableAmount(
+      CurrentConfig.tokens.token0Amount,
+      CurrentConfig.tokens.token0.decimals
+    ),
+    amount1: fromReadableAmount(
+      CurrentConfig.tokens.token1Amount,
+      CurrentConfig.tokens.token1.decimals
+    ),
+    useFullPrecision: true,
+  })
+}
 
 async function mintPosition(): Promise<TransactionState> {
   const address = getWalletAddress()
@@ -123,33 +140,9 @@ async function mintPosition(): Promise<TransactionState> {
     return TransactionState.Failed
   }
 
-  // pool 
-  const poolInfo = await getPoolInfo()
-  const USDC_DAI_POOL = await getPool()
-
-  // create position using the maximum liquidity from input amounts
-  const position = Position.fromAmounts({
-    pool: USDC_DAI_POOL,
-    tickLower:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
-      poolInfo.tickSpacing * 2,
-    tickUpper:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
-      poolInfo.tickSpacing * 2,
-    amount0: fromReadableAmount(
-      CurrentConfig.tokens.token0Amount,
-      CurrentConfig.tokens.token0.decimals
-    ),
-    amount1: fromReadableAmount(
-      CurrentConfig.tokens.token1Amount,
-      CurrentConfig.tokens.token1.decimals
-    ),
-    useFullPrecision: true,
-  })
-
   // get calldata for minting a position
   const { calldata, value } = NonfungiblePositionManager.addCallParameters(
-    position,
+    await getPosition(),
     {
       recipient: address,
       deadline: Math.floor(Date.now() / 1000) + 60 * 20,
@@ -178,42 +171,9 @@ async function increasePosition(positionId: number): Promise<TransactionState> {
     return TransactionState.Failed
   }
 
-  // get pool data
-  const poolInfo = await getPoolInfo()
-
-  // create Pool abstraction
-  const USDC_DAI_POOL = new Pool(
-    CurrentConfig.tokens.token0,
-    CurrentConfig.tokens.token1,
-    poolInfo.fee,
-    poolInfo.sqrtPriceX96.toString(),
-    poolInfo.liquidity.toString(),
-    poolInfo.tick
-  )
-
-  // create position using the maximum liquidity from input amounts
-  const position = Position.fromAmounts({
-    pool: USDC_DAI_POOL,
-    tickLower:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
-      poolInfo.tickSpacing * 2,
-    tickUpper:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
-      poolInfo.tickSpacing * 2,
-    amount0: fromReadableAmount(
-      CurrentConfig.tokens.token0Amount,
-      CurrentConfig.tokens.token0.decimals
-    ),
-    amount1: fromReadableAmount(
-      CurrentConfig.tokens.token1Amount,
-      CurrentConfig.tokens.token1.decimals
-    ),
-    useFullPrecision: true,
-  })
-
   // get calldata for minting a position
   const { calldata, value } = NonfungiblePositionManager.addCallParameters(
-    position,
+    await getPosition(),
     {
       deadline: Math.floor(Date.now() / 1000) + 60 * 20,
       slippageTolerance: new Percent(50, 10_000),
@@ -242,42 +202,9 @@ async function decreasePosition(positionId: number): Promise<TransactionState> {
     return TransactionState.Failed
   }
 
-  // get pool data
-  const poolInfo = await getPoolInfo()
-
-  // create Pool abstraction
-  const USDC_DAI_POOL = new Pool(
-    CurrentConfig.tokens.token0,
-    CurrentConfig.tokens.token1,
-    poolInfo.fee,
-    poolInfo.sqrtPriceX96.toString(),
-    poolInfo.liquidity.toString(),
-    poolInfo.tick
-  )
-
-  // create position using the maximum liquidity from input amounts
-  const position = Position.fromAmounts({
-    pool: USDC_DAI_POOL,
-    tickLower:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
-      poolInfo.tickSpacing * 2,
-    tickUpper:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
-      poolInfo.tickSpacing * 2,
-    amount0: fromReadableAmount(
-      CurrentConfig.tokens.token0Amount,
-      CurrentConfig.tokens.token0.decimals
-    ),
-    amount1: fromReadableAmount(
-      CurrentConfig.tokens.token1Amount,
-      CurrentConfig.tokens.token1.decimals
-    ),
-    useFullPrecision: true,
-  })
-
   // get calldata for minting a position
   const { calldata, value } = NonfungiblePositionManager.removeCallParameters(
-    position,
+    await getPosition(),
     {
       deadline: Math.floor(Date.now() / 1000) + 60 * 20,
       slippageTolerance: new Percent(50, 10_000),
