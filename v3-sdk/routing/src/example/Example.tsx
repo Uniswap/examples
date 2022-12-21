@@ -64,13 +64,13 @@ const Example = () => {
     setRoute(await generateRoute())
   }, [])
 
-  const onSwap = useCallback(async () => {
+  const executeSwap = useCallback(async (route: SwapRoute | null) => {
     if (!route) {
       return
     }
     setTxState(TransactionState.Sending)
     setTxState(await executeRoute(route))
-  }, [route])
+  }, [])
 
   return (
     <div className="App">
@@ -116,7 +116,7 @@ const Example = () => {
             .join(', ')}
       </h3>
       <button
-        onClick={onSwap}
+        onClick={() => executeSwap(route)}
         disabled={
           txState === TransactionState.Sending ||
           getProvider() === null ||
