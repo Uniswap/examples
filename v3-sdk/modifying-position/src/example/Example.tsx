@@ -8,7 +8,7 @@ import {
   nearestUsableTick,
   NonfungiblePositionManager,
 } from '@uniswap/v3-sdk'
-import { Percent } from '@uniswap/sdk-core'
+import { Percent, CurrencyAmount } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/balance'
 import { getPositionIds, getTokenTransferApprovals } from '../libs/positions'
@@ -25,6 +25,8 @@ import {
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+  DAI_TOKEN,
+  USDC_TOKEN,
 } from '../libs/constants'
 import { fromReadableAmount } from '../libs/conversion'
 
@@ -246,6 +248,96 @@ async function increasePosition(positionId: number): Promise<TransactionState> {
   return TransactionState.Sent
 }
 
+async function decreasePosition(positionId: number): Promise<TransactionState> {
+  const address = getWalletAddress()
+  const provider = getProvider()
+  if (!address || !provider) {
+    return TransactionState.Failed
+  }
+  // Give approval to the contract to transfer tokens
+  const tokenInApproval = await getTokenTransferApprovals(
+    provider,
+    CurrentConfig.tokens.token0.address,
+    address,
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
+  )
+  const tokenOutApproval = await getTokenTransferApprovals(
+    provider,
+    CurrentConfig.tokens.token1.address,
+    address,
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
+  )
+
+  if (
+    tokenInApproval !== TransactionState.Sent ||
+    tokenOutApproval !== TransactionState.Sent
+  ) {
+    return TransactionState.Failed
+  }
+
+  // get pool data
+  const poolInfo = await getPoolInfo()
+
+  // create Pool abstraction
+  const USDC_DAI_POOL = new Pool(
+    CurrentConfig.tokens.token0,
+    CurrentConfig.tokens.token1,
+    poolInfo.fee,
+    poolInfo.sqrtPriceX96.toString(),
+    poolInfo.liquidity.toString(),
+    poolInfo.tick
+  )
+
+  // create position using the maximum liquidity from input amounts
+  const position = Position.fromAmounts({
+    pool: USDC_DAI_POOL,
+    tickLower:
+      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
+      poolInfo.tickSpacing * 2,
+    tickUpper:
+      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
+      poolInfo.tickSpacing * 2,
+    amount0: fromReadableAmount(
+      CurrentConfig.tokens.token0Amount,
+      CurrentConfig.tokens.token0.decimals
+    ),
+    amount1: fromReadableAmount(
+      CurrentConfig.tokens.token1Amount,
+      CurrentConfig.tokens.token1.decimals
+    ),
+    useFullPrecision: true,
+  })
+
+  // get calldata for minting a position
+  const { calldata, value } = NonfungiblePositionManager.removeCallParameters(
+    position,
+    {
+      deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+      slippageTolerance: new Percent(50, 10_000),
+      tokenId: positionId,
+      liquidityPercentage: new Percent(1),
+      collectOptions: {
+        expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(DAI_TOKEN, 0),
+        expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(USDC_TOKEN, 0),
+        recipient: address,
+      },
+    }
+  )
+
+  // build transaction
+  const transaction = {
+    data: calldata,
+    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+    value: value,
+    from: address,
+    maxFeePerGas: MAX_FEE_PER_GAS,
+    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+  }
+
+  await sendTransaction(transaction)
+  return TransactionState.Sent
+}
+
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   useEffect(() => {
     const subscription = getProvider()?.on('block', callback)
@@ -310,7 +402,7 @@ const Example = () => {
 
   const onDecreasePosition = useCallback(async (position: number) => {
     setTxState(TransactionState.Sending)
-    setTxState(await increasePosition(position))
+    setTxState(await decreasePosition(position))
   }, [])
 
   return (
@@ -338,6 +430,7 @@ const Example = () => {
         <h3>{`Token Out ${CurrentConfig.tokens.token1.symbol} Balance: ${tokenOutBalance}`}</h3>
         <h3>{`Position Ids: ${positionIds}`}</h3>
         <button
+          className="button"
           onClick={onMintPosition}
           disabled={
             txState === TransactionState.Sending ||
@@ -347,6 +440,7 @@ const Example = () => {
           <p>Mint Position</p>
         </button>
         <button
+          className="button"
           onClick={() => {
             if (!positionIds) {
               return
@@ -362,6 +456,7 @@ const Example = () => {
           <p>Increase Position</p>
         </button>
         <button
+          className="button"
           onClick={() => {
             if (!positionIds) {
               return
