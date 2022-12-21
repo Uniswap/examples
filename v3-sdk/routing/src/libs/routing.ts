@@ -6,19 +6,19 @@ import {
   SwapType,
 } from '@uniswap/smart-order-router'
 import { TradeType, CurrencyAmount, Percent } from '@uniswap/sdk-core'
-import { CurrentConfig } from './config'
+import { CurrentConfig } from '../config'
 import {
   getMainnetProvider,
   getWalletAddress,
   sendTransaction,
   TransactionState,
-} from './libs/providers'
+} from './providers'
 import {
   V3_SWAP_ROUTER_ADDRESS,
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
-} from './libs/constants'
-import { fromReadableAmount } from './libs/conversion'
+} from './constants'
+import { fromReadableAmount } from './conversion'
 
 export async function generateRoute(): Promise<SwapRoute | null> {
   const router = new AlphaRouter({

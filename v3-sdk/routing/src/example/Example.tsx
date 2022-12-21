@@ -8,7 +8,7 @@ import {
   getWalletAddress,
   TransactionState,
 } from '../libs/providers'
-import { executeRoute, generateRoute } from '../routing'
+import { executeRoute, generateRoute } from '../libs/routing'
 import { SwapRoute } from '@uniswap/smart-order-router'
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
