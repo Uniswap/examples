@@ -19,9 +19,17 @@ export const USDC_TOKEN = new Token(
   'USD//C'
 )
 
+export const DAI_TOKEN = new Token(
+  SupportedChainId.MAINNET,
+  '0x6B175474E89094C44Da98b954EedeAC495271d0F',
+  18,
+  'DAI',
+  'Dai Stablecoin'
+)
+
 // ABI's
 
-export const ERC_20_ABI = [
+export const ERC20_ABI = [
   // Read-Only Functions
   'function balanceOf(address owner) view returns (uint256)',
   'function decimals() view returns (uint8)',

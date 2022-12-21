@@ -3,8 +3,8 @@
 import { Currency } from '@uniswap/sdk-core'
 import { ethers } from 'ethers'
 import { providers } from 'ethers'
-import { ERC_20_ABI } from './constants'
-import { toReadableAmount } from './utils'
+import { ERC20_ABI } from './constants'
+import { toReadableAmount } from './conversion'
 
 export async function getCurrencyBalance(
   provider: providers.Provider,
@@ -17,13 +17,13 @@ export async function getCurrencyBalance(
   }
 
   // Get currency otherwise
-  const currencyContract = new ethers.Contract(
+  const walletContract = new ethers.Contract(
     currency.address,
-    ERC_20_ABI,
+    ERC20_ABI,
     provider
   )
-  const balance: number = await currencyContract.balanceOf(address)
-  const decimals: number = await currencyContract.decimals()
+  const balance: number = await walletContract.balanceOf(address)
+  const decimals: number = await walletContract.decimals()
 
   // Format with proper units (approximate)
   return toReadableAmount(balance, decimals).toString()
