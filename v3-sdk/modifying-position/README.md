@@ -1,4 +1,4 @@
-# Minting a Position
+# Modifying a Position
 ## Overview
 
 This is a template for dApp development guides that includes running against mainnet, locally, and using a wallet connection.
