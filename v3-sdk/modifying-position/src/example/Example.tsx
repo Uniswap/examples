@@ -9,7 +9,11 @@ import {
 import { Percent, CurrencyAmount } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
-import { getPositionIds, getPosition, mintPosition } from '../libs/positions'
+import {
+  getPositionIds,
+  constructPosition,
+  mintPosition,
+} from '../libs/liquidity'
 import {
   connectBrowserExtensionWallet,
   getProvider,
@@ -24,6 +28,7 @@ import {
   DAI_TOKEN,
   USDC_TOKEN,
 } from '../libs/constants'
+import { fromReadableAmount } from '../libs/conversion'
 
 async function addLiquidity(positionId: number): Promise<TransactionState> {
   const address = getWalletAddress()
@@ -32,8 +37,25 @@ async function addLiquidity(positionId: number): Promise<TransactionState> {
     return TransactionState.Failed
   }
 
-  const positionToIncreaseBy = await getPosition(
-    CurrentConfig.tokens.fractionToAdd
+  const positionToIncreaseBy = await await constructPosition(
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token0,
+      fromReadableAmount(
+        (CurrentConfig.tokens.token0Amount *
+          CurrentConfig.tokens.fractionToAdd) /
+          100,
+        CurrentConfig.tokens.token0.decimals
+      )
+    ),
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token1,
+      fromReadableAmount(
+        (CurrentConfig.tokens.token1Amount *
+          CurrentConfig.tokens.fractionToAdd) /
+          100,
+        CurrentConfig.tokens.token1.decimals
+      )
+    )
   )
 
   const addLiquidityOptions: AddLiquidityOptions = {
@@ -69,7 +91,22 @@ async function removeLiquidity(positionId: number): Promise<TransactionState> {
     return TransactionState.Failed
   }
 
-  const currentPosition = await getPosition()
+  const currentPosition = await await constructPosition(
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token0,
+      fromReadableAmount(
+        CurrentConfig.tokens.token0Amount,
+        CurrentConfig.tokens.token0.decimals
+      )
+    ),
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token1,
+      fromReadableAmount(
+        CurrentConfig.tokens.token1Amount,
+        CurrentConfig.tokens.token1.decimals
+      )
+    )
+  )
 
   const collectOptions: Omit<CollectOptions, 'tokenId'> = {
     expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(DAI_TOKEN, 0),

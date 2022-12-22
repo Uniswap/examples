@@ -15,11 +15,11 @@ import {
   MintOptions,
   NonfungiblePositionManager,
 } from '@uniswap/v3-sdk'
-import { fromReadableAmount } from '../libs/conversion'
 import { CurrentConfig } from '../config'
 import { getPoolInfo } from './pool'
-import { getProvider, getWalletAddress } from '../libs/providers'
-import { Percent } from '@uniswap/sdk-core'
+import { getProvider, getWalletAddress } from './providers'
+import { Percent, CurrencyAmount, Token } from '@uniswap/sdk-core'
+import { fromReadableAmount } from './conversion'
 
 export async function getPositionIds(
   provider: ethers.providers.Provider,
@@ -77,35 +77,22 @@ export async function getTokenTransferApprovals(
   return TransactionState.Sent
 }
 
-export const getPosition = async (
-  percentageToIncrease?: number
+export const constructPosition = async (
+  token0Amount: CurrencyAmount<Token>,
+  token1Amount: CurrencyAmount<Token>
 ): Promise<Position> => {
   // get pool info
   const poolInfo = await getPoolInfo()
 
   // construct pool instance
   const USDC_DAI_POOL = new Pool(
-    CurrentConfig.tokens.token0,
-    CurrentConfig.tokens.token1,
+    token0Amount.currency,
+    token1Amount.currency,
     poolInfo.fee,
     poolInfo.sqrtPriceX96.toString(),
     poolInfo.liquidity.toString(),
     poolInfo.tick
   )
-
-  let amount0 = fromReadableAmount(
-    CurrentConfig.tokens.token0Amount,
-    CurrentConfig.tokens.token0.decimals
-  )
-  let amount1 = fromReadableAmount(
-    CurrentConfig.tokens.token1Amount,
-    CurrentConfig.tokens.token1.decimals
-  )
-
-  if (percentageToIncrease) {
-    amount0 = (amount0 * percentageToIncrease) / 100
-    amount1 = (amount1 * percentageToIncrease) / 100
-  }
 
   // create position using the maximum liquidity from input amounts
   return Position.fromAmounts({
@@ -116,8 +103,8 @@ export const getPosition = async (
     tickUpper:
       nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
       poolInfo.tickSpacing * 2,
-    amount0,
-    amount1,
+    amount0: token0Amount.quotient,
+    amount1: token1Amount.quotient,
     useFullPrecision: true,
   })
 }
@@ -155,9 +142,26 @@ export async function mintPosition(): Promise<TransactionState> {
     slippageTolerance: new Percent(50, 10_000),
   }
 
+  const positionToMint = await constructPosition(
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token0,
+      fromReadableAmount(
+        CurrentConfig.tokens.token0Amount,
+        CurrentConfig.tokens.token0.decimals
+      )
+    ),
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token1,
+      fromReadableAmount(
+        CurrentConfig.tokens.token1Amount,
+        CurrentConfig.tokens.token1.decimals
+      )
+    )
+  )
+
   // get calldata for minting a position
   const { calldata, value } = NonfungiblePositionManager.addCallParameters(
-    await getPosition(),
+    positionToMint,
     minPositionOptions
   )
 
