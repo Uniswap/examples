@@ -2,15 +2,8 @@ import { Token } from '@uniswap/sdk-core'
 import { FeeAmount } from '@uniswap/v3-sdk'
 import { USDC_TOKEN, WETH_TOKEN } from './libs/constants'
 
-// Sets if the example should run locally or on chain
-export enum Environment {
-  LOCAL,
-  PRODUCTION,
-}
-
 // Inputs that configure this example to run
 export interface ExampleConfig {
-  env: Environment
   rpc: {
     local: string
     mainnet: string
@@ -26,7 +19,6 @@ export interface ExampleConfig {
 // Example Configuration
 
 export const CurrentConfig: ExampleConfig = {
-  env: Environment.LOCAL,
   rpc: {
     local: 'http://localhost:8545',
     mainnet: '',
