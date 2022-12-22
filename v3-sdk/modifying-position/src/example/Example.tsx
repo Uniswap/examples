@@ -232,65 +232,61 @@ const Example = () => {
 
   return (
     <div className="App">
-      <header className="App-header">
-        {CurrentConfig.rpc.mainnet === '' && (
+      {CurrentConfig.rpc.mainnet === '' && (
+        <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>
+      )}
+      {CurrentConfig.env === Environment.WALLET_EXTENSION &&
+        getProvider() === null && (
           <h2 className="error">
-            Please set your mainnet RPC URL in config.ts
+            Please install a wallet to use this example configuration
           </h2>
         )}
-        {CurrentConfig.env === Environment.WALLET_EXTENSION &&
-          getProvider() === null && (
-            <h2 className="error">
-              Please install a wallet to use this example configuration
-            </h2>
-          )}
-        <h3>{`Wallet Address: ${getWalletAddress()}`}</h3>
-        {CurrentConfig.env === Environment.WALLET_EXTENSION &&
-          !getWalletAddress() && (
-            <button onClick={onConnectWallet}>Connect Wallet</button>
-          )}
-        <h3>{`Block Number: ${blockNumber + 1}`}</h3>
-        <h3>{`Transaction State: ${txState}`}</h3>
-        <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${token0Balance}`}</h3>
-        <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${token1Balance}`}</h3>
-        <h3>{`Position Ids: ${positionIds}`}</h3>
-        <button
-          className="button"
-          onClick={onMintPosition}
-          disabled={
-            txState === TransactionState.Sending ||
-            getProvider() === null ||
-            CurrentConfig.rpc.mainnet === ''
-          }>
-          <p>Mint Position</p>
-        </button>
-        <button
-          className="button"
-          onClick={() => {
-            onAddLiquidity(positionIds[positionIds.length - 1])
-          }}
-          disabled={
-            txState === TransactionState.Sending ||
-            getProvider() === null ||
-            CurrentConfig.rpc.mainnet === '' ||
-            positionIds.length === 0
-          }>
-          <p>Add Liquidity to Position</p>
-        </button>
-        <button
-          className="button"
-          onClick={() => {
-            onRemoveLiquidity(positionIds[positionIds.length - 1])
-          }}
-          disabled={
-            txState === TransactionState.Sending ||
-            getProvider() === null ||
-            CurrentConfig.rpc.mainnet === '' ||
-            positionIds.length === 0
-          }>
-          <p>Remove Liquidity from Position</p>
-        </button>
-      </header>
+      <h3>{`Wallet Address: ${getWalletAddress()}`}</h3>
+      {CurrentConfig.env === Environment.WALLET_EXTENSION &&
+        !getWalletAddress() && (
+          <button onClick={onConnectWallet}>Connect Wallet</button>
+        )}
+      <h3>{`Block Number: ${blockNumber + 1}`}</h3>
+      <h3>{`Transaction State: ${txState}`}</h3>
+      <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${token0Balance}`}</h3>
+      <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${token1Balance}`}</h3>
+      <h3>{`Position Ids: ${positionIds}`}</h3>
+      <button
+        className="button"
+        onClick={onMintPosition}
+        disabled={
+          txState === TransactionState.Sending ||
+          getProvider() === null ||
+          CurrentConfig.rpc.mainnet === ''
+        }>
+        <p>Mint Position</p>
+      </button>
+      <button
+        className="button"
+        onClick={() => {
+          onAddLiquidity(positionIds[positionIds.length - 1])
+        }}
+        disabled={
+          txState === TransactionState.Sending ||
+          getProvider() === null ||
+          CurrentConfig.rpc.mainnet === '' ||
+          positionIds.length === 0
+        }>
+        <p>Add Liquidity to Position</p>
+      </button>
+      <button
+        className="button"
+        onClick={() => {
+          onRemoveLiquidity(positionIds[positionIds.length - 1])
+        }}
+        disabled={
+          txState === TransactionState.Sending ||
+          getProvider() === null ||
+          CurrentConfig.rpc.mainnet === '' ||
+          positionIds.length === 0
+        }>
+        <p>Remove Liquidity from Position</p>
+      </button>
     </div>
   )
 }
