@@ -1,6 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
-import { NonfungiblePositionManager } from '@uniswap/v3-sdk'
+import {
+  AddLiquidityOptions,
+  CollectOptions,
+  MintOptions,
+  NonfungiblePositionManager,
+  RemoveLiquidityOptions,
+} from '@uniswap/v3-sdk'
 import { Percent, CurrencyAmount } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/balance'
@@ -51,14 +57,16 @@ async function mintPosition(): Promise<TransactionState> {
     return TransactionState.Failed
   }
 
+  const minPositionOptions: MintOptions = {
+    recipient: address,
+    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+    slippageTolerance: new Percent(50, 10_000),
+  }
+
   // get calldata for minting a position
   const { calldata, value } = NonfungiblePositionManager.addCallParameters(
     await getPosition(),
-    {
-      recipient: address,
-      deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-      slippageTolerance: new Percent(50, 10_000),
-    }
+    minPositionOptions
   )
 
   // build transaction
@@ -86,14 +94,16 @@ async function addLiquidity(positionId: number): Promise<TransactionState> {
     CurrentConfig.tokens.percentageToAdd
   )
 
+  const addLiquidityOptions: AddLiquidityOptions = {
+    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+    slippageTolerance: new Percent(50, 10_000),
+    tokenId: positionId,
+  }
+
   // get calldata for increasing a position
   const { calldata, value } = NonfungiblePositionManager.addCallParameters(
     positionToIncreaseBy,
-    {
-      deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-      slippageTolerance: new Percent(50, 10_000),
-      tokenId: positionId,
-    }
+    addLiquidityOptions
   )
 
   // build transaction
@@ -119,21 +129,24 @@ async function removeLiquidity(positionId: number): Promise<TransactionState> {
 
   const currentPosition = await getPosition()
 
+  const collectOptions: Omit<CollectOptions, 'tokenId'> = {
+    expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(DAI_TOKEN, 0),
+    expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(USDC_TOKEN, 0),
+    recipient: address,
+  }
+
+  const removeLiquidityOptions: RemoveLiquidityOptions = {
+    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+    slippageTolerance: new Percent(50, 10_000),
+    tokenId: positionId,
+    // percentage of liquidity to remove
+    liquidityPercentage: new Percent(CurrentConfig.tokens.percentageToRemove),
+    collectOptions,
+  }
   // get calldata for minting a position
   const { calldata, value } = NonfungiblePositionManager.removeCallParameters(
     currentPosition,
-    {
-      deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-      slippageTolerance: new Percent(50, 10_000),
-      tokenId: positionId,
-      // percentage of liquidity to remove
-      liquidityPercentage: new Percent(CurrentConfig.tokens.percentageToRemove),
-      collectOptions: {
-        expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(DAI_TOKEN, 0),
-        expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(USDC_TOKEN, 0),
-        recipient: address,
-      },
-    }
+    removeLiquidityOptions
   )
 
   // build transaction
