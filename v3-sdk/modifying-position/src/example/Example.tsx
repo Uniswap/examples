@@ -9,7 +9,7 @@ import {
 } from '@uniswap/v3-sdk'
 import { Percent, CurrencyAmount } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
-import { getCurrencyBalance } from '../libs/balance'
+import { getCurrencyBalance } from '../libs/wallet'
 import {
   getPositionIds,
   getTokenTransferApprovals,
