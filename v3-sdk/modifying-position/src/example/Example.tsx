@@ -1,13 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
-import { ethers } from 'ethers'
-import {
-  Pool,
-  computePoolAddress,
-  Position,
-  nearestUsableTick,
-  NonfungiblePositionManager,
-} from '@uniswap/v3-sdk'
+import { NonfungiblePositionManager } from '@uniswap/v3-sdk'
 import { Percent, CurrencyAmount } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/balance'
@@ -19,111 +12,13 @@ import {
   sendTransaction,
   getWalletAddress,
 } from '../libs/providers'
-import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 import {
-  POOL_FACTORY_CONTRACT_ADDRESS,
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
   DAI_TOKEN,
   USDC_TOKEN,
 } from '../libs/constants'
-import { fromReadableAmount } from '../libs/conversion'
-
-interface PoolInfo {
-  token0: string
-  token1: string
-  fee: number
-  tickSpacing: number
-  sqrtPriceX96: ethers.BigNumber
-  liquidity: ethers.BigNumber
-  tick: number
-}
-
-const getPoolInfo = async (): Promise<PoolInfo> => {
-  const provider = getProvider()
-  if (!provider) {
-    throw new Error('No provider')
-  }
-
-  const currentPoolAddress = computePoolAddress({
-    factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
-    tokenA: CurrentConfig.tokens.token0,
-    tokenB: CurrentConfig.tokens.token1,
-    fee: CurrentConfig.tokens.poolFee,
-  })
-
-  const poolContract = new ethers.Contract(
-    currentPoolAddress,
-    IUniswapV3PoolABI.abi,
-    provider
-  )
-
-  const [token0, token1, fee, tickSpacing, liquidity, slot0] =
-    await Promise.all([
-      poolContract.token0(),
-      poolContract.token1(),
-      poolContract.fee(),
-      poolContract.tickSpacing(),
-      poolContract.liquidity(),
-      poolContract.slot0(),
-    ])
-
-  return {
-    token0,
-    token1,
-    fee,
-    tickSpacing,
-    liquidity,
-    sqrtPriceX96: slot0[0],
-    tick: slot0[1],
-  }
-}
-
-const getPosition = async (
-  percentageToIncrease?: number
-): Promise<Position> => {
-  // get pool info
-  const poolInfo = await getPoolInfo()
-
-  // construct pool instance
-  const USDC_DAI_POOL = new Pool(
-    CurrentConfig.tokens.token0,
-    CurrentConfig.tokens.token1,
-    poolInfo.fee,
-    poolInfo.sqrtPriceX96.toString(),
-    poolInfo.liquidity.toString(),
-    poolInfo.tick
-  )
-
-  let amount0 = fromReadableAmount(
-    CurrentConfig.tokens.token0Amount,
-    CurrentConfig.tokens.token0.decimals
-  )
-  let amount1 = fromReadableAmount(
-    CurrentConfig.tokens.token1Amount,
-    CurrentConfig.tokens.token1.decimals
-  )
-
-  if (percentageToIncrease) {
-    amount0 = (amount0 * percentageToIncrease) / 100
-    amount1 = (amount1 * percentageToIncrease) / 100
-  }
-
-  // create position using the maximum liquidity from input amounts
-  return Position.fromAmounts({
-    pool: USDC_DAI_POOL,
-    tickLower:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
-      poolInfo.tickSpacing * 2,
-    tickUpper:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
-      poolInfo.tickSpacing * 2,
-    amount0,
-    amount1,
-    useFullPrecision: true,
-  })
-}
 
 async function mintPosition(): Promise<TransactionState> {
   const address = getWalletAddress()
