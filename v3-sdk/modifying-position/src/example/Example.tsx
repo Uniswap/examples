@@ -4,7 +4,11 @@ import { NonfungiblePositionManager } from '@uniswap/v3-sdk'
 import { Percent, CurrencyAmount } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/balance'
-import { getPositionIds, getTokenTransferApprovals } from '../libs/positions'
+import {
+  getPositionIds,
+  getTokenTransferApprovals,
+  getPosition,
+} from '../libs/positions'
 import {
   connectBrowserExtensionWallet,
   getProvider,
