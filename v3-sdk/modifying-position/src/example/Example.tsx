@@ -91,7 +91,7 @@ async function addLiquidity(positionId: number): Promise<TransactionState> {
   }
 
   const positionToIncreaseBy = await getPosition(
-    CurrentConfig.tokens.percentageToAdd
+    CurrentConfig.tokens.fractionToAdd
   )
 
   const addLiquidityOptions: AddLiquidityOptions = {
@@ -140,7 +140,7 @@ async function removeLiquidity(positionId: number): Promise<TransactionState> {
     slippageTolerance: new Percent(50, 10_000),
     tokenId: positionId,
     // percentage of liquidity to remove
-    liquidityPercentage: new Percent(CurrentConfig.tokens.percentageToRemove),
+    liquidityPercentage: new Percent(CurrentConfig.tokens.fractionToRemove),
     collectOptions,
   }
   // get calldata for minting a position
