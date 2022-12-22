@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { ERC20_ABI, NONFUNGIBLE_POSITION_MANAGER_ABI } from './constants'
-import { AMOUNT_TO_APPROVE } from './constants'
+import { TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER } from './constants'
 import { sendTransaction, TransactionState } from './providers'
 import { Pool, Position, nearestUsableTick } from '@uniswap/v3-sdk'
 import { fromReadableAmount } from '../libs/conversion'
@@ -48,7 +48,7 @@ export async function getTokenTransferApprovals(
 
     const transaction = await tokenContract.populateTransaction.approve(
       toAddress,
-      AMOUNT_TO_APPROVE
+      TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER
     )
 
     await sendTransaction({

@@ -173,8 +173,8 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 }
 
 const Example = () => {
-  const [tokenInBalance, setTokenInBalance] = useState<string>()
-  const [tokenOutBalance, setTokenOutBalance] = useState<string>()
+  const [token0Balance, setToken0Balance] = useState<string>()
+  const [token1Balance, setToken1Balance] = useState<string>()
   const [positionIds, setPositionIds] = useState<number[]>([])
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
@@ -192,10 +192,10 @@ const Example = () => {
     if (!provider || !address) {
       throw new Error('No provider or address')
     }
-    setTokenInBalance(
+    setToken0Balance(
       await getCurrencyBalance(provider, address, CurrentConfig.tokens.token0)
     )
-    setTokenOutBalance(
+    setToken1Balance(
       await getCurrencyBalance(provider, address, CurrentConfig.tokens.token1)
     )
     setPositionIds(
@@ -251,8 +251,8 @@ const Example = () => {
           )}
         <h3>{`Block Number: ${blockNumber + 1}`}</h3>
         <h3>{`Transaction State: ${txState}`}</h3>
-        <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${tokenInBalance}`}</h3>
-        <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${tokenOutBalance}`}</h3>
+        <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${token0Balance}`}</h3>
+        <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${token1Balance}`}</h3>
         <h3>{`Position Ids: ${positionIds}`}</h3>
         <button
           className="button"
