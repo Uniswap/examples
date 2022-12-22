@@ -3,18 +3,13 @@ import './Example.css'
 import {
   AddLiquidityOptions,
   CollectOptions,
-  MintOptions,
   NonfungiblePositionManager,
   RemoveLiquidityOptions,
 } from '@uniswap/v3-sdk'
 import { Percent, CurrencyAmount } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
-import {
-  getPositionIds,
-  getTokenTransferApprovals,
-  getPosition,
-} from '../libs/positions'
+import { getPositionIds, getPosition, mintPosition } from '../libs/positions'
 import {
   connectBrowserExtensionWallet,
   getProvider,
@@ -29,59 +24,6 @@ import {
   DAI_TOKEN,
   USDC_TOKEN,
 } from '../libs/constants'
-
-async function mintPosition(): Promise<TransactionState> {
-  const address = getWalletAddress()
-  const provider = getProvider()
-  if (!address || !provider) {
-    return TransactionState.Failed
-  }
-  // Give approval to the contract to transfer tokens
-  const tokenInApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.token0.address,
-    address,
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-  )
-  const tokenOutApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.token1.address,
-    address,
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-  )
-
-  if (
-    tokenInApproval !== TransactionState.Sent ||
-    tokenOutApproval !== TransactionState.Sent
-  ) {
-    return TransactionState.Failed
-  }
-
-  const minPositionOptions: MintOptions = {
-    recipient: address,
-    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-    slippageTolerance: new Percent(50, 10_000),
-  }
-
-  // get calldata for minting a position
-  const { calldata, value } = NonfungiblePositionManager.addCallParameters(
-    await getPosition(),
-    minPositionOptions
-  )
-
-  // build transaction
-  const transaction = {
-    data: calldata,
-    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    value: value,
-    from: address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  }
-
-  await sendTransaction(transaction)
-  return TransactionState.Sent
-}
 
 async function addLiquidity(positionId: number): Promise<TransactionState> {
   const address = getWalletAddress()

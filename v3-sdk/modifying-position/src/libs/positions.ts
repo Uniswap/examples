@@ -1,11 +1,25 @@
 import { ethers } from 'ethers'
-import { ERC20_ABI, NONFUNGIBLE_POSITION_MANAGER_ABI } from './constants'
+import {
+  ERC20_ABI,
+  NONFUNGIBLE_POSITION_MANAGER_ABI,
+  MAX_FEE_PER_GAS,
+  MAX_PRIORITY_FEE_PER_GAS,
+  NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+} from './constants'
 import { TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER } from './constants'
 import { sendTransaction, TransactionState } from './providers'
-import { Pool, Position, nearestUsableTick } from '@uniswap/v3-sdk'
+import {
+  Pool,
+  Position,
+  nearestUsableTick,
+  MintOptions,
+  NonfungiblePositionManager,
+} from '@uniswap/v3-sdk'
 import { fromReadableAmount } from '../libs/conversion'
 import { CurrentConfig } from '../config'
 import { getPoolInfo } from './pool'
+import { getProvider, getWalletAddress } from '../libs/providers'
+import { Percent } from '@uniswap/sdk-core'
 
 export async function getPositionIds(
   provider: ethers.providers.Provider,
@@ -106,4 +120,57 @@ export const getPosition = async (
     amount1,
     useFullPrecision: true,
   })
+}
+
+export async function mintPosition(): Promise<TransactionState> {
+  const address = getWalletAddress()
+  const provider = getProvider()
+  if (!address || !provider) {
+    return TransactionState.Failed
+  }
+  // Give approval to the contract to transfer tokens
+  const tokenInApproval = await getTokenTransferApprovals(
+    provider,
+    CurrentConfig.tokens.token0.address,
+    address,
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
+  )
+  const tokenOutApproval = await getTokenTransferApprovals(
+    provider,
+    CurrentConfig.tokens.token1.address,
+    address,
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
+  )
+
+  if (
+    tokenInApproval !== TransactionState.Sent ||
+    tokenOutApproval !== TransactionState.Sent
+  ) {
+    return TransactionState.Failed
+  }
+
+  const minPositionOptions: MintOptions = {
+    recipient: address,
+    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+    slippageTolerance: new Percent(50, 10_000),
+  }
+
+  // get calldata for minting a position
+  const { calldata, value } = NonfungiblePositionManager.addCallParameters(
+    await getPosition(),
+    minPositionOptions
+  )
+
+  // build transaction
+  const transaction = {
+    data: calldata,
+    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+    value: value,
+    from: address,
+    maxFeePerGas: MAX_FEE_PER_GAS,
+    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+  }
+
+  await sendTransaction(transaction)
+  return TransactionState.Sent
 }
