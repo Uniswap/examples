@@ -1,17 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
-import { ethers } from 'ethers'
-import {
-  Pool,
-  computePoolAddress,
-  Position,
-  nearestUsableTick,
-  NonfungiblePositionManager,
-} from '@uniswap/v3-sdk'
-import { Percent, CurrencyAmount } from '@uniswap/sdk-core'
+import { CollectOptions, NonfungiblePositionManager } from '@uniswap/v3-sdk'
+import { CurrencyAmount } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
-import { getCurrencyBalance } from '../libs/balance'
-import { getPositionIds, getTokenTransferApprovals } from '../libs/positions'
+import { getCurrencyBalance } from '../libs/wallet'
 import {
   connectBrowserExtensionWallet,
   getProvider,
@@ -19,152 +11,14 @@ import {
   sendTransaction,
   getWalletAddress,
 } from '../libs/providers'
-import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 import {
-  POOL_FACTORY_CONTRACT_ADDRESS,
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
   DAI_TOKEN,
   USDC_TOKEN,
 } from '../libs/constants'
-import { fromReadableAmount } from '../libs/conversion'
-
-interface PoolInfo {
-  token0: string
-  token1: string
-  fee: number
-  tickSpacing: number
-  sqrtPriceX96: ethers.BigNumber
-  liquidity: ethers.BigNumber
-  tick: number
-}
-
-const getPoolInfo = async (): Promise<PoolInfo> => {
-  const provider = getProvider()
-  if (!provider) {
-    throw new Error('No provider')
-  }
-
-  const currentPoolAddress = computePoolAddress({
-    factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
-    tokenA: CurrentConfig.tokens.token0,
-    tokenB: CurrentConfig.tokens.token1,
-    fee: CurrentConfig.tokens.poolFee,
-  })
-
-  const poolContract = new ethers.Contract(
-    currentPoolAddress,
-    IUniswapV3PoolABI.abi,
-    provider
-  )
-
-  const [token0, token1, fee, tickSpacing, liquidity, slot0] =
-    await Promise.all([
-      poolContract.token0(),
-      poolContract.token1(),
-      poolContract.fee(),
-      poolContract.tickSpacing(),
-      poolContract.liquidity(),
-      poolContract.slot0(),
-    ])
-
-  return {
-    token0,
-    token1,
-    fee,
-    tickSpacing,
-    liquidity,
-    sqrtPriceX96: slot0[0],
-    tick: slot0[1],
-  }
-}
-
-const getPosition = async (): Promise<Position> => {
-  // get pool info
-  const poolInfo = await getPoolInfo()
-
-  // construct pool instance
-  const USDC_DAI_POOL = new Pool(
-    CurrentConfig.tokens.token0,
-    CurrentConfig.tokens.token1,
-    poolInfo.fee,
-    poolInfo.sqrtPriceX96.toString(),
-    poolInfo.liquidity.toString(),
-    poolInfo.tick
-  )
-
-  // create position using the maximum liquidity from input amounts
-  return Position.fromAmounts({
-    pool: USDC_DAI_POOL,
-    tickLower:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
-      poolInfo.tickSpacing * 2,
-    tickUpper:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
-      poolInfo.tickSpacing * 2,
-    amount0: fromReadableAmount(
-      CurrentConfig.tokens.token0Amount,
-      CurrentConfig.tokens.token0.decimals
-    ),
-    amount1: fromReadableAmount(
-      CurrentConfig.tokens.token1Amount,
-      CurrentConfig.tokens.token1.decimals
-    ),
-    useFullPrecision: true,
-  })
-}
-
-async function mintPosition(): Promise<TransactionState> {
-  const address = getWalletAddress()
-  const provider = getProvider()
-  if (!address || !provider) {
-    return TransactionState.Failed
-  }
-  // Give approval to the contract to transfer tokens
-  const tokenInApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.token0.address,
-    address,
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-  )
-  const tokenOutApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.token1.address,
-    address,
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-  )
-
-  if (
-    tokenInApproval !== TransactionState.Sent ||
-    tokenOutApproval !== TransactionState.Sent
-  ) {
-    return TransactionState.Failed
-  }
-
-  // get calldata for minting a position
-  const { calldata, value } = NonfungiblePositionManager.addCallParameters(
-    await getPosition(),
-    {
-      recipient: address,
-      deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-      slippageTolerance: new Percent(50, 10_000),
-    }
-  )
-
-  // build transaction
-  const transaction = {
-    data: calldata,
-    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    value: value,
-    from: address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  }
-
-  await sendTransaction(transaction)
-  return TransactionState.Sent
-}
+import { getPositionIds, mintPosition } from '../libs/liquidity'
 
 async function collectFees(positionId: number): Promise<TransactionState> {
   const address = getWalletAddress()
@@ -173,8 +27,7 @@ async function collectFees(positionId: number): Promise<TransactionState> {
     return TransactionState.Failed
   }
 
-  // get calldata for minting a position
-  const { calldata, value } = NonfungiblePositionManager.collectCallParameters({
+  const collectOptions: CollectOptions = {
     tokenId: positionId,
     expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(
       DAI_TOKEN,
@@ -185,7 +38,11 @@ async function collectFees(positionId: number): Promise<TransactionState> {
       CurrentConfig.tokens.token1AmountToCollect
     ),
     recipient: address,
-  })
+  }
+
+  // get calldata for minting a position
+  const { calldata, value } =
+    NonfungiblePositionManager.collectCallParameters(collectOptions)
 
   // build transaction
   const transaction = {
@@ -306,7 +163,7 @@ const Example = () => {
             txState === TransactionState.Sending ||
             getProvider() === null ||
             CurrentConfig.rpc.mainnet === '' ||
-            positionIds.length === 0
+            positionIds.length < 1
           }>
           <p>Collect Fees</p>
         </button>
