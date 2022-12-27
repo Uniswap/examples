@@ -1,63 +1,15 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import './Example.css'
-import { ethers } from 'ethers'
-import { AlphaRouter, ChainId, SwapType } from '@uniswap/smart-order-router'
-import { TradeType, CurrencyAmount, Percent } from '@uniswap/sdk-core'
-import { Environment, CurrentConfig } from '../config'
-import { getCurrencyBalance } from '../libs/wallet'
+import { CurrentConfig, Environment } from '../config'
 import {
   connectBrowserExtensionWallet,
-  getMainnetProvider,
   getProvider,
   getWalletAddress,
-  sendTransaction,
   TransactionState,
 } from '../libs/providers'
-import {
-  V3_SWAP_ROUTER_ADDRESS,
-  MAX_FEE_PER_GAS,
-  MAX_PRIORITY_FEE_PER_GAS,
-} from '../libs/constants'
-
-async function route(): Promise<TransactionState> {
-  const router = new AlphaRouter({
-    chainId: ChainId.MAINNET,
-    provider: getMainnetProvider(),
-  })
-  const address = getWalletAddress()
-
-  if (!address) {
-    return TransactionState.Failed
-  }
-
-  const route = await router.route(
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.currencies.in,
-      ethers.utils
-        .parseEther(CurrentConfig.currencies.amountIn.toString())
-        .toString()
-    ),
-    CurrentConfig.currencies.out,
-    TradeType.EXACT_INPUT,
-    {
-      recipient: CurrentConfig.wallet.address,
-      slippageTolerance: new Percent(5, 100),
-      deadline: Math.floor(Date.now() / 1000 + 1800),
-      type: SwapType.SWAP_ROUTER_02,
-    }
-  )
-
-  const res = await sendTransaction({
-    data: route?.methodParameters?.calldata,
-    to: V3_SWAP_ROUTER_ADDRESS,
-    value: route?.methodParameters?.value,
-    from: address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  })
-
-  return res
-}
+import { displayTrade } from '../libs/utils'
+import { getCurrencyBalance, wrapETH } from '../libs/wallet'
+import { createTrade, executeTrade, TokenTrade } from '../libs/trading'
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   useEffect(() => {
@@ -69,9 +21,11 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 }
 
 const Example = () => {
+  const [trade, setTrade] = useState<TokenTrade>()
+  const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
+
   const [tokenInBalance, setTokenInBalance] = useState<string>()
   const [tokenOutBalance, setTokenOutBalance] = useState<string>()
-  const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
   // Listen for new blocks and update the wallet
@@ -86,14 +40,10 @@ const Example = () => {
     const address = getWalletAddress()
     if (address && provider) {
       setTokenInBalance(
-        await getCurrencyBalance(provider, address, CurrentConfig.currencies.in)
+        await getCurrencyBalance(provider, address, CurrentConfig.tokens.in)
       )
       setTokenOutBalance(
-        await getCurrencyBalance(
-          provider,
-          address,
-          CurrentConfig.currencies.out
-        )
+        await getCurrencyBalance(provider, address, CurrentConfig.tokens.out)
       )
     }
   }, [])
@@ -106,9 +56,15 @@ const Example = () => {
     }
   }, [refreshBalances])
 
-  const onTrade = useCallback(async () => {
-    setTxState(TransactionState.Sending)
-    setTxState(await route())
+  const onCreateTrade = useCallback(async () => {
+    refreshBalances()
+    setTrade(await createTrade())
+  }, [refreshBalances])
+
+  const onTrade = useCallback(async (trade: TokenTrade | undefined) => {
+    if (trade) {
+      setTxState(await executeTrade(trade))
+    }
   }, [])
 
   return (
@@ -122,6 +78,14 @@ const Example = () => {
             Please install a wallet to use this example configuration
           </h2>
         )}
+      <h3>
+        Trading {CurrentConfig.tokens.amountIn} {CurrentConfig.tokens.in.symbol}{' '}
+        for {CurrentConfig.tokens.out.symbol}
+      </h3>
+      <h3>{trade && `Constructed Trade: ${displayTrade(trade)}`}</h3>
+      <button onClick={onCreateTrade}>
+        <p>Create Trade</p>
+      </button>
       <h3>{`Wallet Address: ${getWalletAddress()}`}</h3>
       {CurrentConfig.env === Environment.WALLET_EXTENSION &&
         !getWalletAddress() && (
@@ -129,11 +93,17 @@ const Example = () => {
         )}
       <h3>{`Block Number: ${blockNumber + 1}`}</h3>
       <h3>{`Transaction State: ${txState}`}</h3>
-      <h3>{`Token In (${CurrentConfig.currencies.in.symbol}) Balance: ${tokenInBalance}`}</h3>
-      <h3>{`Token Out (${CurrentConfig.currencies.out.symbol}) Balance: ${tokenOutBalance}`}</h3>
+      <h3>{`${CurrentConfig.tokens.in.symbol} Balance: ${tokenInBalance}`}</h3>
+      <h3>{`${CurrentConfig.tokens.out.symbol} Balance: ${tokenOutBalance}`}</h3>
       <button
-        onClick={onTrade}
+        onClick={() => wrapETH(100)}
+        disabled={getProvider() === null || CurrentConfig.rpc.mainnet === ''}>
+        <p>Wrap ETH</p>
+      </button>
+      <button
+        onClick={() => onTrade(trade)}
         disabled={
+          trade === undefined ||
           txState === TransactionState.Sending ||
           getProvider() === null ||
           CurrentConfig.rpc.mainnet === ''
