@@ -30,7 +30,9 @@ import {
 } from '../libs/constants'
 import { fromReadableAmount } from '../libs/conversion'
 
-async function addLiquidity(positionId: number): Promise<TransactionState> {
+async function swapAndAddLiquidity(
+  positionId: number
+): Promise<TransactionState> {
   const address = getWalletAddress()
   const provider = getProvider()
   if (!address || !provider) {
@@ -195,14 +197,9 @@ const Example = () => {
     setTxState(await mintPosition())
   }, [])
 
-  const onAddLiquidity = useCallback(async (position: number) => {
+  const onSwapAndAddLiquidity = useCallback(async (position: number) => {
     setTxState(TransactionState.Sending)
-    setTxState(await addLiquidity(position))
-  }, [])
-
-  const onRemoveLiquidity = useCallback(async (position: number) => {
-    setTxState(TransactionState.Sending)
-    setTxState(await removeLiquidity(position))
+    setTxState(await swapAndAddLiquidity(position))
   }, [])
 
   return (
@@ -239,7 +236,7 @@ const Example = () => {
       <button
         className="button"
         onClick={() => {
-          onAddLiquidity(positionIds[positionIds.length - 1])
+          onSwapAndAddLiquidity(positionIds[positionIds.length - 1])
         }}
         disabled={
           txState === TransactionState.Sending ||
@@ -247,20 +244,7 @@ const Example = () => {
           CurrentConfig.rpc.mainnet === '' ||
           positionIds.length === 0
         }>
-        <p>Add Liquidity to Position</p>
-      </button>
-      <button
-        className="button"
-        onClick={() => {
-          onRemoveLiquidity(positionIds[positionIds.length - 1])
-        }}
-        disabled={
-          txState === TransactionState.Sending ||
-          getProvider() === null ||
-          CurrentConfig.rpc.mainnet === '' ||
-          positionIds.length === 0
-        }>
-        <p>Remove Liquidity from Position</p>
+        <p>Swap and Add Liquidity to Position</p>
       </button>
     </div>
   )
