@@ -1,19 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
-import {
-  AddLiquidityOptions,
-  CollectOptions,
-  NonfungiblePositionManager,
-  RemoveLiquidityOptions,
-} from '@uniswap/v3-sdk'
-import { Percent, CurrencyAmount } from '@uniswap/sdk-core'
+import { CollectOptions, NonfungiblePositionManager } from '@uniswap/v3-sdk'
+import { CurrencyAmount } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
-import {
-  getPositionIds,
-  constructPosition,
-  mintPosition,
-} from '../libs/liquidity'
 import {
   connectBrowserExtensionWallet,
   getProvider,
@@ -28,100 +18,38 @@ import {
   DAI_TOKEN,
   USDC_TOKEN,
 } from '../libs/constants'
+import { getPositionIds, mintPosition } from '../libs/liquidity'
 import { fromReadableAmount } from '../libs/conversion'
 
-async function addLiquidity(positionId: number): Promise<TransactionState> {
+async function collectFees(positionId: number): Promise<TransactionState> {
   const address = getWalletAddress()
   const provider = getProvider()
   if (!address || !provider) {
     return TransactionState.Failed
   }
 
-  const positionToIncreaseBy = await await constructPosition(
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token0,
-      fromReadableAmount(
-        CurrentConfig.tokens.token0Amount * CurrentConfig.tokens.fractionToAdd,
-        CurrentConfig.tokens.token0.decimals
-      )
-    ),
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token1,
-      fromReadableAmount(
-        CurrentConfig.tokens.token1Amount * CurrentConfig.tokens.fractionToAdd,
-        CurrentConfig.tokens.token1.decimals
-      )
-    )
-  )
-
-  const addLiquidityOptions: AddLiquidityOptions = {
-    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-    slippageTolerance: new Percent(50, 10_000),
+  const collectOptions: CollectOptions = {
     tokenId: positionId,
-  }
-
-  // get calldata for increasing a position
-  const { calldata, value } = NonfungiblePositionManager.addCallParameters(
-    positionToIncreaseBy,
-    addLiquidityOptions
-  )
-
-  // build transaction
-  const transaction = {
-    data: calldata,
-    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    value: value,
-    from: address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  }
-
-  return sendTransaction(transaction)
-}
-
-async function removeLiquidity(positionId: number): Promise<TransactionState> {
-  const address = getWalletAddress()
-  const provider = getProvider()
-  if (!address || !provider) {
-    return TransactionState.Failed
-  }
-
-  const currentPosition = await await constructPosition(
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token0,
+    expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(
+      DAI_TOKEN,
       fromReadableAmount(
-        CurrentConfig.tokens.token0Amount,
+        CurrentConfig.tokens.token0AmountToCollect,
         CurrentConfig.tokens.token0.decimals
       )
     ),
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token1,
+    expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(
+      USDC_TOKEN,
       fromReadableAmount(
-        CurrentConfig.tokens.token1Amount,
-        CurrentConfig.tokens.token1.decimals
+        CurrentConfig.tokens.token1AmountToCollect,
+        CurrentConfig.tokens.token0.decimals
       )
-    )
-  )
-
-  const collectOptions: Omit<CollectOptions, 'tokenId'> = {
-    expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(DAI_TOKEN, 0),
-    expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(USDC_TOKEN, 0),
+    ),
     recipient: address,
   }
 
-  const removeLiquidityOptions: RemoveLiquidityOptions = {
-    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-    slippageTolerance: new Percent(50, 10_000),
-    tokenId: positionId,
-    // percentage of liquidity to remove
-    liquidityPercentage: new Percent(CurrentConfig.tokens.fractionToRemove),
-    collectOptions,
-  }
   // get calldata for minting a position
-  const { calldata, value } = NonfungiblePositionManager.removeCallParameters(
-    currentPosition,
-    removeLiquidityOptions
-  )
+  const { calldata, value } =
+    NonfungiblePositionManager.collectCallParameters(collectOptions)
 
   // build transaction
   const transaction = {
@@ -147,8 +75,8 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 }
 
 const Example = () => {
-  const [token0Balance, setToken0Balance] = useState<string>()
-  const [token1Balance, setToken1Balance] = useState<string>()
+  const [tokenInBalance, setTokenInBalance] = useState<string>()
+  const [tokenOutBalance, setTokenOutBalance] = useState<string>()
   const [positionIds, setPositionIds] = useState<number[]>([])
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
@@ -166,10 +94,10 @@ const Example = () => {
     if (!provider || !address) {
       throw new Error('No provider or address')
     }
-    setToken0Balance(
+    setTokenInBalance(
       await getCurrencyBalance(provider, address, CurrentConfig.tokens.token0)
     )
-    setToken1Balance(
+    setTokenOutBalance(
       await getCurrencyBalance(provider, address, CurrentConfig.tokens.token1)
     )
     setPositionIds(
@@ -194,14 +122,9 @@ const Example = () => {
     setTxState(await mintPosition())
   }, [])
 
-  const onAddLiquidity = useCallback(async (position: number) => {
+  const onCollectFees = useCallback(async (position: number) => {
     setTxState(TransactionState.Sending)
-    setTxState(await addLiquidity(position))
-  }, [])
-
-  const onRemoveLiquidity = useCallback(async (position: number) => {
-    setTxState(TransactionState.Sending)
-    setTxState(await removeLiquidity(position))
+    setTxState(await collectFees(position))
   }, [])
 
   return (
@@ -222,8 +145,8 @@ const Example = () => {
         )}
       <h3>{`Block Number: ${blockNumber + 1}`}</h3>
       <h3>{`Transaction State: ${txState}`}</h3>
-      <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${token0Balance}`}</h3>
-      <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${token1Balance}`}</h3>
+      <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${tokenInBalance}`}</h3>
+      <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${tokenOutBalance}`}</h3>
       <h3>{`Position Ids: ${positionIds}`}</h3>
       <button
         className="button"
@@ -238,28 +161,15 @@ const Example = () => {
       <button
         className="button"
         onClick={() => {
-          onAddLiquidity(positionIds[positionIds.length - 1])
+          onCollectFees(positionIds[positionIds.length - 1])
         }}
         disabled={
           txState === TransactionState.Sending ||
           getProvider() === null ||
           CurrentConfig.rpc.mainnet === '' ||
-          positionIds.length === 0
+          positionIds.length < 1
         }>
-        <p>Add Liquidity to Position</p>
-      </button>
-      <button
-        className="button"
-        onClick={() => {
-          onRemoveLiquidity(positionIds[positionIds.length - 1])
-        }}
-        disabled={
-          txState === TransactionState.Sending ||
-          getProvider() === null ||
-          CurrentConfig.rpc.mainnet === '' ||
-          positionIds.length === 0
-        }>
-        <p>Remove Liquidity from Position</p>
+        <p>Collect Fees</p>
       </button>
     </div>
   )
