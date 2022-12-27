@@ -76,8 +76,7 @@ async function addLiquidity(positionId: number): Promise<TransactionState> {
     maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
   }
 
-  await sendTransaction(transaction)
-  return TransactionState.Sent
+  return sendTransaction(transaction)
 }
 
 async function removeLiquidity(positionId: number): Promise<TransactionState> {

@@ -1,7 +1,6 @@
-# Collecting Fees
 ## Overview
 
-This is a template for dApp development guides that includes running against mainnet, locally, and using a wallet connection.
+This is an example of Collecting Fees that includes running against mainnet, locally, and using a wallet connection.
 
 ## Configuration
 
