@@ -19,6 +19,7 @@ import {
   USDC_TOKEN,
 } from '../libs/constants'
 import { getPositionIds, mintPosition } from '../libs/liquidity'
+import { fromReadableAmount } from '../libs/conversion'
 
 async function collectFees(positionId: number): Promise<TransactionState> {
   const address = getWalletAddress()
@@ -31,11 +32,17 @@ async function collectFees(positionId: number): Promise<TransactionState> {
     tokenId: positionId,
     expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(
       DAI_TOKEN,
-      CurrentConfig.tokens.token0AmountToCollect
+      fromReadableAmount(
+        CurrentConfig.tokens.token0AmountToCollect,
+        CurrentConfig.tokens.token0.decimals
+      )
     ),
     expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(
       USDC_TOKEN,
-      CurrentConfig.tokens.token1AmountToCollect
+      fromReadableAmount(
+        CurrentConfig.tokens.token1AmountToCollect,
+        CurrentConfig.tokens.token0.decimals
+      )
     ),
     recipient: address,
   }
