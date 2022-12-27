@@ -1,12 +1,12 @@
 import { Token } from '@uniswap/sdk-core'
 import { FeeAmount } from '@uniswap/v3-sdk'
-import { DAI_TOKEN, USDC_TOKEN } from './libs/constants'
+import { USDC_TOKEN, WETH_TOKEN } from './libs/constants'
 
 // Sets if the example should run locally or on chain
 export enum Environment {
   LOCAL,
-  WALLET_EXTENSION,
   MAINNET,
+  WALLET_EXTENSION,
 }
 
 // Inputs that configure this example to run
@@ -21,13 +21,10 @@ export interface ExampleConfig {
     privateKey: string
   }
   tokens: {
-    token0: Token
-    token0Amount: number
-    token1: Token
-    token1Amount: number
-    poolFee: FeeAmount
-    fractionToRemove: number
-    fractionToAdd: number
+    in: Token
+    amountIn: number
+    out: Token
+    fee: number
   }
 }
 
@@ -37,7 +34,7 @@ export const CurrentConfig: ExampleConfig = {
   env: Environment.LOCAL,
   rpc: {
     local: 'http://localhost:8545',
-    mainnet: 'https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721',
+    mainnet: 'https://mainnet.infura.io/v3/7b37a3c5c10b47c18473128c2e3bd155',
   },
   wallet: {
     address: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
@@ -45,12 +42,9 @@ export const CurrentConfig: ExampleConfig = {
       '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
   },
   tokens: {
-    token0: USDC_TOKEN,
-    token0Amount: 1000,
-    token1: DAI_TOKEN,
-    token1Amount: 1000,
-    poolFee: FeeAmount.LOW,
-    fractionToRemove: 1,
-    fractionToAdd: 0.5,
+    in: WETH_TOKEN,
+    amountIn: 0.1,
+    out: USDC_TOKEN,
+    fee: FeeAmount.MEDIUM,
   },
 }

@@ -1,17 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
-import { ethers } from 'ethers'
 import {
-  Pool,
-  computePoolAddress,
-  Position,
-  nearestUsableTick,
+  AddLiquidityOptions,
+  CollectOptions,
   NonfungiblePositionManager,
+  RemoveLiquidityOptions,
 } from '@uniswap/v3-sdk'
 import { Percent, CurrencyAmount } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
-import { getCurrencyBalance } from '../libs/balance'
-import { getPositionIds, getTokenTransferApprovals } from '../libs/positions'
+import { getCurrencyBalance } from '../libs/wallet'
+import {
+  getPositionIds,
+  constructPosition,
+  mintPosition,
+} from '../libs/liquidity'
 import {
   connectBrowserExtensionWallet,
   getProvider,
@@ -19,9 +21,7 @@ import {
   sendTransaction,
   getWalletAddress,
 } from '../libs/providers'
-import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 import {
-  POOL_FACTORY_CONTRACT_ADDRESS,
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
@@ -30,152 +30,6 @@ import {
 } from '../libs/constants'
 import { fromReadableAmount } from '../libs/conversion'
 
-interface PoolInfo {
-  token0: string
-  token1: string
-  fee: number
-  tickSpacing: number
-  sqrtPriceX96: ethers.BigNumber
-  liquidity: ethers.BigNumber
-  tick: number
-}
-
-const getPoolInfo = async (): Promise<PoolInfo> => {
-  const provider = getProvider()
-  if (!provider) {
-    throw new Error('No provider')
-  }
-
-  const currentPoolAddress = computePoolAddress({
-    factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
-    tokenA: CurrentConfig.tokens.token0,
-    tokenB: CurrentConfig.tokens.token1,
-    fee: CurrentConfig.tokens.poolFee,
-  })
-
-  const poolContract = new ethers.Contract(
-    currentPoolAddress,
-    IUniswapV3PoolABI.abi,
-    provider
-  )
-
-  const [token0, token1, fee, tickSpacing, liquidity, slot0] =
-    await Promise.all([
-      poolContract.token0(),
-      poolContract.token1(),
-      poolContract.fee(),
-      poolContract.tickSpacing(),
-      poolContract.liquidity(),
-      poolContract.slot0(),
-    ])
-
-  return {
-    token0,
-    token1,
-    fee,
-    tickSpacing,
-    liquidity,
-    sqrtPriceX96: slot0[0],
-    tick: slot0[1],
-  }
-}
-
-const getPosition = async (
-  percentageToIncrease?: number
-): Promise<Position> => {
-  // get pool info
-  const poolInfo = await getPoolInfo()
-
-  // construct pool instance
-  const USDC_DAI_POOL = new Pool(
-    CurrentConfig.tokens.token0,
-    CurrentConfig.tokens.token1,
-    poolInfo.fee,
-    poolInfo.sqrtPriceX96.toString(),
-    poolInfo.liquidity.toString(),
-    poolInfo.tick
-  )
-
-  let amount0 = fromReadableAmount(
-    CurrentConfig.tokens.token0Amount,
-    CurrentConfig.tokens.token0.decimals
-  )
-  let amount1 = fromReadableAmount(
-    CurrentConfig.tokens.token1Amount,
-    CurrentConfig.tokens.token1.decimals
-  )
-
-  if (percentageToIncrease) {
-    amount0 = (amount0 * percentageToIncrease) / 100
-    amount1 = (amount1 * percentageToIncrease) / 100
-  }
-
-  // create position using the maximum liquidity from input amounts
-  return Position.fromAmounts({
-    pool: USDC_DAI_POOL,
-    tickLower:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
-      poolInfo.tickSpacing * 2,
-    tickUpper:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
-      poolInfo.tickSpacing * 2,
-    amount0,
-    amount1,
-    useFullPrecision: true,
-  })
-}
-
-async function mintPosition(): Promise<TransactionState> {
-  const address = getWalletAddress()
-  const provider = getProvider()
-  if (!address || !provider) {
-    return TransactionState.Failed
-  }
-  // Give approval to the contract to transfer tokens
-  const tokenInApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.token0.address,
-    address,
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-  )
-  const tokenOutApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.token1.address,
-    address,
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-  )
-
-  if (
-    tokenInApproval !== TransactionState.Sent ||
-    tokenOutApproval !== TransactionState.Sent
-  ) {
-    return TransactionState.Failed
-  }
-
-  // get calldata for minting a position
-  const { calldata, value } = NonfungiblePositionManager.addCallParameters(
-    await getPosition(),
-    {
-      recipient: address,
-      deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-      slippageTolerance: new Percent(50, 10_000),
-    }
-  )
-
-  // build transaction
-  const transaction = {
-    data: calldata,
-    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    value: value,
-    from: address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  }
-
-  await sendTransaction(transaction)
-  return TransactionState.Sent
-}
-
 async function addLiquidity(positionId: number): Promise<TransactionState> {
   const address = getWalletAddress()
   const provider = getProvider()
@@ -183,18 +37,33 @@ async function addLiquidity(positionId: number): Promise<TransactionState> {
     return TransactionState.Failed
   }
 
-  const positionToIncreaseBy = await getPosition(
-    CurrentConfig.tokens.percentageToAdd
+  const positionToIncreaseBy = await await constructPosition(
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token0,
+      fromReadableAmount(
+        CurrentConfig.tokens.token0Amount * CurrentConfig.tokens.fractionToAdd,
+        CurrentConfig.tokens.token0.decimals
+      )
+    ),
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token1,
+      fromReadableAmount(
+        CurrentConfig.tokens.token1Amount * CurrentConfig.tokens.fractionToAdd,
+        CurrentConfig.tokens.token1.decimals
+      )
+    )
   )
+
+  const addLiquidityOptions: AddLiquidityOptions = {
+    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+    slippageTolerance: new Percent(50, 10_000),
+    tokenId: positionId,
+  }
 
   // get calldata for increasing a position
   const { calldata, value } = NonfungiblePositionManager.addCallParameters(
     positionToIncreaseBy,
-    {
-      deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-      slippageTolerance: new Percent(50, 10_000),
-      tokenId: positionId,
-    }
+    addLiquidityOptions
   )
 
   // build transaction
@@ -218,23 +87,41 @@ async function removeLiquidity(positionId: number): Promise<TransactionState> {
     return TransactionState.Failed
   }
 
-  const currentPosition = await getPosition()
+  const currentPosition = await await constructPosition(
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token0,
+      fromReadableAmount(
+        CurrentConfig.tokens.token0Amount,
+        CurrentConfig.tokens.token0.decimals
+      )
+    ),
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token1,
+      fromReadableAmount(
+        CurrentConfig.tokens.token1Amount,
+        CurrentConfig.tokens.token1.decimals
+      )
+    )
+  )
 
+  const collectOptions: Omit<CollectOptions, 'tokenId'> = {
+    expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(DAI_TOKEN, 0),
+    expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(USDC_TOKEN, 0),
+    recipient: address,
+  }
+
+  const removeLiquidityOptions: RemoveLiquidityOptions = {
+    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+    slippageTolerance: new Percent(50, 10_000),
+    tokenId: positionId,
+    // percentage of liquidity to remove
+    liquidityPercentage: new Percent(CurrentConfig.tokens.fractionToRemove),
+    collectOptions,
+  }
   // get calldata for minting a position
   const { calldata, value } = NonfungiblePositionManager.removeCallParameters(
     currentPosition,
-    {
-      deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-      slippageTolerance: new Percent(50, 10_000),
-      tokenId: positionId,
-      // percentage of liquidity to remove
-      liquidityPercentage: new Percent(CurrentConfig.tokens.percentageToRemove),
-      collectOptions: {
-        expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(DAI_TOKEN, 0),
-        expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(USDC_TOKEN, 0),
-        recipient: address,
-      },
-    }
+    removeLiquidityOptions
   )
 
   // build transaction
@@ -261,8 +148,8 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 }
 
 const Example = () => {
-  const [tokenInBalance, setTokenInBalance] = useState<string>()
-  const [tokenOutBalance, setTokenOutBalance] = useState<string>()
+  const [token0Balance, setToken0Balance] = useState<string>()
+  const [token1Balance, setToken1Balance] = useState<string>()
   const [positionIds, setPositionIds] = useState<number[]>([])
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
@@ -280,10 +167,10 @@ const Example = () => {
     if (!provider || !address) {
       throw new Error('No provider or address')
     }
-    setTokenInBalance(
+    setToken0Balance(
       await getCurrencyBalance(provider, address, CurrentConfig.tokens.token0)
     )
-    setTokenOutBalance(
+    setToken1Balance(
       await getCurrencyBalance(provider, address, CurrentConfig.tokens.token1)
     )
     setPositionIds(
@@ -320,65 +207,61 @@ const Example = () => {
 
   return (
     <div className="App">
-      <header className="App-header">
-        {CurrentConfig.rpc.mainnet === '' && (
+      {CurrentConfig.rpc.mainnet === '' && (
+        <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>
+      )}
+      {CurrentConfig.env === Environment.WALLET_EXTENSION &&
+        getProvider() === null && (
           <h2 className="error">
-            Please set your mainnet RPC URL in config.ts
+            Please install a wallet to use this example configuration
           </h2>
         )}
-        {CurrentConfig.env === Environment.WALLET_EXTENSION &&
-          getProvider() === null && (
-            <h2 className="error">
-              Please install a wallet to use this example configuration
-            </h2>
-          )}
-        <h3>{`Wallet Address: ${getWalletAddress()}`}</h3>
-        {CurrentConfig.env === Environment.WALLET_EXTENSION &&
-          !getWalletAddress() && (
-            <button onClick={onConnectWallet}>Connect Wallet</button>
-          )}
-        <h3>{`Block Number: ${blockNumber + 1}`}</h3>
-        <h3>{`Transaction State: ${txState}`}</h3>
-        <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${tokenInBalance}`}</h3>
-        <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${tokenOutBalance}`}</h3>
-        <h3>{`Position Ids: ${positionIds}`}</h3>
-        <button
-          className="button"
-          onClick={onMintPosition}
-          disabled={
-            txState === TransactionState.Sending ||
-            getProvider() === null ||
-            CurrentConfig.rpc.mainnet === ''
-          }>
-          <p>Mint Position</p>
-        </button>
-        <button
-          className="button"
-          onClick={() => {
-            onAddLiquidity(positionIds[positionIds.length - 1])
-          }}
-          disabled={
-            txState === TransactionState.Sending ||
-            getProvider() === null ||
-            CurrentConfig.rpc.mainnet === '' ||
-            positionIds.length === 0
-          }>
-          <p>Add Liquidity to Position</p>
-        </button>
-        <button
-          className="button"
-          onClick={() => {
-            onRemoveLiquidity(positionIds[positionIds.length - 1])
-          }}
-          disabled={
-            txState === TransactionState.Sending ||
-            getProvider() === null ||
-            CurrentConfig.rpc.mainnet === '' ||
-            positionIds.length === 0
-          }>
-          <p>Remove Liquidity from Position</p>
-        </button>
-      </header>
+      <h3>{`Wallet Address: ${getWalletAddress()}`}</h3>
+      {CurrentConfig.env === Environment.WALLET_EXTENSION &&
+        !getWalletAddress() && (
+          <button onClick={onConnectWallet}>Connect Wallet</button>
+        )}
+      <h3>{`Block Number: ${blockNumber + 1}`}</h3>
+      <h3>{`Transaction State: ${txState}`}</h3>
+      <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${token0Balance}`}</h3>
+      <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${token1Balance}`}</h3>
+      <h3>{`Position Ids: ${positionIds}`}</h3>
+      <button
+        className="button"
+        onClick={onMintPosition}
+        disabled={
+          txState === TransactionState.Sending ||
+          getProvider() === null ||
+          CurrentConfig.rpc.mainnet === ''
+        }>
+        <p>Mint Position</p>
+      </button>
+      <button
+        className="button"
+        onClick={() => {
+          onAddLiquidity(positionIds[positionIds.length - 1])
+        }}
+        disabled={
+          txState === TransactionState.Sending ||
+          getProvider() === null ||
+          CurrentConfig.rpc.mainnet === '' ||
+          positionIds.length === 0
+        }>
+        <p>Add Liquidity to Position</p>
+      </button>
+      <button
+        className="button"
+        onClick={() => {
+          onRemoveLiquidity(positionIds[positionIds.length - 1])
+        }}
+        disabled={
+          txState === TransactionState.Sending ||
+          getProvider() === null ||
+          CurrentConfig.rpc.mainnet === '' ||
+          positionIds.length === 0
+        }>
+        <p>Remove Liquidity from Position</p>
+      </button>
     </div>
   )
 }
