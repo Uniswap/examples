@@ -41,18 +41,14 @@ async function addLiquidity(positionId: number): Promise<TransactionState> {
     CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.token0,
       fromReadableAmount(
-        (CurrentConfig.tokens.token0Amount *
-          CurrentConfig.tokens.fractionToAdd) /
-          100,
+        CurrentConfig.tokens.token0Amount * CurrentConfig.tokens.fractionToAdd,
         CurrentConfig.tokens.token0.decimals
       )
     ),
     CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.token1,
       fromReadableAmount(
-        (CurrentConfig.tokens.token1Amount *
-          CurrentConfig.tokens.fractionToAdd) /
-          100,
+        CurrentConfig.tokens.token1Amount * CurrentConfig.tokens.fractionToAdd,
         CurrentConfig.tokens.token1.decimals
       )
     )
