@@ -1,12 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
-import {
-  AddLiquidityOptions,
-  CollectOptions,
-  NonfungiblePositionManager,
-  RemoveLiquidityOptions,
-} from '@uniswap/v3-sdk'
-import { Percent, CurrencyAmount } from '@uniswap/sdk-core'
+import { Percent, CurrencyAmount, Fraction } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
 import {
@@ -20,15 +14,20 @@ import {
   TransactionState,
   sendTransaction,
   getWalletAddress,
+  getMainnetProvider,
 } from '../libs/providers'
 import {
-  MAX_FEE_PER_GAS,
-  MAX_PRIORITY_FEE_PER_GAS,
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-  DAI_TOKEN,
-  USDC_TOKEN,
+  V3_SWAP_ROUTER_ADDRESS,
 } from '../libs/constants'
 import { fromReadableAmount } from '../libs/conversion'
+import {
+  AlphaRouter,
+  SwapAndAddConfig,
+  SwapAndAddOptions,
+  SwapType,
+  SwapToRatioStatus,
+} from '@uniswap/smart-order-router'
 
 async function swapAndAddLiquidity(
   positionId: number
@@ -39,57 +38,26 @@ async function swapAndAddLiquidity(
     return TransactionState.Failed
   }
 
-  const positionToIncreaseBy = await await constructPosition(
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token0,
-      fromReadableAmount(
-        CurrentConfig.tokens.token0Amount * CurrentConfig.tokens.fractionToAdd,
-        CurrentConfig.tokens.token0.decimals
-      )
-    ),
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token1,
-      fromReadableAmount(
-        CurrentConfig.tokens.token1Amount * CurrentConfig.tokens.fractionToAdd,
-        CurrentConfig.tokens.token1.decimals
-      )
-    )
-  )
+  const router = new AlphaRouter({ chainId: 1, provider: getMainnetProvider() })
 
-  const addLiquidityOptions: AddLiquidityOptions = {
-    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-    slippageTolerance: new Percent(50, 10_000),
-    tokenId: positionId,
+  const swapAndAddConfig: SwapAndAddConfig = {
+    ratioErrorTolerance: new Fraction(1, 100),
+    maxIterations: 6,
   }
 
-  // get calldata for increasing a position
-  const { calldata, value } = NonfungiblePositionManager.addCallParameters(
-    positionToIncreaseBy,
-    addLiquidityOptions
-  )
-
-  // build transaction
-  const transaction = {
-    data: calldata,
-    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    value: value,
-    from: address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+  const swapAndAddOptions: SwapAndAddOptions = {
+    swapOptions: {
+      type: SwapType.SWAP_ROUTER_02,
+      recipient: address,
+      slippageTolerance: new Percent(5, 100),
+      deadline: 60 * 20,
+    },
+    addLiquidityOptions: {
+      tokenId: positionId,
+    },
   }
 
-  await sendTransaction(transaction)
-  return TransactionState.Sent
-}
-
-async function removeLiquidity(positionId: number): Promise<TransactionState> {
-  const address = getWalletAddress()
-  const provider = getProvider()
-  if (!address || !provider) {
-    return TransactionState.Failed
-  }
-
-  const currentPosition = await await constructPosition(
+  const currentPosition = await constructPosition(
     CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.token0,
       fromReadableAmount(
@@ -106,38 +74,42 @@ async function removeLiquidity(positionId: number): Promise<TransactionState> {
     )
   )
 
-  const collectOptions: Omit<CollectOptions, 'tokenId'> = {
-    expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(DAI_TOKEN, 0),
-    expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(USDC_TOKEN, 0),
-    recipient: address,
-  }
-
-  const removeLiquidityOptions: RemoveLiquidityOptions = {
-    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-    slippageTolerance: new Percent(50, 10_000),
-    tokenId: positionId,
-    // percentage of liquidity to remove
-    liquidityPercentage: new Percent(CurrentConfig.tokens.fractionToRemove),
-    collectOptions,
-  }
-  // get calldata for minting a position
-  const { calldata, value } = NonfungiblePositionManager.removeCallParameters(
+  const routeToRatioResponse = await router.routeToRatio(
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token1,
+      fromReadableAmount(
+        CurrentConfig.tokens.token1Amount,
+        CurrentConfig.tokens.token1.decimals
+      )
+    ),
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token0,
+      fromReadableAmount(
+        CurrentConfig.tokens.token0Amount,
+        CurrentConfig.tokens.token0.decimals
+      )
+    ),
     currentPosition,
-    removeLiquidityOptions
+    swapAndAddConfig,
+    swapAndAddOptions
   )
 
-  // build transaction
-  const transaction = {
-    data: calldata,
-    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    value: value,
-    from: address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+  if (
+    !routeToRatioResponse ||
+    routeToRatioResponse.status !== SwapToRatioStatus.SUCCESS
+  ) {
+    return TransactionState.Failed
   }
 
-  await sendTransaction(transaction)
-  return TransactionState.Sent
+  const route = routeToRatioResponse.result
+  const transaction = {
+    data: route.methodParameters?.calldata,
+    to: V3_SWAP_ROUTER_ADDRESS,
+    value: route.methodParameters?.value,
+    from: address,
+  }
+
+  return sendTransaction(transaction)
 }
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
@@ -236,6 +208,9 @@ const Example = () => {
       <button
         className="button"
         onClick={() => {
+          if (!token0Balance || !token1Balance) {
+            return
+          }
           onSwapAndAddLiquidity(positionIds[positionIds.length - 1])
         }}
         disabled={
@@ -244,7 +219,7 @@ const Example = () => {
           CurrentConfig.rpc.mainnet === '' ||
           positionIds.length === 0
         }>
-        <p>Swap and Add Liquidity to Position</p>
+        <p>Swap and Add Liquidity</p>
       </button>
     </div>
   )

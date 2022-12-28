@@ -25,5 +25,5 @@ export async function getCurrencyBalance(
   const decimals: number = await ERC20Contract.decimals()
 
   // Format with proper units (approximate)
-  return toReadableAmount(balance, decimals).toString()
+  return toReadableAmount(balance, decimals)
 }

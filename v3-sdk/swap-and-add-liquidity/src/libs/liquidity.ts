@@ -95,7 +95,7 @@ export const constructPosition = async (
   )
 
   // create position using the maximum liquidity from input amounts
-  return Position.fromAmounts({
+  return new Position({
     pool: USDC_DAI_POOL,
     tickLower:
       nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
@@ -103,9 +103,8 @@ export const constructPosition = async (
     tickUpper:
       nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
       poolInfo.tickSpacing * 2,
-    amount0: token0Amount.quotient,
-    amount1: token1Amount.quotient,
-    useFullPrecision: true,
+
+    liquidity: 1,
   })
 }
 

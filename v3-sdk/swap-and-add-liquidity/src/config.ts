@@ -26,8 +26,6 @@ export interface ExampleConfig {
     token1: Token
     token1Amount: number
     poolFee: FeeAmount
-    fractionToRemove: number
-    fractionToAdd: number
   }
 }
 
@@ -46,11 +44,9 @@ export const CurrentConfig: ExampleConfig = {
   },
   tokens: {
     token0: USDC_TOKEN,
-    token0Amount: 1000,
+    token0Amount: 0.0015,
     token1: DAI_TOKEN,
-    token1Amount: 1000,
+    token1Amount: 0.0015,
     poolFee: FeeAmount.LOW,
-    fractionToRemove: 1,
-    fractionToAdd: 0.5,
   },
 }
