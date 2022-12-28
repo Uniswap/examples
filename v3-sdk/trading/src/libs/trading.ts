@@ -1,24 +1,10 @@
-import {
-  BigintIsh,
-  CurrencyAmount,
-  Percent,
-  Token,
-  TradeType,
-} from '@uniswap/sdk-core'
-import {
-  computePoolAddress,
-  Pool,
-  Route,
-  SwapOptions,
-  SwapRouter,
-  Trade,
-} from '@uniswap/v3-sdk'
+import { CurrencyAmount, Percent, Token, TradeType } from '@uniswap/sdk-core'
+import { Pool, Route, SwapOptions, SwapRouter, Trade } from '@uniswap/v3-sdk'
 import { ethers } from 'ethers'
 import { CurrentConfig } from '../config'
 import {
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
-  POOL_FACTORY_CONTRACT_ADDRESS,
   QUOTER_CONTRACT_ADDRESS,
   V3_SWAP_ROUTER_ADDRESS,
 } from './constants'
@@ -28,10 +14,11 @@ import {
   sendTransaction,
   TransactionState,
 } from './providers'
+
+import { getPoolInfo } from './pool'
 import { fromReadableAmount } from './utils'
 
 import Quoter from '@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json'
-import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 
 export type TokenTrade = Trade<Token, Token, TradeType>
 
@@ -42,9 +29,9 @@ export async function createTrade(): Promise<TokenTrade> {
   const pool = new Pool(
     CurrentConfig.tokens.in,
     CurrentConfig.tokens.out,
-    CurrentConfig.tokens.fee,
-    poolInfo.sqrtPriceX96,
-    poolInfo.liquidity,
+    CurrentConfig.tokens.poolFee,
+    poolInfo.sqrtPriceX96.toString(),
+    poolInfo.liquidity.toString(),
     poolInfo.tick
   )
 
@@ -121,7 +108,7 @@ async function getOutputQuote(): Promise<number> {
   const quotedAmountOut = await quoterContract.callStatic.quoteExactInputSingle(
     CurrentConfig.tokens.in.address,
     CurrentConfig.tokens.out.address,
-    CurrentConfig.tokens.fee,
+    CurrentConfig.tokens.poolFee,
     fromReadableAmount(
       CurrentConfig.tokens.amountIn,
       CurrentConfig.tokens.in.decimals
@@ -130,42 +117,4 @@ async function getOutputQuote(): Promise<number> {
   )
 
   return quotedAmountOut
-}
-
-async function getPoolInfo(): Promise<{
-  liquidity: BigintIsh
-  sqrtPriceX96: BigintIsh
-  tick: number
-}> {
-  const provider = getProvider()
-
-  if (!provider) {
-    throw new Error('Provider required to get pool info')
-  }
-
-  const poolContract = new ethers.Contract(
-    getPoolAddress(),
-    IUniswapV3PoolABI.abi,
-    provider
-  )
-
-  const [liquidity, slot] = await Promise.all([
-    poolContract.liquidity(),
-    poolContract.slot0(),
-  ])
-
-  return {
-    liquidity,
-    sqrtPriceX96: slot[0],
-    tick: slot[1],
-  }
-}
-
-function getPoolAddress() {
-  return computePoolAddress({
-    factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
-    tokenA: CurrentConfig.tokens.in,
-    tokenB: CurrentConfig.tokens.out,
-    fee: CurrentConfig.tokens.fee,
-  })
 }

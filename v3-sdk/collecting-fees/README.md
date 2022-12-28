@@ -1,10 +1,15 @@
+# Collecting Fees from a Position
+
 ## Overview
 
-This is an example of Collecting Fees that includes running against mainnet, locally, and using a wallet connection.
+This is an example of collecting fees from a position in a liquidity pool that includes running against mainnet, locally, and using a wallet connection.
+
+The core functionality of this example can be found in [`collectFees`](./src/libs/liquidity.ts#L25).
 
 ## Configuration
 
 This application can be configured to interact with:
+
 1. A locally deployed mainnet fork
 2. The mainnet
 3. An in-browser wallet (mainnet or configured locally)
@@ -16,6 +21,7 @@ The configuration includes control of the environment as well as inputs to the e
 ## Setup
 
 ### Install dependencies
+
 1. Run `yarn install` to install the project dependencies
 2. Run `yarn install:chain` to download and install Foundry
 

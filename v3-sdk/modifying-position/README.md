@@ -1,11 +1,15 @@
 # Modifying a Position
+
 ## Overview
 
-This is a template for dApp development guides that includes running against mainnet, locally, and using a wallet connection.
+This is an example of modifying a position in a liquidity pool that includes running against mainnet, locally, and using a wallet connection.
+
+The core functionality of this example can be found in [`addLiquidity`](./src/libs/liquidity.ts#L27) and [`removeLiquidity`](./src/libs/liquidity.ts#L78).
 
 ## Configuration
 
 This application can be configured to interact with:
+
 1. A locally deployed mainnet fork
 2. The mainnet
 3. An in-browser wallet (mainnet or configured locally)
@@ -17,6 +21,7 @@ The configuration includes control of the environment as well as inputs to the e
 ## Setup
 
 ### Install dependencies
+
 1. Run `yarn install` to install the project dependencies
 2. Run `yarn install:chain` to download and install Foundry
 

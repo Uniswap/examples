@@ -1,9 +1,9 @@
 import { ethers } from 'ethers'
 import {
   ERC20_ABI,
-  NONFUNGIBLE_POSITION_MANAGER_ABI,
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
+  NONFUNGIBLE_POSITION_MANAGER_ABI,
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
 } from './constants'
 import { TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER } from './constants'
@@ -14,12 +14,131 @@ import {
   nearestUsableTick,
   MintOptions,
   NonfungiblePositionManager,
+  AddLiquidityOptions,
+  RemoveLiquidityOptions,
+  CollectOptions,
 } from '@uniswap/v3-sdk'
 import { CurrentConfig } from '../config'
 import { getPoolInfo } from './pool'
 import { getProvider, getWalletAddress } from './providers'
 import { Percent, CurrencyAmount, Token } from '@uniswap/sdk-core'
 import { fromReadableAmount } from './conversion'
+
+export async function addLiquidity(
+  positionId: number
+): Promise<TransactionState> {
+  const address = getWalletAddress()
+  const provider = getProvider()
+  if (!address || !provider) {
+    return TransactionState.Failed
+  }
+
+  const positionToIncreaseBy = await constructPosition(
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token0,
+      fromReadableAmount(
+        CurrentConfig.tokens.token0Amount * CurrentConfig.tokens.fractionToAdd,
+        CurrentConfig.tokens.token0.decimals
+      )
+    ),
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token1,
+      fromReadableAmount(
+        CurrentConfig.tokens.token1Amount * CurrentConfig.tokens.fractionToAdd,
+        CurrentConfig.tokens.token1.decimals
+      )
+    )
+  )
+
+  const addLiquidityOptions: AddLiquidityOptions = {
+    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+    slippageTolerance: new Percent(50, 10_000),
+    tokenId: positionId,
+  }
+
+  // get calldata for increasing a position
+  const { calldata, value } = NonfungiblePositionManager.addCallParameters(
+    positionToIncreaseBy,
+    addLiquidityOptions
+  )
+
+  // build transaction
+  const transaction = {
+    data: calldata,
+    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+    value: value,
+    from: address,
+    maxFeePerGas: MAX_FEE_PER_GAS,
+    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+  }
+
+  return sendTransaction(transaction)
+}
+
+export async function removeLiquidity(
+  positionId: number
+): Promise<TransactionState> {
+  const address = getWalletAddress()
+  const provider = getProvider()
+  if (!address || !provider) {
+    return TransactionState.Failed
+  }
+
+  const currentPosition = await constructPosition(
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token0,
+      fromReadableAmount(
+        CurrentConfig.tokens.token0Amount,
+        CurrentConfig.tokens.token0.decimals
+      )
+    ),
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token1,
+      fromReadableAmount(
+        CurrentConfig.tokens.token1Amount,
+        CurrentConfig.tokens.token1.decimals
+      )
+    )
+  )
+
+  const collectOptions: Omit<CollectOptions, 'tokenId'> = {
+    expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token0,
+      0
+    ),
+    expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.token1,
+      0
+    ),
+    recipient: address,
+  }
+
+  const removeLiquidityOptions: RemoveLiquidityOptions = {
+    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+    slippageTolerance: new Percent(50, 10_000),
+    tokenId: positionId,
+    // percentage of liquidity to remove
+    liquidityPercentage: new Percent(CurrentConfig.tokens.fractionToRemove),
+    collectOptions,
+  }
+  // get calldata for minting a position
+  const { calldata, value } = NonfungiblePositionManager.removeCallParameters(
+    currentPosition,
+    removeLiquidityOptions
+  )
+
+  // build transaction
+  const transaction = {
+    data: calldata,
+    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+    value: value,
+    from: address,
+    maxFeePerGas: MAX_FEE_PER_GAS,
+    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+  }
+
+  return sendTransaction(transaction)
+}
 
 export async function getPositionIds(
   provider: ethers.providers.Provider,
@@ -65,7 +184,7 @@ export async function getTokenTransferApprovals(
       TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER
     )
 
-    await sendTransaction({
+    return sendTransaction({
       ...transaction,
       from: fromAddress,
     })
@@ -73,19 +192,17 @@ export async function getTokenTransferApprovals(
     console.error(e)
     return TransactionState.Failed
   }
-
-  return TransactionState.Sent
 }
 
-export const constructPosition = async (
+export async function constructPosition(
   token0Amount: CurrencyAmount<Token>,
   token1Amount: CurrencyAmount<Token>
-): Promise<Position> => {
+): Promise<Position> {
   // get pool info
   const poolInfo = await getPoolInfo()
 
   // construct pool instance
-  const USDC_DAI_POOL = new Pool(
+  const configuredPool = new Pool(
     token0Amount.currency,
     token1Amount.currency,
     poolInfo.fee,
@@ -96,7 +213,7 @@ export const constructPosition = async (
 
   // create position using the maximum liquidity from input amounts
   return Position.fromAmounts({
-    pool: USDC_DAI_POOL,
+    pool: configuredPool,
     tickLower:
       nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
       poolInfo.tickSpacing * 2,
@@ -175,6 +292,5 @@ export async function mintPosition(): Promise<TransactionState> {
     maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
   }
 
-  await sendTransaction(transaction)
-  return TransactionState.Sent
+  return sendTransaction(transaction)
 }
