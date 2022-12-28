@@ -1,10 +1,13 @@
+# Routing
+
 ## Overview
 
-This is a template for dApp development guides that includes running against mainnet, locally, and using a wallet connection.
+This is an example of finding an ideal swapping route that includes running against mainnet, locally, and using a wallet connection.
 
 ## Configuration
 
 This application can be configured to interact with:
+
 1. A locally deployed mainnet fork
 2. The mainnet
 3. An in-browser wallet (mainnet or configured locally)
@@ -16,6 +19,7 @@ The configuration includes control of the environment as well as inputs to the e
 ## Setup
 
 ### Install dependencies
+
 1. Run `yarn install` to install the project dependencies
 2. Run `yarn install:chain` to download and install Foundry
 

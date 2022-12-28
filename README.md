@@ -1,14 +1,13 @@
 # Uniswap Examples
 
-This repository contains examples of applications integrating with Uniswap.
+This repository contains example integrations with Uniswap SDK's and various Web3 environments. More detailed guides walking through the core parts of an example can be found on the [Uniswap docs site](https://docs.uniswap.org/).
 
-# Templates
+## Adding New Examples
 
-This repository contains templates for different options of creating a guide:
-1. By testing on a local copy of mainnet
-3. By testing on a local copy of mainnet using a Web3 wallet
-2. By testing on the mainnet
-# Adding a new example
+To create a new guide, consider starting with an available template. Currently the react template supports core functionality as well as:
 
-1. If a folder for your application does not exist, create one similar to *v3_sdk*
-2. Under that folder, create a new folder with the name of the example use case like *routing*
+- Running against a local copy of mainnet
+- Running against a Web3 wallet
+- Running against the Ethereum mainnet
+
+Categorize your example by the relevant folder (e.g `v3_sdk/`) and then a folder for the example (e.g `v3_sdk/routing`)
