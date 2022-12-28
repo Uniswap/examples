@@ -57,38 +57,30 @@ async function swapAndAddLiquidity(
     },
   }
 
-  const currentPosition = await constructPosition(
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token0,
-      fromReadableAmount(
-        CurrentConfig.tokens.token0Amount,
-        CurrentConfig.tokens.token0.decimals
-      )
-    ),
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token1,
-      fromReadableAmount(
-        CurrentConfig.tokens.token1Amount,
-        CurrentConfig.tokens.token1.decimals
-      )
+  const token1CurrencyAmount = CurrencyAmount.fromRawAmount(
+    CurrentConfig.tokens.token0,
+    fromReadableAmount(
+      CurrentConfig.tokens.token0Amount,
+      CurrentConfig.tokens.token0.decimals
     )
   )
 
+  const token0CurrencyAmount = CurrencyAmount.fromRawAmount(
+    CurrentConfig.tokens.token1,
+    fromReadableAmount(
+      CurrentConfig.tokens.token1Amount,
+      CurrentConfig.tokens.token1.decimals
+    )
+  )
+
+  const currentPosition = await constructPosition(
+    token0CurrencyAmount,
+    token1CurrencyAmount
+  )
+
   const routeToRatioResponse = await router.routeToRatio(
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token1,
-      fromReadableAmount(
-        CurrentConfig.tokens.token1Amount,
-        CurrentConfig.tokens.token1.decimals
-      )
-    ),
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token0,
-      fromReadableAmount(
-        CurrentConfig.tokens.token0Amount,
-        CurrentConfig.tokens.token0.decimals
-      )
-    ),
+    token0CurrencyAmount,
+    token1CurrencyAmount,
     currentPosition,
     swapAndAddConfig,
     swapAndAddOptions
