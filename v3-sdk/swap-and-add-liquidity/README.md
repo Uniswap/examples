@@ -1,7 +1,7 @@
 # Swap and Add Liquidity
 ## Overview
 
-This is a template for dApp development guides that includes running against mainnet, locally, and using a wallet connection.
+This is a guide about Swapping and Adding Liquidity that includes running against mainnet, locally, and using a wallet connection.
 
 ## Configuration
 
