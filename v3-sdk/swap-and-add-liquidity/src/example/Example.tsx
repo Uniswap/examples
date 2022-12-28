@@ -1,108 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
-import { Percent, CurrencyAmount, Fraction } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
 import {
   getPositionIds,
-  constructPosition,
   mintPosition,
+  swapAndAddLiquidity,
 } from '../libs/liquidity'
 import {
   connectBrowserExtensionWallet,
   getProvider,
   TransactionState,
-  sendTransaction,
   getWalletAddress,
-  getMainnetProvider,
 } from '../libs/providers'
-import {
-  NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-  V3_SWAP_ROUTER_ADDRESS,
-} from '../libs/constants'
-import { fromReadableAmount } from '../libs/conversion'
-import {
-  AlphaRouter,
-  SwapAndAddConfig,
-  SwapAndAddOptions,
-  SwapType,
-  SwapToRatioStatus,
-} from '@uniswap/smart-order-router'
-
-async function swapAndAddLiquidity(
-  positionId: number
-): Promise<TransactionState> {
-  const address = getWalletAddress()
-  const provider = getProvider()
-  if (!address || !provider) {
-    return TransactionState.Failed
-  }
-
-  const router = new AlphaRouter({ chainId: 1, provider: getMainnetProvider() })
-
-  const swapAndAddConfig: SwapAndAddConfig = {
-    ratioErrorTolerance: new Fraction(1, 100),
-    maxIterations: 6,
-  }
-
-  const swapAndAddOptions: SwapAndAddOptions = {
-    swapOptions: {
-      type: SwapType.SWAP_ROUTER_02,
-      recipient: address,
-      slippageTolerance: new Percent(5, 100),
-      deadline: 60 * 20,
-    },
-    addLiquidityOptions: {
-      tokenId: positionId,
-    },
-  }
-
-  const token1CurrencyAmount = CurrencyAmount.fromRawAmount(
-    CurrentConfig.tokens.token0,
-    fromReadableAmount(
-      CurrentConfig.tokens.token0Amount,
-      CurrentConfig.tokens.token0.decimals
-    )
-  )
-
-  const token0CurrencyAmount = CurrencyAmount.fromRawAmount(
-    CurrentConfig.tokens.token1,
-    fromReadableAmount(
-      CurrentConfig.tokens.token1Amount,
-      CurrentConfig.tokens.token1.decimals
-    )
-  )
-
-  const currentPosition = await constructPosition(
-    token0CurrencyAmount,
-    token1CurrencyAmount
-  )
-
-  const routeToRatioResponse = await router.routeToRatio(
-    token0CurrencyAmount,
-    token1CurrencyAmount,
-    currentPosition,
-    swapAndAddConfig,
-    swapAndAddOptions
-  )
-
-  if (
-    !routeToRatioResponse ||
-    routeToRatioResponse.status !== SwapToRatioStatus.SUCCESS
-  ) {
-    return TransactionState.Failed
-  }
-
-  const route = routeToRatioResponse.result
-  const transaction = {
-    data: route.methodParameters?.calldata,
-    to: V3_SWAP_ROUTER_ADDRESS,
-    value: route.methodParameters?.value,
-    from: address,
-  }
-
-  return sendTransaction(transaction)
-}
+import { NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS } from '../libs/constants'
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   useEffect(() => {

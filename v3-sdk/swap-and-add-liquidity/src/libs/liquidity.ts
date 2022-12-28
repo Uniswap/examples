@@ -5,9 +5,14 @@ import {
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+  V3_SWAP_ROUTER_ADDRESS,
 } from './constants'
 import { TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER } from './constants'
-import { sendTransaction, TransactionState } from './providers'
+import {
+  getMainnetProvider,
+  sendTransaction,
+  TransactionState,
+} from './providers'
 import {
   Pool,
   Position,
@@ -18,8 +23,90 @@ import {
 import { CurrentConfig } from '../config'
 import { getPoolInfo } from './pool'
 import { getProvider, getWalletAddress } from './providers'
-import { Percent, CurrencyAmount, Token } from '@uniswap/sdk-core'
+import { Percent, CurrencyAmount, Token, Fraction } from '@uniswap/sdk-core'
 import { fromReadableAmount } from './conversion'
+import {
+  AlphaRouter,
+  SwapAndAddConfig,
+  SwapAndAddOptions,
+  SwapToRatioStatus,
+  SwapType,
+} from '@uniswap/smart-order-router'
+
+export async function swapAndAddLiquidity(
+  positionId: number
+): Promise<TransactionState> {
+  const address = getWalletAddress()
+  const provider = getProvider()
+  if (!address || !provider) {
+    return TransactionState.Failed
+  }
+
+  const router = new AlphaRouter({ chainId: 1, provider: getMainnetProvider() })
+
+  const swapAndAddConfig: SwapAndAddConfig = {
+    ratioErrorTolerance: new Fraction(1, 100),
+    maxIterations: 6,
+  }
+
+  const swapAndAddOptions: SwapAndAddOptions = {
+    swapOptions: {
+      type: SwapType.SWAP_ROUTER_02,
+      recipient: address,
+      slippageTolerance: new Percent(5, 100),
+      deadline: 60 * 20,
+    },
+    addLiquidityOptions: {
+      tokenId: positionId,
+    },
+  }
+
+  const token1CurrencyAmount = CurrencyAmount.fromRawAmount(
+    CurrentConfig.tokens.token0,
+    fromReadableAmount(
+      CurrentConfig.tokens.token0Amount,
+      CurrentConfig.tokens.token0.decimals
+    )
+  )
+
+  const token0CurrencyAmount = CurrencyAmount.fromRawAmount(
+    CurrentConfig.tokens.token1,
+    fromReadableAmount(
+      CurrentConfig.tokens.token1Amount,
+      CurrentConfig.tokens.token1.decimals
+    )
+  )
+
+  const currentPosition = await constructPosition(
+    token0CurrencyAmount,
+    token1CurrencyAmount
+  )
+
+  const routeToRatioResponse = await router.routeToRatio(
+    token0CurrencyAmount,
+    token1CurrencyAmount,
+    currentPosition,
+    swapAndAddConfig,
+    swapAndAddOptions
+  )
+
+  if (
+    !routeToRatioResponse ||
+    routeToRatioResponse.status !== SwapToRatioStatus.SUCCESS
+  ) {
+    return TransactionState.Failed
+  }
+
+  const route = routeToRatioResponse.result
+  const transaction = {
+    data: route.methodParameters?.calldata,
+    to: V3_SWAP_ROUTER_ADDRESS,
+    value: route.methodParameters?.value,
+    from: address,
+  }
+
+  return sendTransaction(transaction)
+}
 
 export async function getPositionIds(
   provider: ethers.providers.Provider,
@@ -65,7 +152,7 @@ export async function getTokenTransferApprovals(
       TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER
     )
 
-    await sendTransaction({
+    return await sendTransaction({
       ...transaction,
       from: fromAddress,
     })
@@ -73,19 +160,17 @@ export async function getTokenTransferApprovals(
     console.error(e)
     return TransactionState.Failed
   }
-
-  return TransactionState.Sent
 }
 
-export const constructPosition = async (
+export async function constructPosition(
   token0Amount: CurrencyAmount<Token>,
   token1Amount: CurrencyAmount<Token>
-): Promise<Position> => {
+): Promise<Position> {
   // get pool info
   const poolInfo = await getPoolInfo()
 
   // construct pool instance
-  const USDC_DAI_POOL = new Pool(
+  const configuredPool = new Pool(
     token0Amount.currency,
     token1Amount.currency,
     poolInfo.fee,
@@ -96,7 +181,7 @@ export const constructPosition = async (
 
   // create position using the maximum liquidity from input amounts
   return new Position({
-    pool: USDC_DAI_POOL,
+    pool: configuredPool,
     tickLower:
       nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
       poolInfo.tickSpacing * 2,
@@ -114,6 +199,7 @@ export async function mintPosition(): Promise<TransactionState> {
   if (!address || !provider) {
     return TransactionState.Failed
   }
+
   // Give approval to the contract to transfer tokens
   const tokenInApproval = await getTokenTransferApprovals(
     provider,
@@ -174,6 +260,5 @@ export async function mintPosition(): Promise<TransactionState> {
     maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
   }
 
-  await sendTransaction(transaction)
-  return TransactionState.Sent
+  return sendTransaction(transaction)
 }

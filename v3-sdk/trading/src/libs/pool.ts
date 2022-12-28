@@ -23,8 +23,8 @@ export async function getPoolInfo(): Promise<PoolInfo> {
 
   const currentPoolAddress = computePoolAddress({
     factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
-    tokenA: CurrentConfig.tokens.token0,
-    tokenB: CurrentConfig.tokens.token1,
+    tokenA: CurrentConfig.tokens.in,
+    tokenB: CurrentConfig.tokens.out,
     fee: CurrentConfig.tokens.poolFee,
   })
 

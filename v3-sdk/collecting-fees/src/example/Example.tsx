@@ -1,69 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
-import { CollectOptions, NonfungiblePositionManager } from '@uniswap/v3-sdk'
-import { CurrencyAmount } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
 import {
   connectBrowserExtensionWallet,
   getProvider,
   TransactionState,
-  sendTransaction,
   getWalletAddress,
 } from '../libs/providers'
-import {
-  MAX_FEE_PER_GAS,
-  MAX_PRIORITY_FEE_PER_GAS,
-  NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-  DAI_TOKEN,
-  USDC_TOKEN,
-} from '../libs/constants'
-import { getPositionIds, mintPosition } from '../libs/liquidity'
-import { fromReadableAmount } from '../libs/conversion'
-
-async function collectFees(positionId: number): Promise<TransactionState> {
-  const address = getWalletAddress()
-  const provider = getProvider()
-  if (!address || !provider) {
-    return TransactionState.Failed
-  }
-
-  const collectOptions: CollectOptions = {
-    tokenId: positionId,
-    expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(
-      DAI_TOKEN,
-      fromReadableAmount(
-        CurrentConfig.tokens.token0AmountToCollect,
-        CurrentConfig.tokens.token0.decimals
-      )
-    ),
-    expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(
-      USDC_TOKEN,
-      fromReadableAmount(
-        CurrentConfig.tokens.token1AmountToCollect,
-        CurrentConfig.tokens.token0.decimals
-      )
-    ),
-    recipient: address,
-  }
-
-  // get calldata for minting a position
-  const { calldata, value } =
-    NonfungiblePositionManager.collectCallParameters(collectOptions)
-
-  // build transaction
-  const transaction = {
-    data: calldata,
-    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    value: value,
-    from: address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  }
-
-  await sendTransaction(transaction)
-  return TransactionState.Sent
-}
+import { NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS } from '../libs/constants'
+import { collectFees, getPositionIds, mintPosition } from '../libs/liquidity'
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   useEffect(() => {

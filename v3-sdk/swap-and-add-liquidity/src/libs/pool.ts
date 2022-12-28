@@ -15,7 +15,7 @@ interface PoolInfo {
   tick: number
 }
 
-export const getPoolInfo = async (): Promise<PoolInfo> => {
+export async function getPoolInfo(): Promise<PoolInfo> {
   const provider = getProvider()
   if (!provider) {
     throw new Error('No provider')

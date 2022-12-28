@@ -6,7 +6,7 @@ import { BaseProvider } from '@ethersproject/providers'
 const mainnetProvider = new ethers.providers.JsonRpcProvider(
   CurrentConfig.rpc.mainnet
 )
-export const wallet = createWallet()
+const wallet = createWallet()
 
 const browserExtensionProvider = createBrowserExtensionProvider()
 let walletExtensionAddress: string | null = null

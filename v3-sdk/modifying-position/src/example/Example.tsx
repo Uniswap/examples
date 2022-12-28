@@ -1,141 +1,20 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
-import {
-  AddLiquidityOptions,
-  CollectOptions,
-  NonfungiblePositionManager,
-  RemoveLiquidityOptions,
-} from '@uniswap/v3-sdk'
-import { Percent, CurrencyAmount } from '@uniswap/sdk-core'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
 import {
   getPositionIds,
-  constructPosition,
   mintPosition,
+  addLiquidity,
+  removeLiquidity,
 } from '../libs/liquidity'
 import {
   connectBrowserExtensionWallet,
   getProvider,
   TransactionState,
-  sendTransaction,
   getWalletAddress,
 } from '../libs/providers'
-import {
-  MAX_FEE_PER_GAS,
-  MAX_PRIORITY_FEE_PER_GAS,
-  NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-  DAI_TOKEN,
-  USDC_TOKEN,
-} from '../libs/constants'
-import { fromReadableAmount } from '../libs/conversion'
-
-async function addLiquidity(positionId: number): Promise<TransactionState> {
-  const address = getWalletAddress()
-  const provider = getProvider()
-  if (!address || !provider) {
-    return TransactionState.Failed
-  }
-
-  const positionToIncreaseBy = await await constructPosition(
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token0,
-      fromReadableAmount(
-        CurrentConfig.tokens.token0Amount * CurrentConfig.tokens.fractionToAdd,
-        CurrentConfig.tokens.token0.decimals
-      )
-    ),
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token1,
-      fromReadableAmount(
-        CurrentConfig.tokens.token1Amount * CurrentConfig.tokens.fractionToAdd,
-        CurrentConfig.tokens.token1.decimals
-      )
-    )
-  )
-
-  const addLiquidityOptions: AddLiquidityOptions = {
-    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-    slippageTolerance: new Percent(50, 10_000),
-    tokenId: positionId,
-  }
-
-  // get calldata for increasing a position
-  const { calldata, value } = NonfungiblePositionManager.addCallParameters(
-    positionToIncreaseBy,
-    addLiquidityOptions
-  )
-
-  // build transaction
-  const transaction = {
-    data: calldata,
-    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    value: value,
-    from: address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  }
-
-  return sendTransaction(transaction)
-}
-
-async function removeLiquidity(positionId: number): Promise<TransactionState> {
-  const address = getWalletAddress()
-  const provider = getProvider()
-  if (!address || !provider) {
-    return TransactionState.Failed
-  }
-
-  const currentPosition = await await constructPosition(
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token0,
-      fromReadableAmount(
-        CurrentConfig.tokens.token0Amount,
-        CurrentConfig.tokens.token0.decimals
-      )
-    ),
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token1,
-      fromReadableAmount(
-        CurrentConfig.tokens.token1Amount,
-        CurrentConfig.tokens.token1.decimals
-      )
-    )
-  )
-
-  const collectOptions: Omit<CollectOptions, 'tokenId'> = {
-    expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(DAI_TOKEN, 0),
-    expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(USDC_TOKEN, 0),
-    recipient: address,
-  }
-
-  const removeLiquidityOptions: RemoveLiquidityOptions = {
-    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-    slippageTolerance: new Percent(50, 10_000),
-    tokenId: positionId,
-    // percentage of liquidity to remove
-    liquidityPercentage: new Percent(CurrentConfig.tokens.fractionToRemove),
-    collectOptions,
-  }
-  // get calldata for minting a position
-  const { calldata, value } = NonfungiblePositionManager.removeCallParameters(
-    currentPosition,
-    removeLiquidityOptions
-  )
-
-  // build transaction
-  const transaction = {
-    data: calldata,
-    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    value: value,
-    from: address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  }
-
-  await sendTransaction(transaction)
-  return TransactionState.Sent
-}
+import { NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS } from '../libs/constants'
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   useEffect(() => {
