@@ -4,6 +4,8 @@
 
 This is an example of collecting fees from a position in a liquidity pool that includes running against mainnet, locally, and using a wallet connection.
 
+The core functionality of this example can be found in [`collectFees`](./src/libs/liquidity.ts#L25).
+
 ## Configuration
 
 This application can be configured to interact with:

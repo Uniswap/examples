@@ -4,6 +4,8 @@
 
 This is an example of finding an ideal swapping route that includes running against mainnet, locally, and using a wallet connection.
 
+The core functionality of this example can be found in [`routing.ts`](./src/libs/routing.ts).
+
 ## Configuration
 
 This application can be configured to interact with:

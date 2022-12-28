@@ -4,6 +4,8 @@
 
 This is an example of modifying a position in a liquidity pool that includes running against mainnet, locally, and using a wallet connection.
 
+The core functionality of this example can be found in [`addLiquidity`](./src/libs/liquidity.ts#L27) and [`removeLiquidity`](./src/libs/liquidity.ts#L78).
+
 ## Configuration
 
 This application can be configured to interact with:

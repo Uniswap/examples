@@ -4,6 +4,8 @@
 
 This is an example of minting a position in a liquidity pool that includes running against mainnet, locally, and using a wallet connection.
 
+The core functionality of this example can be found in [`mintPosition`](./src/libs/positions.ts#L27).
+
 ## Configuration
 
 This application can be configured to interact with:

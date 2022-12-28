@@ -4,6 +4,8 @@
 
 This is an example of executing a quoted swap trade that includes running against mainnet, locally, and using a wallet connection.
 
+The core functionality of this example can be found in [`trading.ts`](./src/libs/trading.ts).
+
 ## Configuration
 
 This application can be configured to interact with:

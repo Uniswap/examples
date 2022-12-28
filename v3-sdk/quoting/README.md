@@ -4,6 +4,8 @@
 
 This is an example of getting a quote using the Uniswap V3 guide and includes running against mainnet or a locally deployed chain.
 
+The core functionality of this example can be found in [`quote.ts`](./src/libs/quote.ts).
+
 ## Configuration
 
 This application is a read only quoting application that communicates with the Ethereum mainnet. To configure the input token/amount and output token, edit the [configuration](./src/config.ts) file. The code should need no further modification to function.
