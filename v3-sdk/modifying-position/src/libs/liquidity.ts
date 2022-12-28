@@ -33,7 +33,7 @@ export async function addLiquidity(
     return TransactionState.Failed
   }
 
-  const positionToIncreaseBy = await await constructPosition(
+  const positionToIncreaseBy = await constructPosition(
     CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.token0,
       fromReadableAmount(
@@ -84,7 +84,7 @@ export async function removeLiquidity(
     return TransactionState.Failed
   }
 
-  const currentPosition = await await constructPosition(
+  const currentPosition = await constructPosition(
     CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.token0,
       fromReadableAmount(

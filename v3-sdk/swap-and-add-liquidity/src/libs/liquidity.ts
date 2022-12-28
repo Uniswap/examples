@@ -29,6 +29,8 @@ import {
   AlphaRouter,
   SwapAndAddConfig,
   SwapAndAddOptions,
+  SwapToRatioResponse,
+  SwapToRatioRoute,
   SwapToRatioStatus,
   SwapType,
 } from '@uniswap/smart-order-router'
@@ -82,7 +84,7 @@ export async function swapAndAddLiquidity(
     token1CurrencyAmount
   )
 
-  const routeToRatioResponse = await router.routeToRatio(
+  const routeToRatioResponse: SwapToRatioResponse = await router.routeToRatio(
     token0CurrencyAmount,
     token1CurrencyAmount,
     currentPosition,
@@ -97,7 +99,7 @@ export async function swapAndAddLiquidity(
     return TransactionState.Failed
   }
 
-  const route = routeToRatioResponse.result
+  const route: SwapToRatioRoute = routeToRatioResponse.result
   const transaction = {
     data: route.methodParameters?.calldata,
     to: V3_SWAP_ROUTER_ADDRESS,

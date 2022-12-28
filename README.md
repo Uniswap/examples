@@ -1,6 +1,6 @@
 # Uniswap Examples
 
-This repository contains example integrations with Uniswap SDK's and various Web3 environments. More detailed guides walking through the core parts of an example can be found on the [Uniswap docs site](https://docs.uniswap.org/).
+This repository contains example integrations with Uniswap SDK's and various Web3 environments. More detailed guides walking through the core parts of an example can be found on the [Uniswap docs site](https://docs.uniswap.org/). Currently this examples set only covers the [Uniswap V3 SDK](https://docs.uniswap.org/sdk/v3/overview).
 
 ## Adding New Examples
 
