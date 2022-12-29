@@ -8,8 +8,13 @@ import {
   TransactionState,
   getWalletAddress,
 } from '../libs/providers'
-import { NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS } from '../libs/constants'
-import { collectFees, getPositionIds, mintPosition } from '../libs/liquidity'
+import {
+  collectFees,
+  getPositionIds,
+  getPositionInfo,
+  mintPosition,
+  PositionInfo,
+} from '../libs/liquidity'
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   useEffect(() => {
@@ -24,6 +29,7 @@ const Example = () => {
   const [tokenInBalance, setTokenInBalance] = useState<string>()
   const [tokenOutBalance, setTokenOutBalance] = useState<string>()
   const [positionIds, setPositionIds] = useState<number[]>([])
+  const [positionsInfo, setPositionsInfo] = useState<PositionInfo[]>([])
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
@@ -46,12 +52,10 @@ const Example = () => {
     setTokenOutBalance(
       await getCurrencyBalance(provider, address, CurrentConfig.tokens.token1)
     )
-    setPositionIds(
-      await getPositionIds(
-        provider,
-        address,
-        NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-      )
+    const ids = await getPositionIds()
+    setPositionIds(ids)
+    setPositionsInfo(
+      await Promise.all(ids.map(async (id) => await getPositionInfo(id)))
     )
   }, [])
 
@@ -93,7 +97,19 @@ const Example = () => {
       <h3>{`Transaction State: ${txState}`}</h3>
       <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${tokenInBalance}`}</h3>
       <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${tokenOutBalance}`}</h3>
-      <h3>{`Position Ids: ${positionIds}`}</h3>
+      <div>
+        Positions:{' '}
+        {positionIds.length === positionsInfo.length &&
+          positionIds
+            .map((id, index) => [id, positionsInfo[index]])
+            .map(
+              (info) =>
+                `${info[0]}: ${(
+                  info[1] as PositionInfo
+                ).liquidity.toString()} liquidity`
+            )
+            .map((s, i) => <p key={i}>{s}</p>)}
+      </div>
       <button
         className="button"
         onClick={onMintPosition}
