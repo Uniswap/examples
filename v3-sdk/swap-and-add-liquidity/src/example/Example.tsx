@@ -4,7 +4,9 @@ import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
 import {
   getPositionIds,
+  getPositionInfo,
   mintPosition,
+  PositionInfo,
   swapAndAddLiquidity,
 } from '../libs/liquidity'
 import {
@@ -13,7 +15,6 @@ import {
   TransactionState,
   getWalletAddress,
 } from '../libs/providers'
-import { NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS } from '../libs/constants'
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   useEffect(() => {
@@ -28,6 +29,7 @@ const Example = () => {
   const [token0Balance, setToken0Balance] = useState<string>()
   const [token1Balance, setToken1Balance] = useState<string>()
   const [positionIds, setPositionIds] = useState<number[]>([])
+  const [positionsInfo, setPositionsInfo] = useState<PositionInfo[]>([])
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
@@ -42,20 +44,22 @@ const Example = () => {
     const provider = getProvider()
     const address = getWalletAddress()
     if (!provider || !address) {
-      throw new Error('No provider or address')
+      return
     }
+
+    // Set Balances
     setToken0Balance(
       await getCurrencyBalance(provider, address, CurrentConfig.tokens.token0)
     )
     setToken1Balance(
       await getCurrencyBalance(provider, address, CurrentConfig.tokens.token1)
     )
-    setPositionIds(
-      await getPositionIds(
-        provider,
-        address,
-        NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-      )
+
+    // Set Position Info
+    const ids = await getPositionIds()
+    setPositionIds(ids)
+    setPositionsInfo(
+      await Promise.all(ids.map(async (id) => await getPositionInfo(id)))
     )
   }, [])
 
@@ -97,7 +101,18 @@ const Example = () => {
       <h3>{`Transaction State: ${txState}`}</h3>
       <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${token0Balance}`}</h3>
       <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${token1Balance}`}</h3>
-      <h3>{`Position Ids: ${positionIds}`}</h3>
+      <div>
+        Positions:
+        {positionIds.length === positionsInfo.length &&
+          positionIds
+            .map((id, index) => [id, positionsInfo[index]])
+            .map((info) => {
+              const id = info[0]
+              const posInfo = info[1] as PositionInfo
+              return `${id}: ${posInfo.liquidity.toString()} liquidity, owed ${posInfo.tokensOwed0.toString()} and ${posInfo.tokensOwed1.toString()}`
+            })
+            .map((s, i) => <p key={i}>{s}</p>)}
+      </div>
       <button
         className="button"
         onClick={onMintPosition}

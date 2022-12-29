@@ -26,8 +26,8 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 }
 
 const Example = () => {
-  const [tokenInBalance, setTokenInBalance] = useState<string>()
-  const [tokenOutBalance, setTokenOutBalance] = useState<string>()
+  const [token0Balance, setToken0Balance] = useState<string>()
+  const [token1Balance, setToken1Balance] = useState<string>()
   const [positionIds, setPositionIds] = useState<number[]>([])
   const [positionsInfo, setPositionsInfo] = useState<PositionInfo[]>([])
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
@@ -44,14 +44,18 @@ const Example = () => {
     const provider = getProvider()
     const address = getWalletAddress()
     if (!provider || !address) {
-      throw new Error('No provider or address')
+      return
     }
-    setTokenInBalance(
+
+    // Set Balances
+    setToken0Balance(
       await getCurrencyBalance(provider, address, CurrentConfig.tokens.token0)
     )
-    setTokenOutBalance(
+    setToken1Balance(
       await getCurrencyBalance(provider, address, CurrentConfig.tokens.token1)
     )
+
+    // Set Position Info
     const ids = await getPositionIds()
     setPositionIds(ids)
     setPositionsInfo(
@@ -95,19 +99,18 @@ const Example = () => {
         )}
       <h3>{`Block Number: ${blockNumber + 1}`}</h3>
       <h3>{`Transaction State: ${txState}`}</h3>
-      <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${tokenInBalance}`}</h3>
-      <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${tokenOutBalance}`}</h3>
+      <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${token0Balance}`}</h3>
+      <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${token1Balance}`}</h3>
       <div>
-        Positions:{' '}
+        Positions:
         {positionIds.length === positionsInfo.length &&
           positionIds
             .map((id, index) => [id, positionsInfo[index]])
-            .map(
-              (info) =>
-                `${info[0]}: ${(
-                  info[1] as PositionInfo
-                ).liquidity.toString()} liquidity`
-            )
+            .map((info) => {
+              const id = info[0]
+              const posInfo = info[1] as PositionInfo
+              return `${id}: ${posInfo.liquidity.toString()} liquidity, owed ${posInfo.tokensOwed0.toString()} and ${posInfo.tokensOwed1.toString()}`
+            })
             .map((s, i) => <p key={i}>{s}</p>)}
       </div>
       <button
