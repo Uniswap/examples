@@ -57,9 +57,7 @@ const Example = () => {
     // Set Position Info
     const ids = await getPositionIds()
     setPositionIds(ids)
-    setPositionsInfo(
-      await Promise.all(ids.map(async (id) => await getPositionInfo(id)))
-    )
+    setPositionsInfo(await Promise.all(ids.map(getPositionInfo)))
   }, [])
 
   // Event Handlers
