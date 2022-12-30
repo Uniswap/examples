@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import {
   ERC20_ABI,
   NONFUNGIBLE_POSITION_MANAGER_ABI,
@@ -34,6 +34,16 @@ import {
   SwapToRatioStatus,
   SwapType,
 } from '@uniswap/smart-order-router'
+
+export interface PositionInfo {
+  tickLower: number
+  tickUpper: number
+  liquidity: BigNumber
+  feeGrowthInside0LastX128: BigNumber
+  feeGrowthInside1LastX128: BigNumber
+  tokensOwed0: BigNumber
+  tokensOwed1: BigNumber
+}
 
 export async function swapAndAddLiquidity(
   positionId: number
@@ -110,29 +120,60 @@ export async function swapAndAddLiquidity(
   return sendTransaction(transaction)
 }
 
-export async function getPositionIds(
-  provider: ethers.providers.Provider,
-  address: string,
-  contractAddress: string
-): Promise<number[]> {
-  // Get currency otherwise
+export async function getPositionIds(): Promise<number[]> {
+  const provider = getProvider()
+  if (!provider) {
+    throw new Error('No provider available')
+  }
+
   const positionContract = new ethers.Contract(
-    contractAddress,
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
     NONFUNGIBLE_POSITION_MANAGER_ABI,
     provider
   )
+
   // Get number of positions
-  const balance: number = await positionContract.balanceOf(address)
+  const balance: number = await positionContract.balanceOf(
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
+  )
 
   // Get all positions
   const tokenIds = []
   for (let i = 0; i < balance; i++) {
     const tokenOfOwnerByIndex: number =
-      await positionContract.tokenOfOwnerByIndex(address, i)
+      await positionContract.tokenOfOwnerByIndex(
+        NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+        i
+      )
     tokenIds.push(tokenOfOwnerByIndex)
   }
 
   return tokenIds
+}
+
+export async function getPositionInfo(tokenId: number): Promise<PositionInfo> {
+  const provider = getProvider()
+  if (!provider) {
+    throw new Error('No provider available')
+  }
+
+  const positionContract = new ethers.Contract(
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+    NONFUNGIBLE_POSITION_MANAGER_ABI,
+    provider
+  )
+
+  const position = await positionContract.positions(tokenId)
+
+  return {
+    tickLower: position.tickLower,
+    tickUpper: position.tickUpper,
+    liquidity: position.liquidity,
+    feeGrowthInside0LastX128: position.feeGrowthInside0LastX128,
+    feeGrowthInside1LastX128: position.feeGrowthInside1LastX128,
+    tokensOwed0: position.tokensOwed0,
+    tokensOwed1: position.tokensOwed1,
+  }
 }
 
 export async function getTokenTransferApprovals(

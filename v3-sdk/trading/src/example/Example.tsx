@@ -38,14 +38,16 @@ const Example = () => {
   const refreshBalances = useCallback(async () => {
     const provider = getProvider()
     const address = getWalletAddress()
-    if (address && provider) {
-      setTokenInBalance(
-        await getCurrencyBalance(provider, address, CurrentConfig.tokens.in)
-      )
-      setTokenOutBalance(
-        await getCurrencyBalance(provider, address, CurrentConfig.tokens.out)
-      )
+    if (!address || !provider) {
+      return
     }
+
+    setTokenInBalance(
+      await getCurrencyBalance(provider, address, CurrentConfig.tokens.in)
+    )
+    setTokenOutBalance(
+      await getCurrencyBalance(provider, address, CurrentConfig.tokens.out)
+    )
   }, [])
 
   // Event Handlers
