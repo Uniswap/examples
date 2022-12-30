@@ -79,6 +79,19 @@ const Example = () => {
     setTxState(await swapAndAddLiquidity(position))
   }, [])
 
+  // Formatted Data
+
+  let positionInfoStrings: string[] = []
+  if (positionIds.length === positionsInfo.length) {
+    positionInfoStrings = positionIds
+      .map((id, index) => [id, positionsInfo[index]])
+      .map((info) => {
+        const id = info[0]
+        const posInfo = info[1] as PositionInfo
+        return `${id}: ${posInfo.liquidity.toString()} liquidity, owed ${posInfo.tokensOwed0.toString()} and ${posInfo.tokensOwed1.toString()}`
+      })
+  }
+
   return (
     <div className="App">
       {CurrentConfig.rpc.mainnet === '' && (
@@ -100,16 +113,10 @@ const Example = () => {
       <h3>{`${CurrentConfig.tokens.token0.symbol} Balance: ${token0Balance}`}</h3>
       <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${token1Balance}`}</h3>
       <div>
-        Positions:
-        {positionIds.length === positionsInfo.length &&
-          positionIds
-            .map((id, index) => [id, positionsInfo[index]])
-            .map((info) => {
-              const id = info[0]
-              const posInfo = info[1] as PositionInfo
-              return `${id}: ${posInfo.liquidity.toString()} liquidity, owed ${posInfo.tokensOwed0.toString()} and ${posInfo.tokensOwed1.toString()}`
-            })
-            .map((s, i) => <p key={i}>{s}</p>)}
+        Positions:{' '}
+        {positionInfoStrings.map((s, i) => (
+          <p key={i}>{s}</p>
+        ))}
       </div>
       <button
         className="button"
