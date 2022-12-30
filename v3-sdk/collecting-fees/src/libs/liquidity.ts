@@ -133,28 +133,31 @@ export async function getPositionInfo(tokenId: number): Promise<PositionInfo> {
   }
 }
 
-export async function getTokenTransferApprovals(
-  provider: ethers.providers.Provider,
-  tokenAddress: string,
-  fromAddress: string,
-  toAddress: string
+export async function getTokenTransferApproval(
+  token: Token
 ): Promise<TransactionState> {
-  if (!provider) {
+  const provider = getProvider()
+  const address = getWalletAddress()
+  if (!provider || !address) {
     console.log('No Provider Found')
     return TransactionState.Failed
   }
 
   try {
-    const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
+    const tokenContract = new ethers.Contract(
+      token.address,
+      ERC20_ABI,
+      provider
+    )
 
     const transaction = await tokenContract.populateTransaction.approve(
-      toAddress,
+      NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
       TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER
     )
 
     return sendTransaction({
       ...transaction,
-      from: fromAddress,
+      from: address,
     })
   } catch (e) {
     console.error(e)
@@ -201,17 +204,11 @@ export async function mintPosition(): Promise<TransactionState> {
     return TransactionState.Failed
   }
   // Give approval to the contract to transfer tokens
-  const tokenInApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.token0.address,
-    address,
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
+  const tokenInApproval = await getTokenTransferApproval(
+    CurrentConfig.tokens.token0
   )
-  const tokenOutApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.token1.address,
-    address,
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
+  const tokenOutApproval = await getTokenTransferApproval(
+    CurrentConfig.tokens.token1
   )
 
   if (
@@ -219,12 +216,6 @@ export async function mintPosition(): Promise<TransactionState> {
     tokenOutApproval !== TransactionState.Sent
   ) {
     return TransactionState.Failed
-  }
-
-  const minPositionOptions: MintOptions = {
-    recipient: address,
-    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-    slippageTolerance: new Percent(50, 10_000),
   }
 
   const positionToMint = await constructPosition(
@@ -244,10 +235,16 @@ export async function mintPosition(): Promise<TransactionState> {
     )
   )
 
+  const mintOptions: MintOptions = {
+    recipient: address,
+    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+    slippageTolerance: new Percent(50, 10_000),
+  }
+
   // get calldata for minting a position
   const { calldata, value } = NonfungiblePositionManager.addCallParameters(
     positionToMint,
-    minPositionOptions
+    mintOptions
   )
 
   // build transaction

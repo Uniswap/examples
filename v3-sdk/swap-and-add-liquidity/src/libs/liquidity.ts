@@ -17,8 +17,8 @@ import {
   Pool,
   Position,
   nearestUsableTick,
-  MintOptions,
   NonfungiblePositionManager,
+  MintOptions,
 } from '@uniswap/v3-sdk'
 import { CurrentConfig } from '../config'
 import { getPoolInfo } from './pool'
@@ -56,23 +56,6 @@ export async function swapAndAddLiquidity(
 
   const router = new AlphaRouter({ chainId: 1, provider: getMainnetProvider() })
 
-  const swapAndAddConfig: SwapAndAddConfig = {
-    ratioErrorTolerance: new Fraction(1, 100),
-    maxIterations: 6,
-  }
-
-  const swapAndAddOptions: SwapAndAddOptions = {
-    swapOptions: {
-      type: SwapType.SWAP_ROUTER_02,
-      recipient: address,
-      slippageTolerance: new Percent(5, 100),
-      deadline: 60 * 20,
-    },
-    addLiquidityOptions: {
-      tokenId: positionId,
-    },
-  }
-
   const token1CurrencyAmount = CurrencyAmount.fromRawAmount(
     CurrentConfig.tokens.token0,
     fromReadableAmount(
@@ -89,10 +72,27 @@ export async function swapAndAddLiquidity(
     )
   )
 
-  const currentPosition = await constructPosition(
-    token0CurrencyAmount,
-    token1CurrencyAmount
+  const currentPosition = await constructPositionWithPlaceholderLiquidity(
+    CurrentConfig.tokens.token0,
+    CurrentConfig.tokens.token1
   )
+
+  const swapAndAddConfig: SwapAndAddConfig = {
+    ratioErrorTolerance: new Fraction(1, 100),
+    maxIterations: 6,
+  }
+
+  const swapAndAddOptions: SwapAndAddOptions = {
+    swapOptions: {
+      type: SwapType.SWAP_ROUTER_02,
+      recipient: address,
+      slippageTolerance: new Percent(5, 100),
+      deadline: 60 * 20,
+    },
+    addLiquidityOptions: {
+      tokenId: positionId,
+    },
+  }
 
   const routeToRatioResponse: SwapToRatioResponse = await router.routeToRatio(
     token0CurrencyAmount,
@@ -176,28 +176,31 @@ export async function getPositionInfo(tokenId: number): Promise<PositionInfo> {
   }
 }
 
-export async function getTokenTransferApprovals(
-  provider: ethers.providers.Provider,
-  tokenAddress: string,
-  fromAddress: string,
-  toAddress: string
+export async function getTokenTransferApproval(
+  token: Token
 ): Promise<TransactionState> {
-  if (!provider) {
+  const provider = getProvider()
+  const address = getWalletAddress()
+  if (!provider || !address) {
     console.log('No Provider Found')
     return TransactionState.Failed
   }
 
   try {
-    const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
+    const tokenContract = new ethers.Contract(
+      token.address,
+      ERC20_ABI,
+      provider
+    )
 
     const transaction = await tokenContract.populateTransaction.approve(
-      toAddress,
+      NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
       TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER
     )
 
-    return await sendTransaction({
+    return sendTransaction({
       ...transaction,
-      from: fromAddress,
+      from: address,
     })
   } catch (e) {
     console.error(e)
@@ -223,6 +226,38 @@ export async function constructPosition(
   )
 
   // create position using the maximum liquidity from input amounts
+  return Position.fromAmounts({
+    pool: configuredPool,
+    tickLower:
+      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
+      poolInfo.tickSpacing * 2,
+    tickUpper:
+      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
+      poolInfo.tickSpacing * 2,
+    amount0: token0Amount.quotient,
+    amount1: token1Amount.quotient,
+    useFullPrecision: true,
+  })
+}
+
+export async function constructPositionWithPlaceholderLiquidity(
+  token0: Token,
+  token1: Token
+): Promise<Position> {
+  // get pool info
+  const poolInfo = await getPoolInfo()
+
+  // construct pool instance
+  const configuredPool = new Pool(
+    token0,
+    token1,
+    poolInfo.fee,
+    poolInfo.sqrtPriceX96.toString(),
+    poolInfo.liquidity.toString(),
+    poolInfo.tick
+  )
+
+  // create position using the maximum liquidity from input amounts
   return new Position({
     pool: configuredPool,
     tickLower:
@@ -231,7 +266,6 @@ export async function constructPosition(
     tickUpper:
       nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
       poolInfo.tickSpacing * 2,
-
     liquidity: 1,
   })
 }
@@ -244,30 +278,19 @@ export async function mintPosition(): Promise<TransactionState> {
   }
 
   // Give approval to the contract to transfer tokens
-  const tokenInApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.token0.address,
-    address,
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
+  const tokenInApproval = await getTokenTransferApproval(
+    CurrentConfig.tokens.token0
   )
-  const tokenOutApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.token1.address,
-    address,
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
+  const tokenOutApproval = await getTokenTransferApproval(
+    CurrentConfig.tokens.token1
   )
 
+  // Fail if transfer approvals do not go through
   if (
     tokenInApproval !== TransactionState.Sent ||
     tokenOutApproval !== TransactionState.Sent
   ) {
     return TransactionState.Failed
-  }
-
-  const minPositionOptions: MintOptions = {
-    recipient: address,
-    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-    slippageTolerance: new Percent(50, 10_000),
   }
 
   const positionToMint = await constructPosition(
@@ -287,10 +310,16 @@ export async function mintPosition(): Promise<TransactionState> {
     )
   )
 
+  const mintOptions: MintOptions = {
+    recipient: address,
+    deadline: Math.floor(Date.now() / 1000) + 60 * 20,
+    slippageTolerance: new Percent(50, 10_000),
+  }
+
   // get calldata for minting a position
   const { calldata, value } = NonfungiblePositionManager.addCallParameters(
     positionToMint,
-    minPositionOptions
+    mintOptions
   )
 
   // build transaction
