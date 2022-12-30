@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import './Example.css'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
@@ -81,16 +81,19 @@ const Example = () => {
 
   // Formatted Data
 
-  let positionInfoStrings: string[] = []
-  if (positionIds.length === positionsInfo.length) {
-    positionInfoStrings = positionIds
+  const positionInfoStrings: string[] = useMemo(() => {
+    if (positionIds.length !== positionsInfo.length) {
+      return []
+    }
+
+    return positionIds
       .map((id, index) => [id, positionsInfo[index]])
       .map((info) => {
         const id = info[0]
         const posInfo = info[1] as PositionInfo
         return `${id}: ${posInfo.liquidity.toString()} liquidity, owed ${posInfo.tokensOwed0.toString()} and ${posInfo.tokensOwed1.toString()}`
       })
-  }
+  }, [positionIds, positionsInfo])
 
   return (
     <div className="App">
