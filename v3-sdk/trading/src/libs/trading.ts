@@ -55,13 +55,7 @@ export async function createTrade(): Promise<TokenTrade> {
     CurrentConfig.tokens.out
   )
 
-  const provider = getProvider()
-  if (!provider) {
-    throw new Error()
-  }
-
   const amountOut = await getOutputQuote(swapRoute)
-  console.log('Amount Out', amountOut)
 
   const uncheckedTrade = Trade.createUncheckedTrade({
     route: swapRoute,
@@ -79,8 +73,6 @@ export async function createTrade(): Promise<TokenTrade> {
     tradeType: TradeType.EXACT_INPUT,
   })
 
-  console.log('Unchecked Trade', uncheckedTrade)
-
   return uncheckedTrade
 }
 
@@ -96,7 +88,7 @@ export async function executeTrade(
 
   const options: SwapOptions = {
     slippageTolerance: new Percent(500, 10000), // 50 bips, or 0.50%
-    deadline: Math.floor(Date.now() / 1000) + 60 * 30, // 20 minutes from the current Unix time
+    deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from the current Unix time
     recipient: walletAddress,
   }
 
