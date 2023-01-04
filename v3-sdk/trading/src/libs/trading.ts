@@ -151,12 +151,12 @@ async function getOutputQuote(route: Route<Currency, Currency>) {
     }
   )
 
-  const returnData = await provider.call({
+  const quoteCallReturnData = await provider.call({
     to: QUOTER_CONTRACT_ADDRESS,
     data: calldata,
   })
 
-  return ethers.utils.defaultAbiCoder.decode(['uint256'], returnData)
+  return ethers.utils.defaultAbiCoder.decode(['uint256'], quoteCallReturnData)
 }
 
 export async function getTokenTransferApprovals(
