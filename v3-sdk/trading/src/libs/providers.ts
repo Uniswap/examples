@@ -116,6 +116,8 @@ async function sendTransactionViaWallet(
   }
   const txRes = await wallet.sendTransaction(transaction)
 
+  console.log('Transaction hash:', txRes)
+
   let receipt = null
   const provider = getProvider()
   if (!provider) {
