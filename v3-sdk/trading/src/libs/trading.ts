@@ -1,6 +1,6 @@
 import { CurrencyAmount, Percent, Token, TradeType } from '@uniswap/sdk-core'
 import { Pool, Route, SwapOptions, SwapRouter, Trade } from '@uniswap/v3-sdk'
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import { CurrentConfig } from '../config'
 import {
   MAX_FEE_PER_GAS,
@@ -18,9 +18,9 @@ import {
 } from './providers'
 
 import { getPoolInfo } from './pool'
-import { fromReadableAmount } from './utils'
 
 import Quoter from '@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json'
+import JSBI from 'jsbi'
 
 export type TokenTrade = Trade<Token, Token, TradeType>
 
@@ -53,18 +53,16 @@ export async function createTrade(): Promise<TokenTrade> {
     throw new Error()
   }
 
-  const foo = await provider.getCode(V3_SWAP_ROUTER_ADDRESS)
-  console.log('foo', foo)
-
   const amountOut = await getOutputQuote()
 
-  console.log('down here')
+  console.log('Amount out', amountOut)
 
   const uncheckedTrade = Trade.createUncheckedTrade({
     route: swapRoute,
     inputAmount: CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.in,
-      CurrentConfig.tokens.amountIn.toString()
+      JSBI.BigInt(CurrentConfig.tokens.amountIn)
+      // CurrentConfig.tokens.amountIn.toString()
       // fromReadableAmount(
       //   CurrentConfig.tokens.amountIn,
       //   CurrentConfig.tokens.in.decimals
@@ -72,7 +70,7 @@ export async function createTrade(): Promise<TokenTrade> {
     ),
     outputAmount: CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.out,
-      amountOut.toString()
+      JSBI.BigInt(amountOut)
     ),
     tradeType: TradeType.EXACT_INPUT,
   })
@@ -91,8 +89,8 @@ export async function executeTrade(
   }
 
   const options: SwapOptions = {
-    slippageTolerance: new Percent(50, 10000), // 50 bips, or 0.50%
-    deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from the current Unix time
+    slippageTolerance: new Percent(500, 10000), // 50 bips, or 0.50%
+    deadline: Math.floor(Date.now() / 1000) + 60 * 30, // 20 minutes from the current Unix time
     recipient: walletAddress,
   }
 
@@ -109,6 +107,13 @@ export async function executeTrade(
     V3_SWAP_ROUTER_ADDRESS
   )
 
+  await getTokenTransferApprovals(
+    provider,
+    CurrentConfig.tokens.out.address,
+    walletAddress,
+    V3_SWAP_ROUTER_ADDRESS
+  )
+
   console.log('tokenApproval', tokenApproval)
 
   const tx = {
@@ -116,23 +121,22 @@ export async function executeTrade(
     to: V3_SWAP_ROUTER_ADDRESS,
     value: methodParameters.value,
     from: walletAddress,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-    // gasLimit: 30000,
+    // maxFeePerGas: MAX_FEE_PER_GAS,
+    // maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
   }
 
-  const moo = await provider.estimateGas(tx)
+  console.log('Gas estimate', await provider.estimateGas(tx))
 
-  console.log('moo', moo)
+  return TransactionState.Failed
 
-  const res = await sendTransaction(tx)
+  // const res = await sendTransaction(tx)
 
-  return res
+  // return res
 }
 
 // Helper Quoting and Pool Functions
 
-async function getOutputQuote(): Promise<number> {
+async function getOutputQuote(): Promise<BigNumber> {
   const provider = getProvider()
 
   if (!provider) {
@@ -147,17 +151,18 @@ async function getOutputQuote(): Promise<number> {
 
   console.log('before quoteExactInputSingle')
 
-  const quotedAmountOut = await quoterContract.callStatic.quoteExactInputSingle(
-    CurrentConfig.tokens.in.address,
-    CurrentConfig.tokens.out.address,
-    CurrentConfig.tokens.poolFee,
-    CurrentConfig.tokens.amountIn.toString(),
-    // fromReadableAmount(
-    //   CurrentConfig.tokens.amountIn,
-    //   CurrentConfig.tokens.in
-    // ).toString(),
-    0
-  )
+  const quotedAmountOut: BigNumber =
+    await quoterContract.callStatic.quoteExactInputSingle(
+      CurrentConfig.tokens.in.address,
+      CurrentConfig.tokens.out.address,
+      CurrentConfig.tokens.poolFee,
+      CurrentConfig.tokens.amountIn.toString(),
+      // fromReadableAmount(
+      //   CurrentConfig.tokens.amountIn,
+      //   CurrentConfig.tokens.in
+      // ).toString(),
+      0
+    )
 
   console.log('after quoteExactInputSingle')
 
@@ -180,14 +185,19 @@ export async function getTokenTransferApprovals(
 
     const transaction = await tokenContract.populateTransaction.approve(
       toAddress,
-      AMOUNT_TO_APPROVE.toString()
+      JSBI.BigInt(AMOUNT_TO_APPROVE).toString()
     )
 
-    return sendTransaction({
+    const tx = sendTransaction({
       ...transaction,
       from: fromAddress,
-      // gasLimit: 30000000,
     })
+
+    const allowance = await tokenContract.allowance(fromAddress, toAddress)
+
+    console.log('Allowance', allowance.toString())
+
+    return tx
   } catch (e) {
     console.error(e)
     return TransactionState.Failed
