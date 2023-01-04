@@ -1,6 +1,6 @@
 import { Token } from '@uniswap/sdk-core'
 import { FeeAmount } from '@uniswap/v3-sdk'
-import { USDC_TOKEN, WETH_TOKEN } from './libs/constants'
+import { USDC_TOKEN, DAI_TOKEN } from './libs/constants'
 
 // Sets if the example should run locally or on chain
 export enum Environment {
@@ -31,20 +31,20 @@ export interface ExampleConfig {
 // Example Configuration
 
 export const CurrentConfig: ExampleConfig = {
-  env: Environment.LOCAL,
+  env: Environment.MAINNET,
   rpc: {
     local: 'http://localhost:8545',
-    mainnet: '',
+    mainnet: 'https://mainnet.gateway.tenderly.co/biusNZqSR6tj1wxGGykHD',
   },
   wallet: {
-    address: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+    address: '0xe471474c7E72FBEe60024a16f2265B4AAeb56e0A',
     privateKey:
-      '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+      '0x4fb16d1363c8370529c6f38173cfc338545df7f976d586adf8563a8b76937d29',
   },
   tokens: {
-    in: WETH_TOKEN,
-    amountIn: 0.1,
+    in: DAI_TOKEN,
+    amountIn: 1000000000000000000,
     out: USDC_TOKEN,
-    poolFee: FeeAmount.MEDIUM,
+    poolFee: FeeAmount.LOWEST,
   },
 }
