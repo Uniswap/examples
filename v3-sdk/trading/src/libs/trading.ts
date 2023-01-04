@@ -99,17 +99,16 @@ export async function executeTrade(
 
   const methodParameters = SwapRouter.swapCallParameters([trade], options)
 
-  console.log('trade', trade)
-
-  console.log('methodParameters', methodParameters)
-
   const tokenApproval = await getTokenTransferApprovals(
     provider,
     CurrentConfig.tokens.in.address,
     walletAddress
   )
 
-  console.log('tokenApproval', tokenApproval)
+  // Fail if transfer approvals do not go through
+  if (tokenApproval !== TransactionState.Sent) {
+    return TransactionState.Failed
+  }
 
   const tx = {
     data: methodParameters.calldata,
