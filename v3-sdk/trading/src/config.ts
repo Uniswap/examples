@@ -1,6 +1,7 @@
 import { Token } from '@uniswap/sdk-core'
 import { FeeAmount } from '@uniswap/v3-sdk'
-import { USDC_TOKEN, DAI_TOKEN } from './libs/constants'
+
+import { DAI_TOKEN, USDC_TOKEN } from './libs/constants'
 
 // Sets if the example should run locally or on chain
 export enum Environment {

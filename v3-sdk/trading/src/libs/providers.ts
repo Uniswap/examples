@@ -1,6 +1,7 @@
-import { ethers, providers, BigNumber } from 'ethers'
-import { Environment, CurrentConfig } from '../config'
 import { BaseProvider } from '@ethersproject/providers'
+import { BigNumber, ethers, providers } from 'ethers'
+
+import { CurrentConfig, Environment } from '../config'
 
 // Single copies of provider and wallet
 const mainnetProvider = new ethers.providers.JsonRpcProvider(
