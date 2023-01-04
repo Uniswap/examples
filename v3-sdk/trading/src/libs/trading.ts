@@ -61,6 +61,7 @@ export async function createTrade(): Promise<TokenTrade> {
   }
 
   const amountOut = await getOutputQuote(swapRoute)
+  console.log('Amount Out', amountOut)
 
   const uncheckedTrade = Trade.createUncheckedTrade({
     route: swapRoute,
@@ -77,6 +78,8 @@ export async function createTrade(): Promise<TokenTrade> {
     ),
     tradeType: TradeType.EXACT_INPUT,
   })
+
+  console.log('Unchecked Trade', uncheckedTrade)
 
   return uncheckedTrade
 }
@@ -137,7 +140,10 @@ async function getOutputQuote(route: Route<Currency, Currency>) {
     route,
     CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.in,
-      CurrentConfig.tokens.amountIn
+      fromReadableAmount(
+        CurrentConfig.tokens.amountIn,
+        CurrentConfig.tokens.in.decimals
+      )
     ),
     TradeType.EXACT_INPUT,
     {
