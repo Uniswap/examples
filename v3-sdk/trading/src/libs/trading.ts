@@ -31,6 +31,7 @@ import {
   sendTransaction,
   TransactionState,
 } from './providers'
+import { fromReadableAmount } from './utils'
 
 export type TokenTrade = Trade<Token, Token, TradeType>
 
@@ -65,11 +66,10 @@ export async function createTrade(): Promise<TokenTrade> {
     route: swapRoute,
     inputAmount: CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.in,
-      JSBI.BigInt(CurrentConfig.tokens.amountIn)
-      // fromReadableAmount(
-      //   CurrentConfig.tokens.amountIn,
-      //   CurrentConfig.tokens.in.decimals
-      // ).toString()
+      fromReadableAmount(
+        CurrentConfig.tokens.amountIn,
+        CurrentConfig.tokens.in.decimals
+      ).toString()
     ),
     outputAmount: CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.out,
@@ -119,10 +119,6 @@ export async function executeTrade(
     maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
   }
 
-  console.log('Gas estimate', await provider.estimateGas(tx))
-
-  // return TransactionState.Failed
-
   const res = await sendTransaction(tx)
 
   return res
@@ -141,7 +137,7 @@ async function getOutputQuote(route: Route<Currency, Currency>) {
     route,
     CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.in,
-      JSBI.BigInt(CurrentConfig.tokens.amountIn)
+      CurrentConfig.tokens.amountIn
     ),
     TradeType.EXACT_INPUT,
     {

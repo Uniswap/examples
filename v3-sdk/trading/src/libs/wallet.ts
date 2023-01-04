@@ -4,6 +4,7 @@ import { Currency } from '@uniswap/sdk-core'
 import { BigNumber, ethers } from 'ethers'
 import { providers } from 'ethers'
 import JSBI from 'jsbi'
+
 import {
   ERC20_ABI,
   MAX_FEE_PER_GAS,
@@ -31,9 +32,6 @@ export async function getCurrencyBalance(
     provider
   )
   const balance: number = await ERC20Contract.balanceOf(address)
-
-  return balance.toString()
-
   const decimals: number = await ERC20Contract.decimals()
 
   // Format with proper units (approximate)

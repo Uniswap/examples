@@ -44,7 +44,7 @@ export const CurrentConfig: ExampleConfig = {
   },
   tokens: {
     in: DAI_TOKEN,
-    amountIn: 10000000000000000,
+    amountIn: 0.05,
     out: USDC_TOKEN,
     poolFee: FeeAmount.LOW,
   },
