@@ -1,6 +1,7 @@
-import { ethers, providers, BigNumber } from 'ethers'
-import { Environment, CurrentConfig } from '../config'
 import { BaseProvider } from '@ethersproject/providers'
+import { BigNumber, ethers, providers } from 'ethers'
+
+import { CurrentConfig, Environment } from '../config'
 
 // Single copies of provider and wallet
 const mainnetProvider = new ethers.providers.JsonRpcProvider(
@@ -111,11 +112,32 @@ async function sendTransactionViaExtension(
 async function sendTransactionViaWallet(
   transaction: ethers.providers.TransactionRequest
 ): Promise<TransactionState> {
-  const res = await wallet.sendTransaction(transaction)
-  const receipt = await res.wait()
+  if (transaction.value) {
+    transaction.value = BigNumber.from(transaction.value)
+  }
+  const txRes = await wallet.sendTransaction(transaction)
+
+  let receipt = null
+  const provider = getProvider()
+  if (!provider) {
+    return TransactionState.Failed
+  }
+
+  while (receipt === null) {
+    try {
+      receipt = await provider.getTransactionReceipt(txRes.hash)
+
+      if (receipt === null) {
+        continue
+      }
+    } catch (e) {
+      console.log(`Receipt error:`, e)
+      break
+    }
+  }
 
   // Transaction was successful if status === 1
-  if (receipt.status === 1) {
+  if (receipt) {
     return TransactionState.Sent
   } else {
     return TransactionState.Failed

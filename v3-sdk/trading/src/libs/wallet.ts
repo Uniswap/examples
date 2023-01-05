@@ -4,6 +4,7 @@ import { Currency } from '@uniswap/sdk-core'
 import { BigNumber, ethers } from 'ethers'
 import { providers } from 'ethers'
 import JSBI from 'jsbi'
+
 import {
   ERC20_ABI,
   MAX_FEE_PER_GAS,

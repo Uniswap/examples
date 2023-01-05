@@ -1,5 +1,6 @@
 import { Token } from '@uniswap/sdk-core'
 import { FeeAmount } from '@uniswap/v3-sdk'
+
 import { USDC_TOKEN, WETH_TOKEN } from './libs/constants'
 
 // Sets if the example should run locally or on chain
@@ -43,7 +44,7 @@ export const CurrentConfig: ExampleConfig = {
   },
   tokens: {
     in: WETH_TOKEN,
-    amountIn: 0.1,
+    amountIn: 1,
     out: USDC_TOKEN,
     poolFee: FeeAmount.MEDIUM,
   },

@@ -1,24 +1,37 @@
-import { CurrencyAmount, Percent, Token, TradeType } from '@uniswap/sdk-core'
-import { Pool, Route, SwapOptions, SwapRouter, Trade } from '@uniswap/v3-sdk'
+import {
+  Currency,
+  CurrencyAmount,
+  Percent,
+  Token,
+  TradeType,
+} from '@uniswap/sdk-core'
+import {
+  Pool,
+  Route,
+  SwapOptions,
+  SwapQuoter,
+  SwapRouter,
+  Trade,
+} from '@uniswap/v3-sdk'
 import { ethers } from 'ethers'
+import JSBI from 'jsbi'
+
 import { CurrentConfig } from '../config'
 import {
-  MAX_FEE_PER_GAS,
-  MAX_PRIORITY_FEE_PER_GAS,
+  AMOUNT_TO_APPROVE,
+  ERC20_ABI,
   QUOTER_CONTRACT_ADDRESS,
-  V3_SWAP_ROUTER_ADDRESS,
+  SWAP_ROUTER_ADDRESS,
 } from './constants'
+import { MAX_FEE_PER_GAS, MAX_PRIORITY_FEE_PER_GAS } from './constants'
+import { getPoolInfo } from './pool'
 import {
   getProvider,
   getWalletAddress,
   sendTransaction,
   TransactionState,
 } from './providers'
-
-import { getPoolInfo } from './pool'
 import { fromReadableAmount } from './utils'
-
-import Quoter from '@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json'
 
 export type TokenTrade = Trade<Token, Token, TradeType>
 
@@ -26,6 +39,7 @@ export type TokenTrade = Trade<Token, Token, TradeType>
 
 export async function createTrade(): Promise<TokenTrade> {
   const poolInfo = await getPoolInfo()
+
   const pool = new Pool(
     CurrentConfig.tokens.in,
     CurrentConfig.tokens.out,
@@ -41,7 +55,7 @@ export async function createTrade(): Promise<TokenTrade> {
     CurrentConfig.tokens.out
   )
 
-  const amountOut = await getOutputQuote()
+  const amountOut = await getOutputQuote(swapRoute)
 
   const uncheckedTrade = Trade.createUncheckedTrade({
     route: swapRoute,
@@ -50,11 +64,11 @@ export async function createTrade(): Promise<TokenTrade> {
       fromReadableAmount(
         CurrentConfig.tokens.amountIn,
         CurrentConfig.tokens.in.decimals
-      )
+      ).toString()
     ),
     outputAmount: CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.out,
-      amountOut
+      JSBI.BigInt(amountOut)
     ),
     tradeType: TradeType.EXACT_INPUT,
   })
@@ -66,7 +80,9 @@ export async function executeTrade(
   trade: TokenTrade
 ): Promise<TransactionState> {
   const walletAddress = getWalletAddress()
-  if (!walletAddress) {
+  const provider = getProvider()
+
+  if (!walletAddress || !provider) {
     throw new Error('Cannot execute a trade without a connected wallet')
   }
 
@@ -78,43 +94,89 @@ export async function executeTrade(
 
   const methodParameters = SwapRouter.swapCallParameters([trade], options)
 
-  const res = await sendTransaction({
+  const tokenApproval = await getTokenTransferApprovals(
+    provider,
+    CurrentConfig.tokens.in.address,
+    walletAddress
+  )
+
+  // Fail if transfer approvals do not go through
+  if (tokenApproval !== TransactionState.Sent) {
+    return TransactionState.Failed
+  }
+
+  const tx = {
     data: methodParameters.calldata,
-    to: V3_SWAP_ROUTER_ADDRESS,
+    to: SWAP_ROUTER_ADDRESS,
     value: methodParameters.value,
     from: walletAddress,
     maxFeePerGas: MAX_FEE_PER_GAS,
     maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  })
+  }
+
+  const res = await sendTransaction(tx)
 
   return res
 }
 
 // Helper Quoting and Pool Functions
 
-async function getOutputQuote(): Promise<number> {
+async function getOutputQuote(route: Route<Currency, Currency>) {
   const provider = getProvider()
 
   if (!provider) {
     throw new Error('Provider required to get pool state')
   }
 
-  const quoterContract = new ethers.Contract(
-    QUOTER_CONTRACT_ADDRESS,
-    Quoter.abi,
-    provider
+  const { calldata } = await SwapQuoter.quoteCallParameters(
+    route,
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.in,
+      fromReadableAmount(
+        CurrentConfig.tokens.amountIn,
+        CurrentConfig.tokens.in.decimals
+      )
+    ),
+    TradeType.EXACT_INPUT,
+    {
+      useQuoterV2: true,
+    }
   )
 
-  const quotedAmountOut = await quoterContract.callStatic.quoteExactInputSingle(
-    CurrentConfig.tokens.in.address,
-    CurrentConfig.tokens.out.address,
-    CurrentConfig.tokens.poolFee,
-    fromReadableAmount(
-      CurrentConfig.tokens.amountIn,
-      CurrentConfig.tokens.in.decimals
-    ).toString(),
-    0
-  )
+  const quoteCallReturnData = await provider.call({
+    to: QUOTER_CONTRACT_ADDRESS,
+    data: calldata,
+  })
 
-  return quotedAmountOut
+  return ethers.utils.defaultAbiCoder.decode(['uint256'], quoteCallReturnData)
+}
+
+export async function getTokenTransferApprovals(
+  provider: ethers.providers.Provider,
+  tokenAddress: string,
+  fromAddress: string
+): Promise<TransactionState> {
+  if (!provider) {
+    console.log('No Provider Found')
+    return TransactionState.Failed
+  }
+
+  try {
+    const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
+
+    const transaction = await tokenContract.populateTransaction.approve(
+      SWAP_ROUTER_ADDRESS,
+      JSBI.BigInt(AMOUNT_TO_APPROVE).toString()
+    )
+
+    const tx = sendTransaction({
+      ...transaction,
+      from: fromAddress,
+    })
+
+    return tx
+  } catch (e) {
+    console.error(e)
+    return TransactionState.Failed
+  }
 }

@@ -1,5 +1,7 @@
-import React, { useState, useCallback, useEffect } from 'react'
 import './Example.css'
+
+import React, { useCallback, useEffect, useState } from 'react'
+
 import { CurrentConfig, Environment } from '../config'
 import {
   connectBrowserExtensionWallet,
@@ -7,9 +9,9 @@ import {
   getWalletAddress,
   TransactionState,
 } from '../libs/providers'
+import { createTrade, executeTrade, TokenTrade } from '../libs/trading'
 import { displayTrade } from '../libs/utils'
 import { getCurrencyBalance, wrapETH } from '../libs/wallet'
-import { createTrade, executeTrade, TokenTrade } from '../libs/trading'
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   useEffect(() => {
