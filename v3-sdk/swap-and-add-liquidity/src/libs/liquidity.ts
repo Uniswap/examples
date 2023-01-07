@@ -1,4 +1,4 @@
-import { BigNumber, ethers } from 'ethers'
+import { BigNumber, ethers, Wallet } from 'ethers'
 import {
   ERC20_ABI,
   NONFUNGIBLE_POSITION_MANAGER_ABI,
@@ -122,7 +122,9 @@ export async function swapAndAddLiquidity(
 
 export async function getPositionIds(): Promise<number[]> {
   const provider = getProvider()
-  if (!provider) {
+  const address = getWalletAddress()
+
+  if (!provider || !address) {
     throw new Error('No provider available')
   }
 
@@ -133,18 +135,13 @@ export async function getPositionIds(): Promise<number[]> {
   )
 
   // Get number of positions
-  const balance: number = await positionContract.balanceOf(
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-  )
+  const balance: number = await positionContract.balanceOf(address)
 
   // Get all positions
   const tokenIds = []
   for (let i = 0; i < balance; i++) {
     const tokenOfOwnerByIndex: number =
-      await positionContract.tokenOfOwnerByIndex(
-        NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-        i
-      )
+      await positionContract.tokenOfOwnerByIndex(address, i)
     tokenIds.push(tokenOfOwnerByIndex)
   }
 
@@ -153,6 +150,7 @@ export async function getPositionIds(): Promise<number[]> {
 
 export async function getPositionInfo(tokenId: number): Promise<PositionInfo> {
   const provider = getProvider()
+
   if (!provider) {
     throw new Error('No provider available')
   }
@@ -273,6 +271,7 @@ export async function constructPositionWithPlaceholderLiquidity(
 export async function mintPosition(): Promise<TransactionState> {
   const address = getWalletAddress()
   const provider = getProvider()
+
   if (!address || !provider) {
     return TransactionState.Failed
   }
