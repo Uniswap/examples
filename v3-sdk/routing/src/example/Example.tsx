@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
 import { Environment, CurrentConfig } from '../config'
-import { getCurrencyBalance } from '../libs/wallet'
+import { getCurrencyBalance, wrapETH } from '../libs/wallet'
 import {
   connectBrowserExtensionWallet,
   getProvider,
@@ -43,10 +43,10 @@ const Example = () => {
     }
 
     setTokenInBalance(
-      await getCurrencyBalance(provider, address, CurrentConfig.currencies.in)
+      await getCurrencyBalance(provider, address, CurrentConfig.tokens.in)
     )
     setTokenOutBalance(
-      await getCurrencyBalance(provider, address, CurrentConfig.currencies.out)
+      await getCurrencyBalance(provider, address, CurrentConfig.tokens.out)
     )
   }, [])
 
@@ -88,8 +88,8 @@ const Example = () => {
         )}
       <h3>{`Block Number: ${blockNumber + 1}`}</h3>
       <h3>{`Transaction State: ${txState}`}</h3>
-      <h3>{`Token In (${CurrentConfig.currencies.in.symbol}) Balance: ${tokenInBalance}`}</h3>
-      <h3>{`Token Out (${CurrentConfig.currencies.out.symbol}) Balance: ${tokenOutBalance}`}</h3>
+      <h3>{`Token In (${CurrentConfig.tokens.in.symbol}) Balance: ${tokenInBalance}`}</h3>
+      <h3>{`Token Out (${CurrentConfig.tokens.out.symbol}) Balance: ${tokenOutBalance}`}</h3>
       <button
         onClick={onCreateRoute}
         disabled={
@@ -101,8 +101,8 @@ const Example = () => {
       </button>
       <h3>
         {route &&
-          `Route: ${CurrentConfig.currencies.amountIn} ${
-            CurrentConfig.currencies.in.symbol
+          `Route: ${CurrentConfig.tokens.amountIn} ${
+            CurrentConfig.tokens.in.symbol
           } to ${route.quote.toExact()} ${
             route.quote.currency.symbol
           } using $${route.estimatedGasUsedUSD.toExact()} worth of gas`}
@@ -113,6 +113,11 @@ const Example = () => {
             .map((r) => r.tokenPath.map((t) => t.symbol).join(' -> '))
             .join(', ')}
       </h3>
+      <button
+        onClick={() => wrapETH(100)}
+        disabled={getProvider() === null || CurrentConfig.rpc.mainnet === ''}>
+        <p>Wrap ETH</p>
+      </button>
       <button
         onClick={() => executeSwap(route)}
         disabled={
