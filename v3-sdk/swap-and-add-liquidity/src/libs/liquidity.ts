@@ -1,4 +1,4 @@
-import { BigNumber, ethers, Wallet } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import {
   ERC20_ABI,
   NONFUNGIBLE_POSITION_MANAGER_ABI,
@@ -54,12 +54,31 @@ export async function swapAndAddLiquidity(
     return TransactionState.Failed
   }
 
+  // Give approval to the router contract to transfer tokens
+  const tokenInApproval = await getTokenTransferApproval(
+    CurrentConfig.tokens.token0,
+    V3_SWAP_ROUTER_ADDRESS
+  )
+
+  const tokenOutApproval = await getTokenTransferApproval(
+    CurrentConfig.tokens.token1,
+    V3_SWAP_ROUTER_ADDRESS
+  )
+
+  // Fail if transfer approvals are not granted
+  if (
+    tokenInApproval !== TransactionState.Sent ||
+    tokenOutApproval !== TransactionState.Sent
+  ) {
+    return TransactionState.Failed
+  }
+
   const router = new AlphaRouter({ chainId: 1, provider: getMainnetProvider() })
 
   const token1CurrencyAmount = CurrencyAmount.fromRawAmount(
     CurrentConfig.tokens.token0,
     fromReadableAmount(
-      CurrentConfig.tokens.token0Amount,
+      CurrentConfig.tokens.token0AmountToAdd,
       CurrentConfig.tokens.token0.decimals
     )
   )
@@ -67,7 +86,7 @@ export async function swapAndAddLiquidity(
   const token0CurrencyAmount = CurrencyAmount.fromRawAmount(
     CurrentConfig.tokens.token1,
     fromReadableAmount(
-      CurrentConfig.tokens.token1Amount,
+      CurrentConfig.tokens.token1AmountToAdd,
       CurrentConfig.tokens.token1.decimals
     )
   )
@@ -87,7 +106,7 @@ export async function swapAndAddLiquidity(
       type: SwapType.SWAP_ROUTER_02,
       recipient: address,
       slippageTolerance: new Percent(5, 100),
-      deadline: 60 * 20,
+      deadline: Math.floor(Date.now() / 1000) + 60 * 20,
     },
     addLiquidityOptions: {
       tokenId: positionId,
@@ -175,7 +194,8 @@ export async function getPositionInfo(tokenId: number): Promise<PositionInfo> {
 }
 
 export async function getTokenTransferApproval(
-  token: Token
+  token: Token,
+  spenderAddress: string
 ): Promise<TransactionState> {
   const provider = getProvider()
   const address = getWalletAddress()
@@ -192,7 +212,7 @@ export async function getTokenTransferApproval(
     )
 
     const transaction = await tokenContract.populateTransaction.approve(
-      NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+      spenderAddress,
       TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER
     )
 
@@ -276,12 +296,14 @@ export async function mintPosition(): Promise<TransactionState> {
     return TransactionState.Failed
   }
 
-  // Give approval to the contract to transfer tokens
+  // Give approval to the Position Manager contract to transfer tokens
   const tokenInApproval = await getTokenTransferApproval(
-    CurrentConfig.tokens.token0
+    CurrentConfig.tokens.token0,
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
   )
   const tokenOutApproval = await getTokenTransferApproval(
-    CurrentConfig.tokens.token1
+    CurrentConfig.tokens.token1,
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
   )
 
   // Fail if transfer approvals do not go through
