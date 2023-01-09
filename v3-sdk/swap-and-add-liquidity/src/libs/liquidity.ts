@@ -54,12 +54,31 @@ export async function swapAndAddLiquidity(
     return TransactionState.Failed
   }
 
+  // Give approval to the router contract to transfer tokens
+  const tokenInApproval = await getTokenTransferApproval(
+    CurrentConfig.tokens.token0,
+    V3_SWAP_ROUTER_ADDRESS
+  )
+
+  const tokenOutApproval = await getTokenTransferApproval(
+    CurrentConfig.tokens.token1,
+    V3_SWAP_ROUTER_ADDRESS
+  )
+
+  // Fail if transfer approvals are not granted
+  if (
+    tokenInApproval !== TransactionState.Sent ||
+    tokenOutApproval !== TransactionState.Sent
+  ) {
+    return TransactionState.Failed
+  }
+
   const router = new AlphaRouter({ chainId: 1, provider: getMainnetProvider() })
 
   const token1CurrencyAmount = CurrencyAmount.fromRawAmount(
     CurrentConfig.tokens.token0,
     fromReadableAmount(
-      CurrentConfig.tokens.token0Amount,
+      CurrentConfig.tokens.token0AmountToAdd,
       CurrentConfig.tokens.token0.decimals
     )
   )
@@ -67,7 +86,7 @@ export async function swapAndAddLiquidity(
   const token0CurrencyAmount = CurrencyAmount.fromRawAmount(
     CurrentConfig.tokens.token1,
     fromReadableAmount(
-      CurrentConfig.tokens.token1Amount,
+      CurrentConfig.tokens.token1AmountToAdd,
       CurrentConfig.tokens.token1.decimals
     )
   )
@@ -87,7 +106,7 @@ export async function swapAndAddLiquidity(
       type: SwapType.SWAP_ROUTER_02,
       recipient: address,
       slippageTolerance: new Percent(5, 100),
-      deadline: 60 * 20,
+      deadline: Math.floor(Date.now() / 1000) + 60 * 20,
     },
     addLiquidityOptions: {
       tokenId: positionId,
@@ -122,7 +141,9 @@ export async function swapAndAddLiquidity(
 
 export async function getPositionIds(): Promise<number[]> {
   const provider = getProvider()
-  if (!provider) {
+  const address = getWalletAddress()
+
+  if (!provider || !address) {
     throw new Error('No provider available')
   }
 
@@ -133,18 +154,13 @@ export async function getPositionIds(): Promise<number[]> {
   )
 
   // Get number of positions
-  const balance: number = await positionContract.balanceOf(
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-  )
+  const balance: number = await positionContract.balanceOf(address)
 
   // Get all positions
   const tokenIds = []
   for (let i = 0; i < balance; i++) {
     const tokenOfOwnerByIndex: number =
-      await positionContract.tokenOfOwnerByIndex(
-        NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-        i
-      )
+      await positionContract.tokenOfOwnerByIndex(address, i)
     tokenIds.push(tokenOfOwnerByIndex)
   }
 
@@ -153,6 +169,7 @@ export async function getPositionIds(): Promise<number[]> {
 
 export async function getPositionInfo(tokenId: number): Promise<PositionInfo> {
   const provider = getProvider()
+
   if (!provider) {
     throw new Error('No provider available')
   }
@@ -177,7 +194,8 @@ export async function getPositionInfo(tokenId: number): Promise<PositionInfo> {
 }
 
 export async function getTokenTransferApproval(
-  token: Token
+  token: Token,
+  spenderAddress: string
 ): Promise<TransactionState> {
   const provider = getProvider()
   const address = getWalletAddress()
@@ -194,7 +212,7 @@ export async function getTokenTransferApproval(
     )
 
     const transaction = await tokenContract.populateTransaction.approve(
-      NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
+      spenderAddress,
       TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER
     )
 
@@ -273,16 +291,19 @@ export async function constructPositionWithPlaceholderLiquidity(
 export async function mintPosition(): Promise<TransactionState> {
   const address = getWalletAddress()
   const provider = getProvider()
+
   if (!address || !provider) {
     return TransactionState.Failed
   }
 
-  // Give approval to the contract to transfer tokens
+  // Give approval to the Position Manager contract to transfer tokens
   const tokenInApproval = await getTokenTransferApproval(
-    CurrentConfig.tokens.token0
+    CurrentConfig.tokens.token0,
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
   )
   const tokenOutApproval = await getTokenTransferApproval(
-    CurrentConfig.tokens.token1
+    CurrentConfig.tokens.token1,
+    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
   )
 
   // Fail if transfer approvals do not go through

@@ -152,7 +152,9 @@ export async function removeLiquidity(
 
 export async function getPositionIds(): Promise<number[]> {
   const provider = getProvider()
-  if (!provider) {
+  const address = getWalletAddress()
+
+  if (!provider || !address) {
     throw new Error('No provider available')
   }
 
@@ -163,18 +165,13 @@ export async function getPositionIds(): Promise<number[]> {
   )
 
   // Get number of positions
-  const balance: number = await positionContract.balanceOf(
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS
-  )
+  const balance: number = await positionContract.balanceOf(address)
 
   // Get all positions
   const tokenIds = []
   for (let i = 0; i < balance; i++) {
     const tokenOfOwnerByIndex: number =
-      await positionContract.tokenOfOwnerByIndex(
-        NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-        i
-      )
+      await positionContract.tokenOfOwnerByIndex(address, i)
     tokenIds.push(tokenOfOwnerByIndex)
   }
 
