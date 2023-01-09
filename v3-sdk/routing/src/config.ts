@@ -1,5 +1,5 @@
-import { Currency } from '@uniswap/sdk-core'
-import { DAI_TOKEN, ETH, USDC_TOKEN } from './libs/constants'
+import { Token } from '@uniswap/sdk-core'
+import { WETH_TOKEN, USDC_TOKEN } from './libs/constants'
 
 // Sets if the example should run locally or on chain
 export enum Environment {
@@ -19,10 +19,10 @@ export interface ExampleConfig {
     address: string
     privateKey: string
   }
-  currencies: {
-    in: Currency
+  tokens: {
+    in: Token
     amountIn: number
-    out: Currency
+    out: Token
   }
 }
 
@@ -39,8 +39,8 @@ export const CurrentConfig: ExampleConfig = {
     privateKey:
       '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
   },
-  currencies: {
-    in: ETH,
+  tokens: {
+    in: WETH_TOKEN,
     amountIn: 1,
     out: USDC_TOKEN,
   },

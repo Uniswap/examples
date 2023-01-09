@@ -1,15 +1,15 @@
 // This file stores web3 related constants such as addresses, token definitions, ETH currency references and ABI's
 
-import { Ether, SupportedChainId, Token } from '@uniswap/sdk-core'
+import { SupportedChainId, Token } from '@uniswap/sdk-core'
 
 // Addresses
 
 export const V3_SWAP_ROUTER_ADDRESS =
   '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45'
+export const WETH_CONTRACT_ADDRESS =
+  '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 
 // Currencies and Tokens
-
-export const ETH = Ether.onChain(SupportedChainId.MAINNET)
 
 export const USDC_TOKEN = new Token(
   SupportedChainId.MAINNET,
@@ -27,6 +27,14 @@ export const DAI_TOKEN = new Token(
   'Dai Stablecoin'
 )
 
+export const WETH_TOKEN = new Token(
+  SupportedChainId.MAINNET,
+  '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+  18,
+  'WETH',
+  'Wrapped Ether'
+)
+
 // ABI's
 
 export const ERC20_ABI = [
@@ -37,12 +45,22 @@ export const ERC20_ABI = [
 
   // Authenticated Functions
   'function transfer(address to, uint amount) returns (bool)',
+  'function approve(address _spender, uint256 _value) returns (bool)',
 
   // Events
   'event Transfer(address indexed from, address indexed to, uint amount)',
+]
+
+export const WETH_ABI = [
+  // Wrap ETH
+  'function deposit() payable',
+
+  // Unwrap ETH
+  'function withdraw(uint wad) public',
 ]
 
 // Transactions
 
 export const MAX_FEE_PER_GAS = 100000000000
 export const MAX_PRIORITY_FEE_PER_GAS = 100000000000
+export const TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER = 10000
