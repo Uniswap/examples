@@ -18,10 +18,10 @@ import JSBI from 'jsbi'
 
 import { CurrentConfig } from '../config'
 import {
-  AMOUNT_TO_APPROVE,
   ERC20_ABI,
   QUOTER_CONTRACT_ADDRESS,
   SWAP_ROUTER_ADDRESS,
+  TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER,
 } from './constants'
 import { MAX_FEE_PER_GAS, MAX_PRIORITY_FEE_PER_GAS } from './constants'
 import { getPoolInfo } from './pool'
@@ -86,6 +86,13 @@ export async function executeTrade(
     throw new Error('Cannot execute a trade without a connected wallet')
   }
 
+  const tokenApproval = await getTokenTransferApproval(CurrentConfig.tokens.in)
+
+  // Fail if transfer approvals do not go through
+  if (tokenApproval !== TransactionState.Sent) {
+    return TransactionState.Failed
+  }
+
   const options: SwapOptions = {
     slippageTolerance: new Percent(500, 10000), // 50 bips, or 0.50%
     deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from the current Unix time
@@ -93,17 +100,6 @@ export async function executeTrade(
   }
 
   const methodParameters = SwapRouter.swapCallParameters([trade], options)
-
-  const tokenApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.in.address,
-    walletAddress
-  )
-
-  // Fail if transfer approvals do not go through
-  if (tokenApproval !== TransactionState.Sent) {
-    return TransactionState.Failed
-  }
 
   const tx = {
     data: methodParameters.calldata,
@@ -151,30 +147,32 @@ async function getOutputQuote(route: Route<Currency, Currency>) {
   return ethers.utils.defaultAbiCoder.decode(['uint256'], quoteCallReturnData)
 }
 
-export async function getTokenTransferApprovals(
-  provider: ethers.providers.Provider,
-  tokenAddress: string,
-  fromAddress: string
+export async function getTokenTransferApproval(
+  token: Token
 ): Promise<TransactionState> {
-  if (!provider) {
+  const provider = getProvider()
+  const address = getWalletAddress()
+  if (!provider || !address) {
     console.log('No Provider Found')
     return TransactionState.Failed
   }
 
   try {
-    const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider)
+    const tokenContract = new ethers.Contract(
+      token.address,
+      ERC20_ABI,
+      provider
+    )
 
     const transaction = await tokenContract.populateTransaction.approve(
       SWAP_ROUTER_ADDRESS,
-      JSBI.BigInt(AMOUNT_TO_APPROVE).toString()
+      TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER
     )
 
-    const tx = sendTransaction({
+    return sendTransaction({
       ...transaction,
-      from: fromAddress,
+      from: address,
     })
-
-    return tx
   } catch (e) {
     console.error(e)
     return TransactionState.Failed
