@@ -41,14 +41,14 @@ const Example = () => {
     const hasCoinbaseExtension = getHasCoinbaseExtensionInstalled()
     const isMobile = false
 
-    let injectedOption
+    let meteMaskOption
     if (!isInjected) {
       if (!isMobile) {
-        injectedOption = <a href='"https://metamask.io/"'>Install Metamask</a>
+        meteMaskOption = <a href='"https://metamask.io/"'>Install Metamask</a>
       }
     } else if (!hasCoinbaseExtension) {
       if (hasMetaMaskExtension) {
-        injectedOption = (
+        meteMaskOption = (
           <div>
             <button
               onClick={() => {
@@ -64,27 +64,10 @@ const Example = () => {
             </button>
           </div>
         )
-      } else {
-        injectedOption = (
-          <div>
-            <button
-              onClick={() => {
-                tryActivation(metamaskConnection.connector)
-              }}>
-              Connect Injected
-            </button>
-            <button
-              onClick={() => {
-                tryDeactivation(metamaskConnection.connector)
-              }}>
-              Disconnect Injected
-            </button>
-          </div>
-        )
       }
     }
 
-    return <>{injectedOption}</>
+    return <>{meteMaskOption}</>
   }
 
   const tryActivation = useCallback(async (connector: Connector) => {
@@ -102,7 +85,7 @@ const Example = () => {
       }
       connector.resetState()
     } catch (error) {
-      console.debug(`web3-react connection error: ${error}`)
+      console.debug(`web3-react disconnection error: ${error}`)
     }
   }, [])
 
