@@ -1,11 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
-import { Environment, CurrentConfig } from '../config'
-import {
-  connectBrowserExtensionWallet,
-  getProvider,
-  getWalletAddress,
-} from '../libs/providers'
+import { CurrentConfig } from '../config'
 import {
   getHasCoinbaseExtensionInstalled,
   getHasMetaMaskExtensionInstalled,
@@ -14,10 +9,18 @@ import {
   injectedConnection,
 } from '../libs/connectors'
 import { Connector } from '@web3-react/types'
+import { useWeb3React } from '@web3-react/core'
+import { Web3Provider } from '@ethersproject/providers'
 
-const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
+const useOnBlockUpdated = (
+  provider: Web3Provider | undefined,
+  callback: (blockNumber: number) => void
+) => {
   useEffect(() => {
-    const subscription = getProvider()?.on('block', callback)
+    if (!provider) {
+      return
+    }
+    const subscription = provider?.on('block', callback)
     return () => {
       subscription?.removeAllListeners()
     }
@@ -25,30 +28,13 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 }
 
 const Example = () => {
+  const { chainId, account, provider } = useWeb3React()
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
   // Listen for new blocks and update the wallet
-  useOnBlockUpdated(async (blockNumber: number) => {
-    refreshBalances()
+  useOnBlockUpdated(provider, async (blockNumber: number) => {
     setBlockNumber(blockNumber)
   })
-
-  // Update wallet state given a block number
-  const refreshBalances = useCallback(async () => {
-    const provider = getProvider()
-    const address = getWalletAddress()
-    if (!address || !provider) {
-      return
-    }
-  }, [])
-
-  // Event Handlers
-
-  const onConnectWallet = useCallback(async () => {
-    if (await connectBrowserExtensionWallet()) {
-      refreshBalances()
-    }
-  }, [refreshBalances])
 
   function getOptions() {
     const isInjected = getIsInjected()
@@ -63,14 +49,7 @@ const Example = () => {
     let injectedOption
     if (!isInjected) {
       if (!isMobile) {
-        injectedOption = (
-          <button
-            onClick={() => {
-              tryActivation(injectedConnection.connector)
-            }}>
-            Install Metamask
-          </button>
-        )
+        injectedOption = <a href='"https://metamask.io/"'>Install Metamask</a>
       }
     } else if (!hasCoinbaseExtension) {
       if (hasMetaMaskExtension) {
@@ -136,19 +115,10 @@ const Example = () => {
       {CurrentConfig.rpc.mainnet === '' && (
         <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>
       )}
-      {CurrentConfig.env === Environment.WALLET_EXTENSION &&
-        getProvider() === null && (
-          <h2 className="error">
-            Please install a wallet to use this example configuration
-          </h2>
-        )}
-      <h3>{`Wallet Address: ${getWalletAddress()}`}</h3>
-      {CurrentConfig.env === Environment.WALLET_EXTENSION &&
-        !getWalletAddress() && (
-          <button onClick={onConnectWallet}>Connect Wallet</button>
-        )}
       <h3>{`Block Number: ${blockNumber + 1}`}</h3>
       <div className="connectors">{getOptions()}</div>
+      <h3>{`ChainId: ${chainId}`}</h3>
+      <h3>{`Connected Account: ${account}`}</h3>
     </div>
   )
 }
