@@ -20,25 +20,9 @@ export function getHasCoinbaseExtensionInstalled(): boolean {
   return window.ethereum?.isCoinbaseWallet ?? false
 }
 
-export function getIsMetaMask(connectionType: ConnectionType): boolean {
-  return (
-    connectionType === ConnectionType.INJECTED &&
-    getHasMetaMaskExtensionInstalled()
-  )
-}
-
-export enum ConnectionType {
-  COINBASE_WALLET = 'COINBASE_WALLET',
-  GNOSIS_SAFE = 'GNOSIS_SAFE',
-  INJECTED = 'INJECTED',
-  NETWORK = 'NETWORK',
-  WALLET_CONNECT = 'WALLET_CONNECT',
-}
-
 export interface Connection {
   connector: Connector
   hooks: Web3ReactHooks
-  type: ConnectionType
 }
 
 let metaMaskErrorHandler: (error: Error) => void | undefined
@@ -71,16 +55,15 @@ const [web3Network, web3NetworkHooks] = initializeConnector<Network>(
 export const networkConnection: Connection = {
   connector: web3Network,
   hooks: web3NetworkHooks,
-  type: ConnectionType.NETWORK,
 }
 
-const [web3Injected, web3InjectedHooks] = initializeConnector<MetaMask>(
-  (actions) => new MetaMask({ actions, onError: onMetamaskError })
-)
+const [web3MetamaskWallet, web3MetamaskWalletHooks] =
+  initializeConnector<MetaMask>(
+    (actions) => new MetaMask({ actions, onError: onMetamaskError })
+  )
 export const injectedConnection: Connection = {
-  connector: web3Injected,
-  hooks: web3InjectedHooks,
-  type: ConnectionType.INJECTED,
+  connector: web3MetamaskWallet,
+  hooks: web3MetamaskWalletHooks,
 }
 
 const [web3GnosisSafe, web3GnosisSafeHooks] = initializeConnector<GnosisSafe>(
@@ -89,7 +72,6 @@ const [web3GnosisSafe, web3GnosisSafeHooks] = initializeConnector<GnosisSafe>(
 export const gnosisSafeConnection: Connection = {
   connector: web3GnosisSafe,
   hooks: web3GnosisSafeHooks,
-  type: ConnectionType.GNOSIS_SAFE,
 }
 
 const [web3CoinbaseWallet, web3CoinbaseWalletHooks] =
@@ -108,5 +90,4 @@ const [web3CoinbaseWallet, web3CoinbaseWalletHooks] =
 export const coinbaseWalletConnection: Connection = {
   connector: web3CoinbaseWallet,
   hooks: web3CoinbaseWalletHooks,
-  type: ConnectionType.COINBASE_WALLET,
 }

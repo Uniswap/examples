@@ -12,6 +12,8 @@ import {
   getHasCoinbaseExtensionInstalled,
   getHasMetaMaskExtensionInstalled,
   getIsInjected,
+  coinbaseWalletConnection,
+  injectedConnection,
 } from '../libs/connectors'
 import { Connector } from '@web3-react/types'
 
@@ -78,21 +80,56 @@ const Example = () => {
     let injectedOption
     if (!isInjected) {
       if (!isMobile) {
-        injectedOption = <p>Install Metamask</p>
+        injectedOption = (
+          <button
+            onClick={() => {
+              tryActivation(injectedConnection.connector)
+            }}>
+            Install Metamask
+          </button>
+        )
       }
     } else if (!hasCoinbaseExtension) {
       if (hasMetaMaskExtension) {
-        injectedOption = <p>Metamask</p>
+        injectedOption = (
+          <button
+            onClick={() => {
+              tryActivation(injectedConnection.connector)
+            }}>
+            Metamask
+          </button>
+        )
       } else {
-        injectedOption = <p>Injected</p>
+        injectedOption = (
+          <button
+            onClick={() => {
+              tryActivation(injectedConnection.connector)
+            }}>
+            Injected
+          </button>
+        )
       }
     }
 
     let coinbaseWalletOption
     if (isMobile && !isInjectedMobileBrowser) {
-      coinbaseWalletOption = <p>Install Coinbase</p>
+      coinbaseWalletOption = (
+        <button
+          onClick={() => {
+            tryActivation(coinbaseWalletConnection.connector)
+          }}>
+          Install Coinbase
+        </button>
+      )
     } else if (!isMobile || isCoinbaseWalletBrowser) {
-      coinbaseWalletOption = <p>Coinbase</p>
+      coinbaseWalletOption = (
+        <button
+          onClick={() => {
+            tryActivation(coinbaseWalletConnection.connector)
+          }}>
+          Connect Coinbase
+        </button>
+      )
     }
 
     return (
