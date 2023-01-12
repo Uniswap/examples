@@ -9,12 +9,10 @@ import {
 } from '../libs/connectors'
 import { Connector } from '@web3-react/types'
 import { useWeb3React } from '@web3-react/core'
-import { Web3Provider } from '@ethersproject/providers'
 
-const useOnBlockUpdated = (
-  provider: Web3Provider | undefined,
-  callback: (blockNumber: number) => void
-) => {
+const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
+  const { provider } = useWeb3React()
+
   useEffect(() => {
     if (!provider) {
       return
@@ -27,15 +25,15 @@ const useOnBlockUpdated = (
 }
 
 const Example = () => {
-  const { chainId, account, provider } = useWeb3React()
+  const { chainId, account, isActive } = useWeb3React()
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
   // Listen for new blocks and update the wallet
-  useOnBlockUpdated(provider, async (blockNumber: number) => {
+  useOnBlockUpdated(async (blockNumber: number) => {
     setBlockNumber(blockNumber)
   })
 
-  function getOptions() {
+  function getOptions(isActive: boolean) {
     const isInjected = getIsInjected()
     const hasMetaMaskExtension = getHasMetaMaskExtensionInstalled()
     const hasCoinbaseExtension = getHasCoinbaseExtensionInstalled()
@@ -50,18 +48,21 @@ const Example = () => {
       if (hasMetaMaskExtension) {
         meteMaskOption = (
           <div>
-            <button
-              onClick={() => {
-                tryActivation(metamaskConnection.connector)
-              }}>
-              Connect Metamask
-            </button>
-            <button
-              onClick={() => {
-                tryDeactivation(metamaskConnection.connector)
-              }}>
-              Disconnect Metamask
-            </button>
+            {!isActive ? (
+              <button
+                onClick={() => {
+                  tryActivation(metamaskConnection.connector)
+                }}>
+                Connect Metamask
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  tryDeactivation(metamaskConnection.connector)
+                }}>
+                Disconnect Metamask
+              </button>
+            )}
           </div>
         )
       }
@@ -95,7 +96,7 @@ const Example = () => {
         <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>
       )}
       <h3>{`Block Number: ${blockNumber + 1}`}</h3>
-      <div className="connectors">{getOptions()}</div>
+      <div className="connectors">{getOptions(isActive)}</div>
       <h3>{`ChainId: ${chainId}`}</h3>
       <h3>{`Connected Account: ${account}`}</h3>
     </div>
