@@ -5,8 +5,7 @@ import {
   getHasCoinbaseExtensionInstalled,
   getHasMetaMaskExtensionInstalled,
   getIsInjected,
-  coinbaseWalletConnection,
-  injectedConnection,
+  metamaskConnection,
 } from '../libs/connectors'
 import { Connector } from '@web3-react/types'
 import { useWeb3React } from '@web3-react/core'
@@ -42,10 +41,6 @@ const Example = () => {
     const hasCoinbaseExtension = getHasCoinbaseExtensionInstalled()
     const isMobile = false
 
-    const isCoinbaseWalletBrowser = isMobile && hasCoinbaseExtension
-    const isMetaMaskBrowser = isMobile && hasMetaMaskExtension
-    const isInjectedMobileBrowser = isCoinbaseWalletBrowser || isMetaMaskBrowser
-
     let injectedOption
     if (!isInjected) {
       if (!isMobile) {
@@ -54,57 +49,58 @@ const Example = () => {
     } else if (!hasCoinbaseExtension) {
       if (hasMetaMaskExtension) {
         injectedOption = (
-          <button
-            onClick={() => {
-              tryActivation(injectedConnection.connector)
-            }}>
-            Metamask
-          </button>
+          <div>
+            <button
+              onClick={() => {
+                tryActivation(metamaskConnection.connector)
+              }}>
+              Connect Metamask
+            </button>
+            <button
+              onClick={() => {
+                tryDeactivation(metamaskConnection.connector)
+              }}>
+              Disconnect Metamask
+            </button>
+          </div>
         )
       } else {
         injectedOption = (
-          <button
-            onClick={() => {
-              tryActivation(injectedConnection.connector)
-            }}>
-            Injected
-          </button>
+          <div>
+            <button
+              onClick={() => {
+                tryActivation(metamaskConnection.connector)
+              }}>
+              Connect Injected
+            </button>
+            <button
+              onClick={() => {
+                tryDeactivation(metamaskConnection.connector)
+              }}>
+              Disconnect Injected
+            </button>
+          </div>
         )
       }
     }
 
-    let coinbaseWalletOption
-    if (isMobile && !isInjectedMobileBrowser) {
-      coinbaseWalletOption = (
-        <button
-          onClick={() => {
-            tryActivation(coinbaseWalletConnection.connector)
-          }}>
-          Install Coinbase
-        </button>
-      )
-    } else if (!isMobile || isCoinbaseWalletBrowser) {
-      coinbaseWalletOption = (
-        <button
-          onClick={() => {
-            tryActivation(coinbaseWalletConnection.connector)
-          }}>
-          Connect Coinbase
-        </button>
-      )
-    }
-
-    return (
-      <>
-        {injectedOption}
-        {coinbaseWalletOption}
-      </>
-    )
+    return <>{injectedOption}</>
   }
 
   const tryActivation = useCallback(async (connector: Connector) => {
     try {
       await connector.activate()
+    } catch (error) {
+      console.debug(`web3-react connection error: ${error}`)
+    }
+  }, [])
+
+  const tryDeactivation = useCallback(async (connector: Connector) => {
+    try {
+      if (connector && connector.deactivate) {
+        connector.deactivate()
+      }
+      connector.resetState()
     } catch (error) {
       console.debug(`web3-react connection error: ${error}`)
     }
