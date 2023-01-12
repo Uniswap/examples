@@ -1,6 +1,11 @@
 name: Lint React Template
 
-on: push
+on:
+  push:
+  pull_request:
+    types:
+      - opened
+      - synchronize
 
 jobs:
   lint:
