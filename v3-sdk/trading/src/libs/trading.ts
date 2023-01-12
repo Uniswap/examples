@@ -87,11 +87,7 @@ export async function executeTrade(
   }
 
   // Give approval to the router to spend the token
-  const tokenApproval = await getTokenTransferApprovals(
-    provider,
-    CurrentConfig.tokens.in.address,
-    walletAddress
-  )
+  const tokenApproval = await getTokenTransferApproval(CurrentConfig.tokens.in);
 
   // Fail if transfer approvals do not go through
   if (tokenApproval !== TransactionState.Sent) {
