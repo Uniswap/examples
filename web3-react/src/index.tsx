@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
 import Example from './example/Example'
-import Web3Provider from './libs/components/Web3Provider'
+import { Web3Provider } from './libs/components/Web3Provider'
 
 if (window.ethereum) {
   window.ethereum.autoRefreshOnNetworkChange = false
