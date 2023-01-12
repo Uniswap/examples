@@ -1,12 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
 import { Environment, CurrentConfig } from '../config'
-import { getCurrencyBalance } from '../libs/wallet'
 import {
   connectBrowserExtensionWallet,
   getProvider,
   getWalletAddress,
-  TransactionState,
 } from '../libs/providers'
 import {
   getHasCoinbaseExtensionInstalled,
@@ -27,9 +25,6 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 }
 
 const Example = () => {
-  const [tokenInBalance, setTokenInBalance] = useState<string>()
-  const [tokenOutBalance, setTokenOutBalance] = useState<string>()
-  const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
   // Listen for new blocks and update the wallet
@@ -45,13 +40,6 @@ const Example = () => {
     if (!address || !provider) {
       return
     }
-
-    setTokenInBalance(
-      await getCurrencyBalance(provider, address, CurrentConfig.currencies.in)
-    )
-    setTokenOutBalance(
-      await getCurrencyBalance(provider, address, CurrentConfig.currencies.out)
-    )
   }, [])
 
   // Event Handlers
@@ -61,11 +49,6 @@ const Example = () => {
       refreshBalances()
     }
   }, [refreshBalances])
-
-  const onAction = useCallback(async () => {
-    // TODO do your action here
-    setTxState(TransactionState.Sent)
-  }, [])
 
   function getOptions() {
     const isInjected = getIsInjected()
@@ -165,19 +148,7 @@ const Example = () => {
           <button onClick={onConnectWallet}>Connect Wallet</button>
         )}
       <h3>{`Block Number: ${blockNumber + 1}`}</h3>
-      <h3>{`Transaction State: ${txState}`}</h3>
-      <h3>{`Token In (${CurrentConfig.currencies.in.symbol}) Balance: ${tokenInBalance}`}</h3>
-      <h3>{`Token Out (${CurrentConfig.currencies.out.symbol}) Balance: ${tokenOutBalance}`}</h3>
-      <button
-        onClick={onAction}
-        disabled={
-          txState === TransactionState.Sending ||
-          getProvider() === null ||
-          CurrentConfig.rpc.mainnet === ''
-        }>
-        <p>Trade</p>
-      </button>
-      <div>{getOptions()}</div>
+      <div className="connectors">{getOptions()}</div>
     </div>
   )
 }
