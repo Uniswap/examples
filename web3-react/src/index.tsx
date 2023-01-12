@@ -2,24 +2,17 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
 import Example from './example/Example'
-import { Web3ReactProvider, Web3ReactHooks } from '@web3-react/core'
-import { Connector } from '@web3-react/types'
-import { metamaskConnection, networkConnection } from './libs/connectors'
+import Web3Provider from './libs/components/Web3Provider'
 
 if (window.ethereum) {
   window.ethereum.autoRefreshOnNetworkChange = false
 }
 
-const connectors: [Connector, Web3ReactHooks][] = [
-  [metamaskConnection.connector, metamaskConnection.hooks],
-  [networkConnection.connector, networkConnection.hooks],
-]
-
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(
   <React.StrictMode>
-    <Web3ReactProvider connectors={connectors}>
+    <Web3Provider>
       <Example />
-    </Web3ReactProvider>
+    </Web3Provider>
   </React.StrictMode>
 )
