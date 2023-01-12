@@ -16,7 +16,7 @@ export interface ExampleConfig {
 // Example Configuration
 
 export const CurrentConfig: ExampleConfig = {
-  env: Environment.MAINNET,
+  env: Environment.LOCAL,
   rpc: {
     local: 'http://localhost:8545',
     mainnet: 'https://mainnet.gateway.tenderly.co/biusNZqSR6tj1wxGGykHD',

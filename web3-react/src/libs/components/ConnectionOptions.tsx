@@ -5,7 +5,8 @@ import {
   getIsInjected,
   injectedConnection,
   ConnectionType,
-} from '../connectors/constants'
+  METAMASK_URL,
+} from '../constants'
 
 type ConnectOptionsParams = {
   connectionType: ConnectionType | null
@@ -27,7 +28,7 @@ export const ConnectionOptions = ({
     let meteMaskOption
     if (!isInjected) {
       meteMaskOption = (
-        <a href="https://metamask.io/">
+        <a href={METAMASK_URL}>
           <button>Install Metamask</button>
         </a>
       )

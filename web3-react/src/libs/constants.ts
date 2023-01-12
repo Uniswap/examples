@@ -2,9 +2,20 @@ import { initializeConnector, Web3ReactHooks } from '@web3-react/core'
 import { MetaMask } from '@web3-react/metamask'
 import { Network } from '@web3-react/network'
 import { Connector } from '@web3-react/types'
-import { CurrentConfig } from '../../config'
+import { CurrentConfig, Environment } from '../config'
 import { JsonRpcProvider } from '@ethersproject/providers'
-import { SupportedChainId } from '@uniswap/sdk-core'
+
+const LOCAL_CHAIN_ID = 1337
+const MAINNET_CHAIN_ID = 1
+const DEFAULT_CHAIN_ID =
+  CurrentConfig.env === Environment.LOCAL ? LOCAL_CHAIN_ID : MAINNET_CHAIN_ID
+
+const URL_MAP = {
+  [LOCAL_CHAIN_ID]: new JsonRpcProvider(CurrentConfig.rpc.local),
+  [MAINNET_CHAIN_ID]: new JsonRpcProvider(CurrentConfig.rpc.mainnet),
+}
+
+export const METAMASK_URL = 'https://metamask.io/'
 
 export interface Connection {
   connector: Connector
@@ -48,12 +59,8 @@ const [web3Network, web3NetworkHooks] = initializeConnector<Network>(
   (actions) =>
     new Network({
       actions,
-      urlMap: {
-        [SupportedChainId.MAINNET]: new JsonRpcProvider(
-          CurrentConfig.rpc.mainnet
-        ),
-      },
-      defaultChainId: 1,
+      urlMap: URL_MAP,
+      defaultChainId: DEFAULT_CHAIN_ID,
     })
 )
 export const networkConnection: Connection = {

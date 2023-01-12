@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react'
 import { Web3ReactProvider } from '@web3-react/core'
-import { connectors } from '../connectors/constants'
-import { useEagerlyConnect } from '../connectors/hooks'
+import { connectors } from '../constants'
+import { useEagerlyConnect } from '../hooks'
 
 export const Web3Provider = ({ children }: { children: ReactNode }) => {
   useEagerlyConnect()
