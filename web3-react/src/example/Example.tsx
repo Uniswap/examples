@@ -5,8 +5,10 @@ import {
   getHasCoinbaseExtensionInstalled,
   getHasMetaMaskExtensionInstalled,
   getIsInjected,
-  metamaskConnection,
-} from '../libs/connectors'
+  injectedConnection,
+  ConnectionType,
+  getConnection,
+} from '../libs/connectors/constants'
 import { Connector } from '@web3-react/types'
 import { useWeb3React } from '@web3-react/core'
 
@@ -27,6 +29,7 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 const Example = () => {
   const { chainId, account, isActive } = useWeb3React()
   const [blockNumber, setBlockNumber] = useState<number>(0)
+  const [connectionType, setConnectionType] = useState<ConnectionType | null>()
 
   // Listen for new blocks and update the wallet
   useOnBlockUpdated(async (blockNumber: number) => {
@@ -48,17 +51,18 @@ const Example = () => {
       if (hasMetaMaskExtension) {
         meteMaskOption = (
           <div>
-            {!isActive ? (
+            {connectionType !== ConnectionType.INJECTED && (
               <button
                 onClick={() => {
-                  tryActivation(metamaskConnection.connector)
+                  tryActivation(injectedConnection.connector)
                 }}>
                 Connect Metamask
               </button>
-            ) : (
+            )}
+            {isActive && connectionType === ConnectionType.INJECTED && (
               <button
                 onClick={() => {
-                  tryDeactivation(metamaskConnection.connector)
+                  tryDeactivation(injectedConnection.connector)
                 }}>
                 Disconnect Metamask
               </button>
@@ -74,6 +78,9 @@ const Example = () => {
   const tryActivation = useCallback(async (connector: Connector) => {
     try {
       await connector.activate()
+      const connectionType = getConnection(connector).type
+
+      setConnectionType(connectionType)
     } catch (error) {
       console.debug(`web3-react connection error: ${error}`)
     }
@@ -85,6 +92,7 @@ const Example = () => {
         connector.deactivate()
       }
       connector.resetState()
+      setConnectionType(null)
     } catch (error) {
       console.debug(`web3-react disconnection error: ${error}`)
     }
