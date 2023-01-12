@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
 import { CurrentConfig } from '../config'
 import {
-  getHasCoinbaseExtensionInstalled,
   getHasMetaMaskExtensionInstalled,
   getIsInjected,
   injectedConnection,
@@ -39,15 +38,18 @@ const Example = () => {
   function getOptions(isActive: boolean) {
     const isInjected = getIsInjected()
     const hasMetaMaskExtension = getHasMetaMaskExtensionInstalled()
-    const hasCoinbaseExtension = getHasCoinbaseExtensionInstalled()
     const isMobile = false
 
     let meteMaskOption
     if (!isInjected) {
       if (!isMobile) {
-        meteMaskOption = <a href='"https://metamask.io/"'>Install Metamask</a>
+        meteMaskOption = (
+          <a href="https://metamask.io/">
+            <button>Install Metamask</button>
+          </a>
+        )
       }
-    } else if (!hasCoinbaseExtension) {
+    } else {
       if (hasMetaMaskExtension) {
         meteMaskOption = (
           <div>
