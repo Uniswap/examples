@@ -1,8 +1,7 @@
-import { initializeConnector, Web3ReactHooks } from '@web3-react/core'
-import { MetaMask } from '@web3-react/metamask'
-import { Network } from '@web3-react/network'
+import { Web3ReactHooks } from '@web3-react/core'
 import { Connector } from '@web3-react/types'
-import { URL_MAP, DEFAULT_CHAIN_ID } from './constants'
+import { buildInjectedConnector } from './injected'
+import { buildNetworkConnector } from './network'
 
 export interface Connection {
   connector: Connector
@@ -25,48 +24,6 @@ export function getHasMetaMaskExtensionInstalled(): boolean {
 
 export function getHasCoinbaseExtensionInstalled(): boolean {
   return window.ethereum?.isCoinbaseWallet ?? false
-}
-
-function buildInjectedConnector() {
-  let metaMaskErrorHandler: (error: Error) => void | undefined
-
-  function onError(error: Error) {
-    console.debug(`web3-react error: ${error}`)
-  }
-
-  function onMetamaskError(error: Error) {
-    onError(error)
-    metaMaskErrorHandler?.(error)
-  }
-  const [web3MetamaskWallet, web3MetamaskWalletHooks] =
-    initializeConnector<MetaMask>(
-      (actions) => new MetaMask({ actions, onError: onMetamaskError })
-    )
-  const injectedConnection: Connection = {
-    connector: web3MetamaskWallet,
-    hooks: web3MetamaskWalletHooks,
-    type: ConnectionType.INJECTED,
-  }
-
-  return injectedConnection
-}
-
-function buildNetworkConnector() {
-  const [web3Network, web3NetworkHooks] = initializeConnector<Network>(
-    (actions) =>
-      new Network({
-        actions,
-        urlMap: URL_MAP,
-        defaultChainId: DEFAULT_CHAIN_ID,
-      })
-  )
-  const networkConnection: Connection = {
-    connector: web3Network,
-    hooks: web3NetworkHooks,
-    type: ConnectionType.NETWORK,
-  }
-
-  return networkConnection
 }
 
 export const PRIORITIZED_CONNECTORS: Connection[] = [
