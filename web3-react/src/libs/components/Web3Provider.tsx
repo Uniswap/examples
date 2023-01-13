@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react'
 import { Web3ReactProvider } from '@web3-react/core'
-import { connectors } from '../constants'
+import { PRIORITIZED_CONNECTORS } from '../connections'
 import { useEagerlyConnect } from '../hooks'
 
 export const Web3Provider = ({ children }: { children: ReactNode }) => {
@@ -8,7 +8,7 @@ export const Web3Provider = ({ children }: { children: ReactNode }) => {
 
   return (
     <Web3ReactProvider
-      connectors={connectors.map((connector) => [
+      connectors={PRIORITIZED_CONNECTORS.map((connector) => [
         connector.connector,
         connector.hooks,
       ])}>

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
 import { CurrentConfig } from '../config'
-import { ConnectionType, getConnection } from '../libs/constants'
+import { ConnectionType, getConnection } from '../libs/connections'
 import { Connector } from '@web3-react/types'
 import { useWeb3React } from '@web3-react/core'
 import { ConnectionOptions } from '../libs/components/ConnectionOptions'

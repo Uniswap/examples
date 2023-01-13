@@ -1,10 +1,10 @@
 import { useEffect } from 'react'
-import { networkConnection } from './constants'
+import { getConnection, ConnectionType } from './connections'
 import { Connector } from '@web3-react/types'
 
 export const useEagerlyConnect = () => {
   useEffect(() => {
-    connect(networkConnection.connector)
+    connect(getConnection(ConnectionType.NETWORK).connector)
   }, [])
 }
 

@@ -3,10 +3,10 @@ import React from 'react'
 import {
   getHasMetaMaskExtensionInstalled,
   getIsInjected,
-  injectedConnection,
+  getConnection,
   ConnectionType,
-  METAMASK_URL,
-} from '../constants'
+} from '../connections'
+import { METAMASK_URL } from '../constants'
 
 type ConnectOptionsParams = {
   connectionType: ConnectionType | null
@@ -38,7 +38,7 @@ export const ConnectionOptions = ({
           {connectionType !== ConnectionType.INJECTED && (
             <button
               onClick={() => {
-                onActivate(injectedConnection.connector)
+                onActivate(getConnection(ConnectionType.INJECTED).connector)
               }}>
               Connect Metamask
             </button>
@@ -46,7 +46,7 @@ export const ConnectionOptions = ({
           {isActive && connectionType === ConnectionType.INJECTED && (
             <button
               onClick={() => {
-                onDeactivate(injectedConnection.connector)
+                onDeactivate(getConnection(ConnectionType.INJECTED).connector)
               }}>
               Disconnect Metamask
             </button>
