@@ -31,7 +31,6 @@ export function getHasMetaMaskExtensionInstalled(): boolean {
 
 export function onConnectionError(error: Error) {
   console.debug(`web3-react error: ${error}`)
-  console.log(`web3-react error: ${error}`)
 }
 
 export const PRIORITIZED_CONNECTORS: Connection[] = [
@@ -77,15 +76,21 @@ export const switchNetwork = async (
 
   const { connector } = getConnection(connectionType)
 
-  if (connectionType !== ConnectionType.NETWORK) {
-    const chainInfo = CHAIN_INFO[chainId]
-    const addChainParameter: AddEthereumChainParameter = {
-      chainId,
-      chainName: chainInfo.label,
-      rpcUrls: [chainInfo.rpcUrl],
-      nativeCurrency: chainInfo.nativeCurrency,
-      blockExplorerUrls: [chainInfo.explorer],
-    }
-    await connector.activate(addChainParameter)
+  if (
+    connectionType === ConnectionType.WALLET_CONNECT ||
+    connectionType === ConnectionType.NETWORK
+  ) {
+    await connector.activate(chainId)
+    return
   }
+
+  const chainInfo = CHAIN_INFO[chainId]
+  const addChainParameter: AddEthereumChainParameter = {
+    chainId,
+    chainName: chainInfo.label,
+    rpcUrls: [chainInfo.rpcUrl],
+    nativeCurrency: chainInfo.nativeCurrency,
+    blockExplorerUrls: [chainInfo.explorer],
+  }
+  await connector.activate(addChainParameter)
 }
