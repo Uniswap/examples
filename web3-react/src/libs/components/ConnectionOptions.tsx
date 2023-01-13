@@ -2,10 +2,12 @@ import { Connector } from '@web3-react/types'
 import React from 'react'
 import {
   getHasMetaMaskExtensionInstalled,
-  getConnection,
   ConnectionType,
 } from '../connections'
 import { METAMASK_URL } from '../constants'
+import { MetaMaskOption } from './MetaMaskOption'
+import { CoinbaseOption } from './CoinbaseOption'
+import { WalletConnectOption } from './WalletConnectOption'
 
 type ConnectOptionsParams = {
   connectionType: ConnectionType | null
@@ -32,79 +34,31 @@ export const ConnectionOptions = ({
       )
     } else {
       meteMaskOption = (
-        <div>
-          {((isActive &&
-            (connectionType === ConnectionType.NETWORK || !connectionType)) ||
-            !isActive) && (
-            <button
-              onClick={() => {
-                onActivate(getConnection(ConnectionType.INJECTED).connector)
-              }}>
-              Connect Metamask
-            </button>
-          )}
-          {isActive && connectionType === ConnectionType.INJECTED && (
-            <button
-              onClick={() => {
-                onDeactivate(getConnection(ConnectionType.INJECTED).connector)
-              }}>
-              Disconnect Metamask
-            </button>
-          )}
-        </div>
+        <MetaMaskOption
+          isActive={isActive}
+          connectionType={connectionType}
+          onActivate={onActivate}
+          onDeactivate={onDeactivate}
+        />
       )
     }
 
     const coinbaseWalletOption = (
-      <div>
-        {((isActive &&
-          (connectionType === ConnectionType.NETWORK || !connectionType)) ||
-          !isActive) && (
-          <button
-            onClick={() => {
-              onActivate(
-                getConnection(ConnectionType.COINBASE_WALLET).connector
-              )
-            }}>
-            Connect Coinbase
-          </button>
-        )}
-        {isActive && connectionType === ConnectionType.COINBASE_WALLET && (
-          <button
-            onClick={() => {
-              onDeactivate(
-                getConnection(ConnectionType.COINBASE_WALLET).connector
-              )
-            }}>
-            Disconnect Coinbase
-          </button>
-        )}
-      </div>
+      <CoinbaseOption
+        isActive={isActive}
+        connectionType={connectionType}
+        onActivate={onActivate}
+        onDeactivate={onDeactivate}
+      />
     )
 
     const walletConnectOption = (
-      <div>
-        {((isActive &&
-          (connectionType === ConnectionType.NETWORK || !connectionType)) ||
-          !isActive) && (
-          <button
-            onClick={() => {
-              onActivate(getConnection(ConnectionType.WALLET_CONNECT).connector)
-            }}>
-            Connect WalletConnect
-          </button>
-        )}
-        {isActive && connectionType === ConnectionType.WALLET_CONNECT && (
-          <button
-            onClick={() => {
-              onDeactivate(
-                getConnection(ConnectionType.WALLET_CONNECT).connector
-              )
-            }}>
-            Disconnect WalletConnect
-          </button>
-        )}
-      </div>
+      <WalletConnectOption
+        isActive={isActive}
+        connectionType={connectionType}
+        onActivate={onActivate}
+        onDeactivate={onDeactivate}
+      />
     )
 
     return (
