@@ -2,9 +2,10 @@ import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
 import { CurrentConfig } from '../config'
 import { ConnectionType, getConnection } from '../libs/connections'
-import { Connector } from '@web3-react/types'
+import { AddEthereumChainParameter, Connector } from '@web3-react/types'
 import { useWeb3React } from '@web3-react/core'
 import { ConnectionOptions } from '../libs/components/ConnectionOptions'
+import { CHAIN_INFO } from '../libs/constants'
 
 // Listen for new blocks and update the wallet
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
@@ -56,6 +57,29 @@ const Example = () => {
     }
   }, [])
 
+  const switchNetwork = useCallback(
+    async (chainId: number) => {
+      if (!connectionType) {
+        return
+      }
+
+      const { connector } = getConnection(connectionType)
+
+      if (connectionType !== ConnectionType.NETWORK) {
+        const chainInfo = CHAIN_INFO[chainId]
+        const addChainParameter: AddEthereumChainParameter = {
+          chainId,
+          chainName: chainInfo.label,
+          rpcUrls: [chainInfo.rpcUrl],
+          nativeCurrency: chainInfo.nativeCurrency,
+          blockExplorerUrls: [chainInfo.explorer],
+        }
+        await connector.activate(addChainParameter)
+      }
+    },
+    [connectionType]
+  )
+
   return (
     <div className="App">
       {CurrentConfig.rpc.mainnet === '' && (
@@ -70,6 +94,11 @@ const Example = () => {
       />
       <h3>{`ChainId: ${chainId}`}</h3>
       <h3>{`Connected Account: ${account}`}</h3>
+      {Object.keys(CHAIN_INFO).map((chainId) => (
+        <button key={chainId} onClick={() => switchNetwork(parseInt(chainId))}>
+          {`Switch to ${chainId}`}
+        </button>
+      ))}
     </div>
   )
 }

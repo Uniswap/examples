@@ -2,7 +2,6 @@ import { Connector } from '@web3-react/types'
 import React from 'react'
 import {
   getHasMetaMaskExtensionInstalled,
-  getIsInjected,
   getConnection,
   ConnectionType,
 } from '../connections'
@@ -22,17 +21,16 @@ export const ConnectionOptions = ({
   onDeactivate,
 }: ConnectOptionsParams) => {
   function getOptions(isActive: boolean) {
-    const isInjected = getIsInjected()
     const hasMetaMaskExtension = getHasMetaMaskExtensionInstalled()
 
     let meteMaskOption
-    if (!isInjected) {
+    if (!hasMetaMaskExtension) {
       meteMaskOption = (
         <a href={METAMASK_URL}>
           <button>Install Metamask</button>
         </a>
       )
-    } else if (hasMetaMaskExtension) {
+    } else {
       meteMaskOption = (
         <div>
           {((isActive &&
@@ -56,9 +54,6 @@ export const ConnectionOptions = ({
         </div>
       )
     }
-
-    console.log('isActive', isActive)
-    console.log('connectionType', connectionType)
 
     const coinbaseWalletOption = (
       <div>

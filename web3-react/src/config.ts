@@ -1,14 +1,14 @@
 // Sets if the example should run locally or on chain
-export enum Environment {
-  LOCAL,
+export enum Chain {
+  POLYGON,
   MAINNET,
 }
 
 // Inputs that configure this example to run
 export interface ExampleConfig {
-  env: Environment
+  chain: Chain
   rpc: {
-    local: string
+    polygon: string
     mainnet: string
   }
 }
@@ -16,9 +16,10 @@ export interface ExampleConfig {
 // Example Configuration
 
 export const CurrentConfig: ExampleConfig = {
-  env: Environment.LOCAL,
+  chain: Chain.MAINNET,
   rpc: {
-    local: 'http://localhost:8545',
-    mainnet: 'https://mainnet.gateway.tenderly.co/biusNZqSR6tj1wxGGykHD',
+    polygon:
+      'https://polygon-mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721',
+    mainnet: 'https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721',
   },
 }

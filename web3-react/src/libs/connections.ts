@@ -24,10 +24,6 @@ export function getHasMetaMaskExtensionInstalled(): boolean {
   return window.ethereum?.isMetaMask ?? false
 }
 
-export function getHasCoinbaseExtensionInstalled(): boolean {
-  return window.ethereum?.isCoinbaseWallet ?? false
-}
-
 export function onConnectionError(error: Error) {
   console.debug(`web3-react error: ${error}`)
 }
