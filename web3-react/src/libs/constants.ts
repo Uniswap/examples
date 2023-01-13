@@ -1,5 +1,4 @@
 import { CurrentConfig, Chain } from '../config'
-import { JsonRpcProvider } from '@ethersproject/providers'
 
 // Chains
 const MAINNET_CHAIN_ID = 1
@@ -11,11 +10,6 @@ export const INPUT_CHAIN_URL =
   CurrentConfig.chain === Chain.POLYGON
     ? CurrentConfig.rpc.polygon
     : CurrentConfig.rpc.mainnet
-
-export const CHAIN_TO_PROVIDER_MAP = {
-  [POLYGON_CHAIN_ID]: new JsonRpcProvider(CurrentConfig.rpc.polygon),
-  [MAINNET_CHAIN_ID]: new JsonRpcProvider(CurrentConfig.rpc.mainnet),
-}
 
 export const CHAIN_TO_URL_MAP = {
   [POLYGON_CHAIN_ID]: CurrentConfig.rpc.polygon,
