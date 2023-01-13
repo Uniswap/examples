@@ -35,7 +35,9 @@ export const ConnectionOptions = ({
     } else if (hasMetaMaskExtension) {
       meteMaskOption = (
         <div>
-          {connectionType !== ConnectionType.INJECTED && (
+          {((isActive &&
+            (connectionType === ConnectionType.NETWORK || !connectionType)) ||
+            !isActive) && (
             <button
               onClick={() => {
                 onActivate(getConnection(ConnectionType.INJECTED).connector)
@@ -55,7 +57,42 @@ export const ConnectionOptions = ({
       )
     }
 
-    return <>{meteMaskOption}</>
+    console.log('isActive', isActive)
+    console.log('connectionType', connectionType)
+
+    const coinbaseWalletOption = (
+      <div>
+        {((isActive &&
+          (connectionType === ConnectionType.NETWORK || !connectionType)) ||
+          !isActive) && (
+          <button
+            onClick={() => {
+              onActivate(
+                getConnection(ConnectionType.COINBASE_WALLET).connector
+              )
+            }}>
+            Connect Coinbase
+          </button>
+        )}
+        {isActive && connectionType === ConnectionType.COINBASE_WALLET && (
+          <button
+            onClick={() => {
+              onDeactivate(
+                getConnection(ConnectionType.COINBASE_WALLET).connector
+              )
+            }}>
+            Disconnect Coinbase
+          </button>
+        )}
+      </div>
+    )
+
+    return (
+      <>
+        {meteMaskOption}
+        {coinbaseWalletOption}
+      </>
+    )
   }
 
   return <div className="connectors">{getOptions(isActive)}</div>
