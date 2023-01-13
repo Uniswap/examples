@@ -17,6 +17,11 @@ export const CHAIN_TO_PROVIDER_MAP = {
   [MAINNET_CHAIN_ID]: new JsonRpcProvider(CurrentConfig.rpc.mainnet),
 }
 
+export const CHAIN_TO_URL_MAP = {
+  [POLYGON_CHAIN_ID]: CurrentConfig.rpc.polygon,
+  [MAINNET_CHAIN_ID]: CurrentConfig.rpc.mainnet,
+}
+
 type ChainInfo = {
   explorer: string
   label: string

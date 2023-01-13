@@ -5,6 +5,7 @@ import { Connector } from '@web3-react/types'
 export const useEagerlyConnect = () => {
   useEffect(() => {
     connect(getConnection(ConnectionType.NETWORK).connector)
+    connect(getConnection(ConnectionType.GNOSIS_SAFE).connector)
   }, [])
 }
 

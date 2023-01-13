@@ -82,10 +82,36 @@ export const ConnectionOptions = ({
       </div>
     )
 
+    const walletConnectOption = (
+      <div>
+        {((isActive &&
+          (connectionType === ConnectionType.NETWORK || !connectionType)) ||
+          !isActive) && (
+          <button
+            onClick={() => {
+              onActivate(getConnection(ConnectionType.WALLET_CONNECT).connector)
+            }}>
+            Connect WalletConnect
+          </button>
+        )}
+        {isActive && connectionType === ConnectionType.WALLET_CONNECT && (
+          <button
+            onClick={() => {
+              onDeactivate(
+                getConnection(ConnectionType.WALLET_CONNECT).connector
+              )
+            }}>
+            Disconnect WalletConnect
+          </button>
+        )}
+      </div>
+    )
+
     return (
       <>
         {meteMaskOption}
         {coinbaseWalletOption}
+        {walletConnectOption}
       </>
     )
   }

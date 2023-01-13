@@ -3,10 +3,13 @@ import ReactDOM from 'react-dom/client'
 import './index.css'
 import Example from './example/Example'
 import { Web3Provider } from './libs/components/Web3Provider'
+import { Buffer } from 'buffer'
 
 if (window.ethereum) {
   window.ethereum.autoRefreshOnNetworkChange = false
 }
+
+window.Buffer = Buffer
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(

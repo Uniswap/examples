@@ -1,6 +1,6 @@
 import { initializeConnector } from '@web3-react/core'
 import { Network } from '@web3-react/network'
-import { CHAIN_TO_PROVIDER_MAP, INPUT_CHAIN_ID } from './constants'
+import { CHAIN_TO_URL_MAP, INPUT_CHAIN_ID } from './constants'
 import { Connection, ConnectionType } from './connections'
 
 export function buildNetworkConnector() {
@@ -8,7 +8,7 @@ export function buildNetworkConnector() {
     (actions) =>
       new Network({
         actions,
-        urlMap: CHAIN_TO_PROVIDER_MAP,
+        urlMap: CHAIN_TO_URL_MAP,
         defaultChainId: INPUT_CHAIN_ID,
       })
   )

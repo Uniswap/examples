@@ -3,6 +3,8 @@ import { Connector, AddEthereumChainParameter } from '@web3-react/types'
 import { buildInjectedConnector } from './injected'
 import { buildNetworkConnector } from './network'
 import { buildCoinbaseWalletConnector } from './coinbase'
+import { buildGnosisSafeConnector } from './gnosis'
+import { buildWalletConnectConnector } from './wallet-connect'
 import { CHAIN_INFO } from './constants'
 
 export interface Connection {
@@ -13,8 +15,10 @@ export interface Connection {
 
 export enum ConnectionType {
   COINBASE_WALLET = 'COINBASE_WALLET',
+  GNOSIS_SAFE = 'GNOSIS_SAFE',
   INJECTED = 'INJECTED',
   NETWORK = 'NETWORK',
+  WALLET_CONNECT = 'WALLET_CONNECT',
 }
 
 export function getIsInjected(): boolean {
@@ -27,11 +31,14 @@ export function getHasMetaMaskExtensionInstalled(): boolean {
 
 export function onConnectionError(error: Error) {
   console.debug(`web3-react error: ${error}`)
+  console.log(`web3-react error: ${error}`)
 }
 
 export const PRIORITIZED_CONNECTORS: Connection[] = [
   buildInjectedConnector(),
   buildCoinbaseWalletConnector(),
+  buildWalletConnectConnector(),
+  buildGnosisSafeConnector(),
   buildNetworkConnector(),
 ]
 
@@ -50,8 +57,12 @@ export function getConnection(c: Connector | ConnectionType) {
         return PRIORITIZED_CONNECTORS[0]
       case ConnectionType.COINBASE_WALLET:
         return PRIORITIZED_CONNECTORS[1]
-      case ConnectionType.NETWORK:
+      case ConnectionType.WALLET_CONNECT:
         return PRIORITIZED_CONNECTORS[2]
+      case ConnectionType.GNOSIS_SAFE:
+        return PRIORITIZED_CONNECTORS[3]
+      case ConnectionType.NETWORK:
+        return PRIORITIZED_CONNECTORS[4]
     }
   }
 }

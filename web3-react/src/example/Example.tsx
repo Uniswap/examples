@@ -76,11 +76,12 @@ const Example = () => {
       <h3>{`ChainId: ${chainId}`}</h3>
       <h3>{`Connected Account: ${account}`}</h3>
       {Object.keys(CHAIN_INFO).map((chainId) => (
-        <button
-          key={chainId}
-          onClick={() => switchNetwork(parseInt(chainId), connectionType)}>
-          {`Switch to ${chainId}`}
-        </button>
+        <div key={chainId}>
+          <button
+            onClick={() => switchNetwork(parseInt(chainId), connectionType)}>
+            {`Switch to ${CHAIN_INFO[chainId].label}`}
+          </button>
+        </div>
       ))}
     </div>
   )
