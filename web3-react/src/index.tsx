@@ -9,6 +9,7 @@ if (window.ethereum) {
   window.ethereum.autoRefreshOnNetworkChange = false
 }
 
+// Node polyfills required by WalletConnect are no longer bundled with webpack
 window.Buffer = Buffer
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
