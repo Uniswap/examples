@@ -1,0 +1,30 @@
+name: Lint web3-react
+
+on:
+  push:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  lint:
+    name: Run linters
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+
+      - name: Set up node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Install dependencies
+        working-directory: ./web3-react
+        run: yarn
+
+      - name: Run linters
+        working-directory: ./web3-react
+        run: yarn lint
