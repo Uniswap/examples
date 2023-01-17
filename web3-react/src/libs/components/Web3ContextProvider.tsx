@@ -3,7 +3,7 @@ import { Web3ReactProvider } from '@web3-react/core'
 import { PRIORITIZED_CONNECTORS } from '../connections'
 import { useEagerlyConnect } from '../hooks'
 
-export const Web3Provider = ({ children }: { children: ReactNode }) => {
+export const Web3ContextProvider = ({ children }: { children: ReactNode }) => {
   useEagerlyConnect()
 
   return (

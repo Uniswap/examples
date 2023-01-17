@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
 import Example from './example/Example'
-import { Web3Provider } from './libs/components/Web3Provider'
+import { Web3ContextProvider } from './libs/components/Web3Provider'
 import { Buffer } from 'buffer'
 
 if (window.ethereum) {
@@ -15,8 +15,8 @@ window.Buffer = Buffer
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(
   <React.StrictMode>
-    <Web3Provider>
+    <Web3ContextProvider>
       <Example />
-    </Web3Provider>
+    </Web3ContextProvider>
   </React.StrictMode>
 )
