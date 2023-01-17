@@ -21,11 +21,11 @@ export interface ExampleConfig {
 export const CurrentConfig: ExampleConfig = {
   rpc: {
     local: 'http://localhost:8545',
-    mainnet: '',
+    mainnet: 'https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721',
   },
   tokens: {
     in: USDC_TOKEN,
-    amountIn: 1000,
+    amountIn: 3100,
     out: WETH_TOKEN,
     poolFee: FeeAmount.MEDIUM,
   },

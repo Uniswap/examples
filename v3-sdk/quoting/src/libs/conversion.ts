@@ -1,5 +1,7 @@
 import JSBI from 'jsbi'
 
+const NUM_DECIMALS = 2
+
 export function fromReadableAmount(amount: number, decimals: number): JSBI {
   const extraDigits = Math.pow(10, countDecimals(amount))
   const adjustedAmount = amount * extraDigits
@@ -13,10 +15,17 @@ export function fromReadableAmount(amount: number, decimals: number): JSBI {
 }
 
 export function toReadableAmount(rawAmount: number, decimals: number): string {
-  return JSBI.divide(
+  const quotient = JSBI.divide(
     JSBI.BigInt(rawAmount),
     JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(decimals))
-  ).toString()
+  )
+
+  const remainder = JSBI.remainder(
+    JSBI.BigInt(rawAmount),
+    JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(decimals))
+  )
+
+  return quotient.toString() + '.' + remainder.toString().slice(0, NUM_DECIMALS)
 }
 
 function countDecimals(x: number) {

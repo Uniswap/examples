@@ -17,15 +17,16 @@ export async function quote(): Promise<string> {
     getProvider()
   )
   const poolConstants = await getPoolConstants()
+  const inputAmount = fromReadableAmount(
+    CurrentConfig.tokens.amountIn,
+    CurrentConfig.tokens.in.decimals
+  ).toString()
 
   const quotedAmountOut = await quoterContract.callStatic.quoteExactInputSingle(
     poolConstants.token0,
     poolConstants.token1,
     poolConstants.fee,
-    fromReadableAmount(
-      CurrentConfig.tokens.amountIn,
-      CurrentConfig.tokens.in.decimals
-    ),
+    inputAmount.toString(),
     0
   )
 
