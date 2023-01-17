@@ -25,7 +25,7 @@ export async function quote(): Promise<string> {
     fromReadableAmount(
       CurrentConfig.tokens.amountIn,
       CurrentConfig.tokens.in.decimals
-    ),
+    ).toString(),
     0
   )
 
