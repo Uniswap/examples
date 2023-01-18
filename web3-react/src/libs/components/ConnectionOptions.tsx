@@ -4,15 +4,13 @@ import {
   ConnectionType,
 } from '../connections'
 import { METAMASK_URL } from '../constants'
-import { MetaMaskOption } from './MetaMaskOption'
-import { CoinbaseOption } from './CoinbaseOption'
-import { WalletConnectOption } from './WalletConnectOption'
+import { Option } from './Option'
 
 type ConnectOptionsParams = {
   connectionType: ConnectionType | null
   isActive: boolean
   onActivate: (connectionType: ConnectionType) => void
-  onDeactivate: (connectionType: ConnectionType | null) => void
+  onDeactivate: (connectionType: null) => void
 }
 
 export const ConnectionOptions = ({
@@ -33,9 +31,10 @@ export const ConnectionOptions = ({
       )
     } else {
       meteMaskOption = (
-        <MetaMaskOption
+        <Option
           isActive={isActive}
-          connectionType={connectionType}
+          activeConnectionType={connectionType}
+          connectionType={ConnectionType.INJECTED}
           onActivate={onActivate}
           onDeactivate={onDeactivate}
         />
@@ -43,18 +42,20 @@ export const ConnectionOptions = ({
     }
 
     const coinbaseWalletOption = (
-      <CoinbaseOption
+      <Option
         isActive={isActive}
-        connectionType={connectionType}
+        activeConnectionType={connectionType}
+        connectionType={ConnectionType.COINBASE_WALLET}
         onActivate={onActivate}
         onDeactivate={onDeactivate}
       />
     )
 
     const walletConnectOption = (
-      <WalletConnectOption
+      <Option
         isActive={isActive}
-        connectionType={connectionType}
+        activeConnectionType={connectionType}
+        connectionType={ConnectionType.WALLET_CONNECT}
         onActivate={onActivate}
         onDeactivate={onDeactivate}
       />
