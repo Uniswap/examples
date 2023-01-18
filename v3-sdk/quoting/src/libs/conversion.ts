@@ -1,6 +1,6 @@
 import { BigNumber, ethers } from 'ethers'
 
-const MAX_DECIMALS = 4
+const READABLE_FORM_LEN = 4
 
 export function fromReadableAmount(
   amount: number,
@@ -10,5 +10,7 @@ export function fromReadableAmount(
 }
 
 export function toReadableAmount(rawAmount: number, decimals: number): string {
-  return ethers.utils.formatUnits(rawAmount, decimals).slice(0, MAX_DECIMALS)
+  return ethers.utils
+    .formatUnits(rawAmount, decimals)
+    .slice(0, READABLE_FORM_LEN)
 }
