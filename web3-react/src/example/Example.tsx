@@ -13,9 +13,9 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
     if (!provider) {
       return
     }
-    const subscription = provider?.on('block', callback)
+    const subscription = provider.on('block', callback)
     return () => {
-      subscription?.removeAllListeners()
+      subscription.removeAllListeners()
     }
   })
 }
