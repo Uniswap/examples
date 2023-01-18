@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
-import { getConnection, ConnectionType } from './connections'
 import { Connector } from '@web3-react/types'
+import { useEffect } from 'react'
+
+import { ConnectionType, getConnection } from './connections'
 
 export const useEagerlyConnect = () => {
   useEffect(() => {
