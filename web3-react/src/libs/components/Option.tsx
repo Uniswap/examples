@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo, useCallback } from 'react'
 import {
   getConnection,
   ConnectionType,
@@ -19,7 +19,31 @@ export const Option = ({
   onActivate: (connectionType: ConnectionType) => void
   onDeactivate: (connectionType: null) => void
 }) => {
-  const onClickActivate = async () => {
+  const isOptionActive = useMemo(
+    () => isActive && activeConnectionType === connectionType,
+    [isActive, activeConnectionType, connectionType]
+  )
+
+  const isOtherOptionActive = useMemo(
+    () =>
+      isActive &&
+      activeConnectionType !== connectionType &&
+      activeConnectionType !== ConnectionType.NETWORK,
+    [isActive, activeConnectionType, connectionType]
+  )
+
+  const onClick = useCallback(async () => {
+    if (isOptionActive) {
+      const deactivation = await tryDeactivateConnector(
+        getConnection(connectionType).connector
+      )
+      if (deactivation === undefined) {
+        return
+      }
+      onDeactivate(deactivation)
+      return
+    }
+
     const activation = await tryActivateConnector(
       getConnection(connectionType).connector
     )
@@ -27,38 +51,18 @@ export const Option = ({
       return
     }
     onActivate(activation)
-  }
-
-  const onClickDeactivate = async () => {
-    const deactivation = await tryDeactivateConnector(
-      getConnection(connectionType).connector
-    )
-    if (!deactivation) {
-      return
-    }
-
-    onDeactivate(deactivation)
-  }
+    return
+  }, [isOptionActive, connectionType, onActivate, onDeactivate])
 
   return (
     <div>
-      {((isActive &&
-        (activeConnectionType === ConnectionType.NETWORK ||
-          !activeConnectionType)) ||
-        !isActive) && (
-        <button
-          onClick={() => {
-            onClickActivate()
-          }}>{`Connect ${connectionType}`}</button>
-      )}
-      {isActive && activeConnectionType === connectionType && (
-        <button
-          onClick={() => {
-            onClickDeactivate()
-          }}>
-          {`Disconnect ${connectionType}`}
-        </button>
-      )}
+      <button
+        onClick={() => {
+          onClick()
+        }}
+        disabled={isOtherOptionActive}>{`${
+        isOptionActive ? 'Disconnect' : 'Connect'
+      } ${connectionType}`}</button>
     </div>
   )
 }
