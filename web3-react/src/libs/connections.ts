@@ -1,11 +1,12 @@
 import { Web3ReactHooks } from '@web3-react/core'
-import { Connector, AddEthereumChainParameter } from '@web3-react/types'
+import { AddEthereumChainParameter, Connector } from '@web3-react/types'
+
+import { buildCoinbaseWalletConnector } from './coinbase'
+import { CHAIN_INFO } from './constants'
+import { buildGnosisSafeConnector } from './gnosis'
 import { buildInjectedConnector } from './injected'
 import { buildNetworkConnector } from './network'
-import { buildCoinbaseWalletConnector } from './coinbase'
-import { buildGnosisSafeConnector } from './gnosis'
 import { buildWalletConnectConnector } from './wallet-connect'
-import { CHAIN_INFO } from './constants'
 
 export interface Connection {
   connector: Connector
@@ -19,10 +20,6 @@ export enum ConnectionType {
   INJECTED = 'INJECTED',
   NETWORK = 'NETWORK',
   WALLET_CONNECT = 'WALLET_CONNECT',
-}
-
-export function getIsInjected(): boolean {
-  return Boolean(window.ethereum)
 }
 
 export function getHasMetaMaskExtensionInstalled(): boolean {
@@ -43,9 +40,7 @@ export const PRIORITIZED_CONNECTORS: { [key in ConnectionType]: Connection } = {
 
 export function getConnection(c: Connector | ConnectionType) {
   if (c instanceof Connector) {
-    const connection = Object.values(PRIORITIZED_CONNECTORS).find(
-      (connection) => connection.connector === c
-    )
+    const connection = Object.values(PRIORITIZED_CONNECTORS).find((connection) => connection.connector === c)
     if (!connection) {
       throw Error('unsupported Connector')
     }
@@ -66,20 +61,14 @@ export function getConnection(c: Connector | ConnectionType) {
   }
 }
 
-export const switchNetwork = async (
-  chainId: number,
-  connectionType: ConnectionType | null
-) => {
+export const switchNetwork = async (chainId: number, connectionType: ConnectionType | null) => {
   if (!connectionType) {
     return
   }
 
   const { connector } = getConnection(connectionType)
 
-  if (
-    connectionType === ConnectionType.WALLET_CONNECT ||
-    connectionType === ConnectionType.NETWORK
-  ) {
+  if (connectionType === ConnectionType.WALLET_CONNECT || connectionType === ConnectionType.NETWORK) {
     await connector.activate(chainId)
     return
   }
@@ -96,9 +85,7 @@ export const switchNetwork = async (
 }
 
 // Try to activate a connector
-export const tryActivateConnector = async (
-  connector: Connector
-): Promise<ConnectionType | undefined> => {
+export const tryActivateConnector = async (connector: Connector): Promise<ConnectionType | undefined> => {
   try {
     await connector.activate()
     const connectionType = getConnection(connector).type
@@ -109,9 +96,7 @@ export const tryActivateConnector = async (
 }
 
 // Try to deactivate a connector
-export const tryDeactivateConnector = async (
-  connector: Connector
-): Promise<null | undefined> => {
+export const tryDeactivateConnector = async (connector: Connector): Promise<null | undefined> => {
   try {
     if (connector && connector.deactivate) {
       connector.deactivate()

@@ -1,8 +1,6 @@
 import React from 'react'
-import {
-  getHasMetaMaskExtensionInstalled,
-  ConnectionType,
-} from '../connections'
+
+import { ConnectionType, getHasMetaMaskExtensionInstalled } from '../connections'
 import { METAMASK_URL } from '../constants'
 import { Option } from './Option'
 
@@ -13,12 +11,7 @@ type ConnectOptionsParams = {
   onDeactivate: (connectionType: null) => void
 }
 
-export const ConnectionOptions = ({
-  connectionType,
-  isActive,
-  onActivate,
-  onDeactivate,
-}: ConnectOptionsParams) => {
+export const ConnectionOptions = ({ connectionType, isActive, onActivate, onDeactivate }: ConnectOptionsParams) => {
   function getOptions(isActive: boolean) {
     const hasMetaMaskExtension = getHasMetaMaskExtensionInstalled()
 

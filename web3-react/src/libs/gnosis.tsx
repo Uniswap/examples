@@ -1,5 +1,6 @@
 import { initializeConnector } from '@web3-react/core'
 import { GnosisSafe } from '@web3-react/gnosis-safe'
+
 import { Connection, ConnectionType } from './connections'
 
 export function buildGnosisSafeConnector() {

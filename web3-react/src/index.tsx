@@ -1,9 +1,11 @@
+import './index.css'
+
+import { Buffer } from 'buffer'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import './index.css'
+
 import Example from './example/Example'
 import { Web3ContextProvider } from './libs/components/Web3ContextProvider'
-import { Buffer } from 'buffer'
 
 if (window.ethereum) {
   window.ethereum.autoRefreshOnNetworkChange = false

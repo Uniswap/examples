@@ -5,7 +5,7 @@ export enum Chain {
 }
 
 // Inputs that configure this example to run
-export interface ExampleConfig {
+interface ExampleConfig {
   chain: Chain
   rpc: {
     polygon: string
