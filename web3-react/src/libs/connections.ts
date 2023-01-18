@@ -47,7 +47,7 @@ export function getConnection(c: Connector | ConnectionType) {
       (connection) => connection.connector === c
     )
     if (!connection) {
-      throw Error('unsupported connector')
+      throw Error('unsupported Connector')
     }
     return connection
   } else {
@@ -97,13 +97,12 @@ export const switchNetwork = async (
 
 // Try to activate a connector
 export const tryActivateConnector = async (
-  connector: Connector,
-  onActivate: (connectionType: ConnectionType) => void
-) => {
+  connector: Connector
+): Promise<ConnectionType | undefined> => {
   try {
     await connector.activate()
     const connectionType = getConnection(connector).type
-    onActivate(connectionType)
+    return connectionType
   } catch (error) {
     console.debug(`web3-react connection error: ${error}`)
   }
@@ -111,15 +110,14 @@ export const tryActivateConnector = async (
 
 // Try to deactivate a connector
 export const tryDeactivateConnector = async (
-  connector: Connector,
-  onDeactivate: (connectionType: ConnectionType | null) => void
-) => {
+  connector: Connector
+): Promise<null | undefined> => {
   try {
     if (connector && connector.deactivate) {
       connector.deactivate()
     }
     connector.resetState()
-    onDeactivate(null)
+    return null
   } catch (error) {
     console.debug(`web3-react disconnection error: ${error}`)
   }

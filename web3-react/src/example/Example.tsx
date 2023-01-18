@@ -28,7 +28,7 @@ const Example = () => {
   )
 
   // Listen for new blocks and update the wallet
-  useOnBlockUpdated(async (blockNumber: number) => {
+  useOnBlockUpdated((blockNumber: number) => {
     setBlockNumber(blockNumber)
   })
 

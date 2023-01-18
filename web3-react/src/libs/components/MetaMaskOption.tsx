@@ -14,8 +14,8 @@ export const MetaMaskOption = ({
 }: {
   isActive: boolean
   connectionType: ConnectionType | null
-  onActivate: (connectionType: ConnectionType) => void
-  onDeactivate: (connectionType: ConnectionType | null) => void
+  onActivate: (connectionType: ConnectionType | undefined) => void
+  onDeactivate: (connectionType: null | undefined) => void
 }) => {
   return (
     <div>
@@ -23,10 +23,11 @@ export const MetaMaskOption = ({
         (connectionType === ConnectionType.NETWORK || !connectionType)) ||
         !isActive) && (
         <button
-          onClick={() => {
-            tryActivateConnector(
-              getConnection(ConnectionType.INJECTED).connector,
-              onActivate
+          onClick={async () => {
+            onActivate(
+              await tryActivateConnector(
+                getConnection(ConnectionType.INJECTED).connector
+              )
             )
           }}>
           Connect Metamask
@@ -34,10 +35,11 @@ export const MetaMaskOption = ({
       )}
       {isActive && connectionType === ConnectionType.INJECTED && (
         <button
-          onClick={() => {
-            tryDeactivateConnector(
-              getConnection(ConnectionType.INJECTED).connector,
-              onDeactivate
+          onClick={async () => {
+            onDeactivate(
+              await tryDeactivateConnector(
+                getConnection(ConnectionType.INJECTED).connector
+              )
             )
           }}>
           Disconnect Metamask
