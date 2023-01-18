@@ -8,7 +8,7 @@ export const Web3ContextProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <Web3ReactProvider
-      connectors={PRIORITIZED_CONNECTORS.map((connector) => [
+      connectors={Object.values(PRIORITIZED_CONNECTORS).map((connector) => [
         connector.connector,
         connector.hooks,
       ])}>

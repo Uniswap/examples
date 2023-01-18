@@ -33,17 +33,17 @@ export function onConnectionError(error: Error) {
   console.debug(`web3-react error: ${error}`)
 }
 
-export const PRIORITIZED_CONNECTORS: Connection[] = [
-  buildInjectedConnector(),
-  buildCoinbaseWalletConnector(),
-  buildWalletConnectConnector(),
-  buildGnosisSafeConnector(),
-  buildNetworkConnector(),
-]
+export const PRIORITIZED_CONNECTORS: { [key in ConnectionType]: Connection } = {
+  [ConnectionType.INJECTED]: buildInjectedConnector(),
+  [ConnectionType.COINBASE_WALLET]: buildCoinbaseWalletConnector(),
+  [ConnectionType.WALLET_CONNECT]: buildWalletConnectConnector(),
+  [ConnectionType.GNOSIS_SAFE]: buildGnosisSafeConnector(),
+  [ConnectionType.NETWORK]: buildNetworkConnector(),
+}
 
 export function getConnection(c: Connector | ConnectionType) {
   if (c instanceof Connector) {
-    const connection = PRIORITIZED_CONNECTORS.find(
+    const connection = Object.values(PRIORITIZED_CONNECTORS).find(
       (connection) => connection.connector === c
     )
     if (!connection) {
@@ -53,15 +53,15 @@ export function getConnection(c: Connector | ConnectionType) {
   } else {
     switch (c) {
       case ConnectionType.INJECTED:
-        return PRIORITIZED_CONNECTORS[0]
+        return PRIORITIZED_CONNECTORS[ConnectionType.INJECTED]
       case ConnectionType.COINBASE_WALLET:
-        return PRIORITIZED_CONNECTORS[1]
+        return PRIORITIZED_CONNECTORS[ConnectionType.COINBASE_WALLET]
       case ConnectionType.WALLET_CONNECT:
-        return PRIORITIZED_CONNECTORS[2]
+        return PRIORITIZED_CONNECTORS[ConnectionType.WALLET_CONNECT]
       case ConnectionType.GNOSIS_SAFE:
-        return PRIORITIZED_CONNECTORS[3]
+        return PRIORITIZED_CONNECTORS[ConnectionType.GNOSIS_SAFE]
       case ConnectionType.NETWORK:
-        return PRIORITIZED_CONNECTORS[4]
+        return PRIORITIZED_CONNECTORS[ConnectionType.NETWORK]
     }
   }
 }
