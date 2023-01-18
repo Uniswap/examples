@@ -1,6 +1,10 @@
 import React from 'react'
-import { getConnection, ConnectionType } from '../connections'
-import { Connector } from '@web3-react/types'
+import {
+  getConnection,
+  ConnectionType,
+  tryActivateConnector,
+  tryDeactivateConnector,
+} from '../connections'
 
 export const MetaMaskOption = ({
   isActive,
@@ -10,8 +14,8 @@ export const MetaMaskOption = ({
 }: {
   isActive: boolean
   connectionType: ConnectionType | null
-  onActivate: (connector: Connector) => Promise<void>
-  onDeactivate: (connector: Connector) => Promise<void>
+  onActivate: (connectionType: ConnectionType) => void
+  onDeactivate: (connectionType: ConnectionType | null) => void
 }) => {
   return (
     <div>
@@ -20,7 +24,10 @@ export const MetaMaskOption = ({
         !isActive) && (
         <button
           onClick={() => {
-            onActivate(getConnection(ConnectionType.INJECTED).connector)
+            tryActivateConnector(
+              getConnection(ConnectionType.INJECTED).connector,
+              onActivate
+            )
           }}>
           Connect Metamask
         </button>
@@ -28,7 +35,10 @@ export const MetaMaskOption = ({
       {isActive && connectionType === ConnectionType.INJECTED && (
         <button
           onClick={() => {
-            onDeactivate(getConnection(ConnectionType.INJECTED).connector)
+            tryDeactivateConnector(
+              getConnection(ConnectionType.INJECTED).connector,
+              onDeactivate
+            )
           }}>
           Disconnect Metamask
         </button>

@@ -1,6 +1,10 @@
 import React from 'react'
-import { getConnection, ConnectionType } from '../connections'
-import { Connector } from '@web3-react/types'
+import {
+  getConnection,
+  ConnectionType,
+  tryActivateConnector,
+  tryDeactivateConnector,
+} from '../connections'
 
 export const CoinbaseOption = ({
   isActive,
@@ -10,8 +14,8 @@ export const CoinbaseOption = ({
 }: {
   isActive: boolean
   connectionType: ConnectionType | null
-  onActivate: (connector: Connector) => Promise<void>
-  onDeactivate: (connector: Connector) => Promise<void>
+  onActivate: (connectionType: ConnectionType) => void
+  onDeactivate: (connectionType: ConnectionType | null) => void
 }) => {
   return (
     <div>
@@ -20,7 +24,10 @@ export const CoinbaseOption = ({
         !isActive) && (
         <button
           onClick={() => {
-            onActivate(getConnection(ConnectionType.COINBASE_WALLET).connector)
+            tryActivateConnector(
+              getConnection(ConnectionType.COINBASE_WALLET).connector,
+              onActivate
+            )
           }}>
           Connect Coinbase
         </button>
@@ -28,8 +35,9 @@ export const CoinbaseOption = ({
       {isActive && connectionType === ConnectionType.COINBASE_WALLET && (
         <button
           onClick={() => {
-            onDeactivate(
-              getConnection(ConnectionType.COINBASE_WALLET).connector
+            tryDeactivateConnector(
+              getConnection(ConnectionType.COINBASE_WALLET).connector,
+              onDeactivate
             )
           }}>
           Disconnect Coinbase

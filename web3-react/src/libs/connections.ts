@@ -94,3 +94,33 @@ export const switchNetwork = async (
   }
   await connector.activate(addChainParameter)
 }
+
+// Try to activate a connector
+export const tryActivateConnector = async (
+  connector: Connector,
+  onActivate: (connectionType: ConnectionType) => void
+) => {
+  try {
+    await connector.activate()
+    const connectionType = getConnection(connector).type
+    onActivate(connectionType)
+  } catch (error) {
+    console.debug(`web3-react connection error: ${error}`)
+  }
+}
+
+// Try to deactivate a connector
+export const tryDeactivateConnector = async (
+  connector: Connector,
+  onDeactivate: (connectionType: ConnectionType | null) => void
+) => {
+  try {
+    if (connector && connector.deactivate) {
+      connector.deactivate()
+    }
+    connector.resetState()
+    onDeactivate(null)
+  } catch (error) {
+    console.debug(`web3-react disconnection error: ${error}`)
+  }
+}

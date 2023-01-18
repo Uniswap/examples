@@ -1,12 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import './Example.css'
 import { CurrentConfig } from '../config'
-import {
-  ConnectionType,
-  getConnection,
-  switchNetwork,
-} from '../libs/connections'
-import { Connector } from '@web3-react/types'
+import { ConnectionType, switchNetwork } from '../libs/connections'
 import { useWeb3React } from '@web3-react/core'
 import { ConnectionOptions } from '../libs/components/ConnectionOptions'
 import { CHAIN_INFO } from '../libs/constants'
@@ -37,30 +32,6 @@ const Example = () => {
     setBlockNumber(blockNumber)
   })
 
-  // Try to activate a connector
-  const tryActivateConnector = useCallback(async (connector: Connector) => {
-    try {
-      await connector.activate()
-      const connectionType = getConnection(connector).type
-      setConnectionType(connectionType)
-    } catch (error) {
-      console.debug(`web3-react connection error: ${error}`)
-    }
-  }, [])
-
-  // Try to deactivate a connector
-  const tryDeactivateConnector = useCallback(async (connector: Connector) => {
-    try {
-      if (connector && connector.deactivate) {
-        connector.deactivate()
-      }
-      connector.resetState()
-      setConnectionType(null)
-    } catch (error) {
-      console.debug(`web3-react disconnection error: ${error}`)
-    }
-  }, [])
-
   return (
     <div className="App">
       {CurrentConfig.rpc.mainnet === '' && (
@@ -70,8 +41,8 @@ const Example = () => {
       <ConnectionOptions
         connectionType={connectionType}
         isActive={isActive}
-        onActivate={tryActivateConnector}
-        onDeactivate={tryDeactivateConnector}
+        onActivate={setConnectionType}
+        onDeactivate={setConnectionType}
       />
       <h3>{`ChainId: ${chainId}`}</h3>
       <h3>{`Connected Account: ${account}`}</h3>

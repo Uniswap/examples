@@ -1,6 +1,10 @@
 import React from 'react'
-import { getConnection, ConnectionType } from '../connections'
-import { Connector } from '@web3-react/types'
+import {
+  getConnection,
+  ConnectionType,
+  tryActivateConnector,
+  tryDeactivateConnector,
+} from '../connections'
 
 export const WalletConnectOption = ({
   isActive,
@@ -10,8 +14,8 @@ export const WalletConnectOption = ({
 }: {
   isActive: boolean
   connectionType: ConnectionType | null
-  onActivate: (connector: Connector) => Promise<void>
-  onDeactivate: (connector: Connector) => Promise<void>
+  onActivate: (connectionType: ConnectionType) => void
+  onDeactivate: (connectionType: ConnectionType | null) => void
 }) => {
   return (
     <div>
@@ -20,7 +24,10 @@ export const WalletConnectOption = ({
         !isActive) && (
         <button
           onClick={() => {
-            onActivate(getConnection(ConnectionType.WALLET_CONNECT).connector)
+            tryActivateConnector(
+              getConnection(ConnectionType.WALLET_CONNECT).connector,
+              onActivate
+            )
           }}>
           Connect WalletConnect
         </button>
@@ -28,7 +35,10 @@ export const WalletConnectOption = ({
       {isActive && connectionType === ConnectionType.WALLET_CONNECT && (
         <button
           onClick={() => {
-            onDeactivate(getConnection(ConnectionType.WALLET_CONNECT).connector)
+            tryDeactivateConnector(
+              getConnection(ConnectionType.WALLET_CONNECT).connector,
+              onDeactivate
+            )
           }}>
           Disconnect WalletConnect
         </button>

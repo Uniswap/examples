@@ -1,4 +1,3 @@
-import { Connector } from '@web3-react/types'
 import React from 'react'
 import {
   getHasMetaMaskExtensionInstalled,
@@ -12,8 +11,8 @@ import { WalletConnectOption } from './WalletConnectOption'
 type ConnectOptionsParams = {
   connectionType: ConnectionType | null
   isActive: boolean
-  onActivate: (connector: Connector) => Promise<void>
-  onDeactivate: (connector: Connector) => Promise<void>
+  onActivate: (connectionType: ConnectionType) => void
+  onDeactivate: (connectionType: ConnectionType | null) => void
 }
 
 export const ConnectionOptions = ({
