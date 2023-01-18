@@ -132,7 +132,7 @@ async function getOutputQuote(route: Route<Currency, Currency>) {
       fromReadableAmount(
         CurrentConfig.tokens.amountIn,
         CurrentConfig.tokens.in.decimals
-      )
+      ).toString()
     ),
     TradeType.EXACT_INPUT,
     {
@@ -167,7 +167,10 @@ export async function getTokenTransferApproval(
 
     const transaction = await tokenContract.populateTransaction.approve(
       SWAP_ROUTER_ADDRESS,
-      TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER
+      fromReadableAmount(
+        TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER,
+        token.decimals
+      ).toString()
     )
 
     return sendTransaction({
