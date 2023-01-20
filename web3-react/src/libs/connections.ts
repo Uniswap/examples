@@ -42,7 +42,7 @@ export function getConnection(c: Connector | ConnectionType) {
   if (c instanceof Connector) {
     const connection = Object.values(PRIORITIZED_CONNECTORS).find((connection) => connection.connector === c)
     if (!connection) {
-      throw Error('unsupported Connector')
+      throw Error('Unsupported Connector')
     }
     return connection
   } else {

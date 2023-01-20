@@ -45,12 +45,9 @@ export const Option = ({
 
   return (
     <div>
-      <button
-        onClick={() => {
-          onClick()
-        }}
-        disabled={isOtherOptionActive}
-      >{`${isOptionActive ? 'Disconnect' : 'Connect'} ${connectionType}`}</button>
+      <button onClick={onClick} disabled={isOtherOptionActive}>{`${
+        isOptionActive ? 'Disconnect' : 'Connect'
+      } ${connectionType}`}</button>
     </div>
   )
 }
