@@ -3,13 +3,13 @@ import React from 'react'
 import { ConnectionType, getConnection, tryActivateConnector, tryDeactivateConnector } from '../connections'
 
 export const Option = ({
-  isDisabled,
+  isEnabled,
   isConnected,
   connectionType,
   onActivate,
   onDeactivate,
 }: {
-  isDisabled: boolean
+  isEnabled: boolean
   isConnected: boolean
   connectionType: ConnectionType
   onActivate: (connectionType: ConnectionType) => void
@@ -35,7 +35,7 @@ export const Option = ({
 
   return (
     <div>
-      <button onClick={onClick} disabled={isDisabled}>{`${
+      <button onClick={onClick} disabled={!isEnabled}>{`${
         isConnected ? 'Disconnect' : 'Connect'
       } ${connectionType}`}</button>
     </div>

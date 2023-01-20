@@ -6,31 +6,26 @@ import { Option } from './Option'
 
 type ConnectOptionsParams = {
   activeConnectionType: ConnectionType | null
-  isActive: boolean
+  isConnectionActive: boolean
   onActivate: (connectionType: ConnectionType) => void
   onDeactivate: (connectionType: null) => void
 }
 
-const getIsOptionConnected =
-  (isActive: boolean, activeConnectionType: ConnectionType | null) => (connectionType: ConnectionType) =>
-    isActive && connectionType == activeConnectionType
-
 export const ConnectionOptions = ({
   activeConnectionType,
-  isActive,
+  isConnectionActive,
   onActivate,
   onDeactivate,
 }: ConnectOptionsParams) => {
   function getOptions(isActive: boolean) {
     const hasMetaMaskExtension = getHasMetaMaskExtensionInstalled()
 
-    const isOptionConnected = getIsOptionConnected(isActive, activeConnectionType)
     const isNoOptionActive = !isActive || (isActive && activeConnectionType === null)
 
     const metaMaskOption = hasMetaMaskExtension ? (
       <Option
-        isDisabled={!isOptionConnected(ConnectionType.INJECTED) && !isNoOptionActive}
-        isConnected={isOptionConnected(ConnectionType.INJECTED)}
+        isEnabled={isNoOptionActive || activeConnectionType === ConnectionType.INJECTED}
+        isConnected={activeConnectionType === ConnectionType.INJECTED}
         connectionType={ConnectionType.INJECTED}
         onActivate={onActivate}
         onDeactivate={onDeactivate}
@@ -43,8 +38,8 @@ export const ConnectionOptions = ({
 
     const coinbaseWalletOption = (
       <Option
-        isDisabled={!isOptionConnected(ConnectionType.COINBASE_WALLET) && !isNoOptionActive}
-        isConnected={isOptionConnected(ConnectionType.COINBASE_WALLET)}
+        isEnabled={isNoOptionActive || activeConnectionType === ConnectionType.COINBASE_WALLET}
+        isConnected={activeConnectionType === ConnectionType.COINBASE_WALLET}
         connectionType={ConnectionType.COINBASE_WALLET}
         onActivate={onActivate}
         onDeactivate={onDeactivate}
@@ -53,8 +48,8 @@ export const ConnectionOptions = ({
 
     const walletConnectOption = (
       <Option
-        isDisabled={!isOptionConnected(ConnectionType.WALLET_CONNECT) && !isNoOptionActive}
-        isConnected={isOptionConnected(ConnectionType.WALLET_CONNECT)}
+        isEnabled={isNoOptionActive || activeConnectionType === ConnectionType.WALLET_CONNECT}
+        isConnected={activeConnectionType === ConnectionType.WALLET_CONNECT}
         connectionType={ConnectionType.WALLET_CONNECT}
         onActivate={onActivate}
         onDeactivate={onDeactivate}
@@ -70,5 +65,5 @@ export const ConnectionOptions = ({
     )
   }
 
-  return <div className="connectors">{getOptions(isActive)}</div>
+  return <div className="connectors">{getOptions(isConnectionActive)}</div>
 }

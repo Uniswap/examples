@@ -47,7 +47,7 @@ const Example = () => {
         <h3>{`Block Number: ${blockNumber + 1}`}</h3>
         <ConnectionOptions
           activeConnectionType={connectionType}
-          isActive={isActive}
+          isConnectionActive={isActive}
           onActivate={setConnectionType}
           onDeactivate={setConnectionType}
         />
