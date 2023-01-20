@@ -2,12 +2,20 @@ import './Example.css'
 
 import { useWeb3React } from '@web3-react/core'
 import React, { useEffect, useState } from 'react'
+import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
 
 import { ConnectionOptions } from '../libs/components/ConnectionOptions'
-import ErrorBoundary from '../libs/components/ErrorBoundary'
 import { ConnectionType, switchNetwork } from '../libs/connections'
 import { CHAIN_INFO, INPUT_CHAIN_URL } from '../libs/constants'
 
+const FallbackComponent = ({ error }: FallbackProps) => {
+  return (
+    <div>
+      <h1>An error occurred: {error.message}</h1>
+      <p>Please reload the application</p>
+    </div>
+  )
+}
 // Listen for new blocks and update the wallet
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   const { provider } = useWeb3React()
@@ -33,7 +41,7 @@ const Example = () => {
   })
 
   return (
-    <ErrorBoundary>
+    <ErrorBoundary FallbackComponent={FallbackComponent}>
       <div className="App">
         {INPUT_CHAIN_URL === '' && <h2 className="error">Please set your RPC URL in config.ts</h2>}
         <h3>{`Block Number: ${blockNumber + 1}`}</h3>
