@@ -16,8 +16,7 @@ export const Option = ({
   onDeactivate: (connectionType: null) => void
 }) => {
   const isOptionActive = isActive && activeConnectionType === connectionType
-  const isOtherOptionActive =
-    isActive && activeConnectionType !== connectionType && activeConnectionType !== ConnectionType.NETWORK
+  const isNoOptionActive = !isActive || (isActive && activeConnectionType === null)
 
   const onClick = async () => {
     if (isOptionActive) {
@@ -39,7 +38,7 @@ export const Option = ({
 
   return (
     <div>
-      <button onClick={onClick} disabled={isOtherOptionActive}>{`${
+      <button onClick={onClick} disabled={!isNoOptionActive && !isOptionActive}>{`${
         isOptionActive ? 'Disconnect' : 'Connect'
       } ${connectionType}`}</button>
     </div>
