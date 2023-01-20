@@ -89,21 +89,13 @@ export const switchNetwork = async (chainId: number, connectionType: ConnectionT
 }
 
 export const tryActivateConnector = async (connector: Connector): Promise<ConnectionType | undefined> => {
-  try {
-    await connector.activate()
-    const connectionType = getConnection(connector).type
-    return connectionType
-  } catch (error) {
-    console.debug(`web3-react connection error: ${error}`)
-  }
+  await connector.activate()
+  const connectionType = getConnection(connector).type
+  return connectionType
 }
 
 export const tryDeactivateConnector = async (connector: Connector): Promise<null | undefined> => {
-  try {
-    connector.deactivate?.()
-    connector.resetState()
-    return null
-  } catch (error) {
-    console.debug(`web3-react disconnection error: ${error}`)
-  }
+  connector.deactivate?.()
+  connector.resetState()
+  return null
 }

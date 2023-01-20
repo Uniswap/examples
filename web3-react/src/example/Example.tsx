@@ -4,6 +4,7 @@ import { useWeb3React } from '@web3-react/core'
 import React, { useEffect, useState } from 'react'
 
 import { ConnectionOptions } from '../libs/components/ConnectionOptions'
+import ErrorBoundary from '../libs/components/ErrorBoundary'
 import { ConnectionType, switchNetwork } from '../libs/connections'
 import { CHAIN_INFO, INPUT_CHAIN_URL } from '../libs/constants'
 
@@ -32,25 +33,27 @@ const Example = () => {
   })
 
   return (
-    <div className="App">
-      {INPUT_CHAIN_URL === '' && <h2 className="error">Please set your RPC URL in config.ts</h2>}
-      <h3>{`Block Number: ${blockNumber + 1}`}</h3>
-      <ConnectionOptions
-        activeConnectionType={connectionType}
-        isActive={isActive}
-        onActivate={setConnectionType}
-        onDeactivate={setConnectionType}
-      />
-      <h3>{`ChainId: ${chainId}`}</h3>
-      <h3>{`Connected Account: ${account}`}</h3>
-      {Object.keys(CHAIN_INFO).map((chainId) => (
-        <div key={chainId}>
-          <button onClick={() => switchNetwork(parseInt(chainId), connectionType)}>
-            {`Switch to ${CHAIN_INFO[chainId].label}`}
-          </button>
-        </div>
-      ))}
-    </div>
+    <ErrorBoundary>
+      <div className="App">
+        {INPUT_CHAIN_URL === '' && <h2 className="error">Please set your RPC URL in config.ts</h2>}
+        <h3>{`Block Number: ${blockNumber + 1}`}</h3>
+        <ConnectionOptions
+          activeConnectionType={connectionType}
+          isActive={isActive}
+          onActivate={setConnectionType}
+          onDeactivate={setConnectionType}
+        />
+        <h3>{`ChainId: ${chainId}`}</h3>
+        <h3>{`Connected Account: ${account}`}</h3>
+        {Object.keys(CHAIN_INFO).map((chainId) => (
+          <div key={chainId}>
+            <button onClick={() => switchNetwork(parseInt(chainId), connectionType)}>
+              {`Switch to ${CHAIN_INFO[chainId].label}`}
+            </button>
+          </div>
+        ))}
+      </div>
+    </ErrorBoundary>
   )
 }
 
