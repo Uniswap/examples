@@ -15,8 +15,6 @@ export const Option = ({
   onActivate: (connectionType: ConnectionType) => void
   onDeactivate: (connectionType: null) => void
 }) => {
-  
-
   const onClick = async () => {
     if (isConnected) {
       const deactivation = await tryDeactivateConnector(getConnection(connectionType).connector)
