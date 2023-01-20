@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React from 'react'
 
 import { ConnectionType, getConnection, tryActivateConnector, tryDeactivateConnector } from '../connections'
 
@@ -15,17 +15,11 @@ export const Option = ({
   onActivate: (connectionType: ConnectionType) => void
   onDeactivate: (connectionType: null) => void
 }) => {
-  const isOptionActive = useMemo(
-    () => isActive && activeConnectionType === connectionType,
-    [isActive, activeConnectionType, connectionType]
-  )
+  const isOptionActive = isActive && activeConnectionType === connectionType
+  const isOtherOptionActive =
+    isActive && activeConnectionType !== connectionType && activeConnectionType !== ConnectionType.NETWORK
 
-  const isOtherOptionActive = useMemo(
-    () => isActive && activeConnectionType !== connectionType && activeConnectionType !== ConnectionType.NETWORK,
-    [isActive, activeConnectionType, connectionType]
-  )
-
-  const onClick = useCallback(async () => {
+  const onClick = async () => {
     if (isOptionActive) {
       const deactivation = await tryDeactivateConnector(getConnection(connectionType).connector)
       if (deactivation === undefined) {
@@ -41,7 +35,7 @@ export const Option = ({
     }
     onActivate(activation)
     return
-  }, [isOptionActive, connectionType, onActivate, onDeactivate])
+  }
 
   return (
     <div>

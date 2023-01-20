@@ -1,11 +1,26 @@
 import { Web3ReactProvider } from '@web3-react/core'
-import React, { ReactNode } from 'react'
+import { Connector } from '@web3-react/types'
+import React, { ReactNode, useEffect } from 'react'
 
-import { PRIORITIZED_CONNECTORS } from '../connections'
-import { useEagerlyConnect } from '../hooks'
+import { ConnectionType, getConnection, PRIORITIZED_CONNECTORS } from '../connections'
 
 export const Web3ContextProvider = ({ children }: { children: ReactNode }) => {
-  useEagerlyConnect()
+  async function connect(connector: Connector) {
+    try {
+      if (connector.connectEagerly) {
+        await connector.connectEagerly()
+      } else {
+        await connector.activate()
+      }
+    } catch (error) {
+      console.debug(`web3-react eager connection error: ${error}`)
+    }
+  }
+
+  useEffect(() => {
+    connect(getConnection(ConnectionType.NETWORK).connector)
+    connect(getConnection(ConnectionType.GNOSIS_SAFE).connector)
+  }, [])
 
   return (
     <Web3ReactProvider
