@@ -89,7 +89,6 @@ export const switchNetwork = async (chainId: number, connectionType: ConnectionT
 }
 
 export const tryActivateConnector = async (connector: Connector): Promise<ConnectionType | undefined> => {
-  throw new Error('test')
   await connector.activate()
   const connectionType = getConnection(connector).type
   return connectionType
