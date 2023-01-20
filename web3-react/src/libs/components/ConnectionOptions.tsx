@@ -15,24 +15,19 @@ export const ConnectionOptions = ({ connectionType, isActive, onActivate, onDeac
   function getOptions(isActive: boolean) {
     const hasMetaMaskExtension = getHasMetaMaskExtensionInstalled()
 
-    let meteMaskOption
-    if (!hasMetaMaskExtension) {
-      meteMaskOption = (
-        <a href={METAMASK_URL}>
-          <button>Install Metamask</button>
-        </a>
-      )
-    } else {
-      meteMaskOption = (
-        <Option
-          isActive={isActive}
-          activeConnectionType={connectionType}
-          connectionType={ConnectionType.INJECTED}
-          onActivate={onActivate}
-          onDeactivate={onDeactivate}
-        />
-      )
-    }
+    const meteMaskOption = hasMetaMaskExtension ? (
+      <Option
+        isActive={isActive}
+        activeConnectionType={connectionType}
+        connectionType={ConnectionType.INJECTED}
+        onActivate={onActivate}
+        onDeactivate={onDeactivate}
+      />
+    ) : (
+      <a href={METAMASK_URL}>
+        <button>Install Metamask</button>
+      </a>
+    )
 
     const coinbaseWalletOption = (
       <Option

@@ -84,7 +84,6 @@ export const switchNetwork = async (chainId: number, connectionType: ConnectionT
   await connector.activate(addChainParameter)
 }
 
-// Try to activate a connector
 export const tryActivateConnector = async (connector: Connector): Promise<ConnectionType | undefined> => {
   try {
     await connector.activate()
@@ -95,7 +94,6 @@ export const tryActivateConnector = async (connector: Connector): Promise<Connec
   }
 }
 
-// Try to deactivate a connector
 export const tryDeactivateConnector = async (connector: Connector): Promise<null | undefined> => {
   try {
     if (connector && connector.deactivate) {
