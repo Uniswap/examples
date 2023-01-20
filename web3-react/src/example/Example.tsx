@@ -3,10 +3,9 @@ import './Example.css'
 import { useWeb3React } from '@web3-react/core'
 import React, { useEffect, useState } from 'react'
 
-import { CurrentConfig } from '../config'
 import { ConnectionOptions } from '../libs/components/ConnectionOptions'
 import { ConnectionType, switchNetwork } from '../libs/connections'
-import { CHAIN_INFO } from '../libs/constants'
+import { CHAIN_INFO, INPUT_CHAIN_URL } from '../libs/constants'
 
 // Listen for new blocks and update the wallet
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
@@ -34,7 +33,7 @@ const Example = () => {
 
   return (
     <div className="App">
-      {CurrentConfig.rpc.mainnet === '' && <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>}
+      {INPUT_CHAIN_URL === '' && <h2 className="error">Please set your RPC URL in config.ts</h2>}
       <h3>{`Block Number: ${blockNumber + 1}`}</h3>
       <ConnectionOptions
         connectionType={connectionType}
