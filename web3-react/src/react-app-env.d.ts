@@ -5,5 +5,6 @@ interface Window {
     isCoinbaseWallet?: true
     isMetaMask?: true
     autoRefreshOnNetworkChange?: boolean
+    isBraveWallet?: true
   }
 }
