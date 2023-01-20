@@ -3,23 +3,22 @@ import React from 'react'
 import { ConnectionType, getConnection, tryActivateConnector, tryDeactivateConnector } from '../connections'
 
 export const Option = ({
-  isActive,
-  activeConnectionType,
+  isDisabled,
+  isConnected,
   connectionType,
   onActivate,
   onDeactivate,
 }: {
-  isActive: boolean
-  activeConnectionType: ConnectionType | null
+  isDisabled: boolean
+  isConnected: boolean
   connectionType: ConnectionType
   onActivate: (connectionType: ConnectionType) => void
   onDeactivate: (connectionType: null) => void
 }) => {
-  const isOptionActive = isActive && activeConnectionType === connectionType
-  const isNoOptionActive = !isActive || (isActive && activeConnectionType === null)
+  
 
   const onClick = async () => {
-    if (isOptionActive) {
+    if (isConnected) {
       const deactivation = await tryDeactivateConnector(getConnection(connectionType).connector)
       if (deactivation === undefined) {
         return
@@ -38,8 +37,8 @@ export const Option = ({
 
   return (
     <div>
-      <button onClick={onClick} disabled={!isNoOptionActive && !isOptionActive}>{`${
-        isOptionActive ? 'Disconnect' : 'Connect'
+      <button onClick={onClick} disabled={isDisabled}>{`${
+        isConnected ? 'Disconnect' : 'Connect'
       } ${connectionType}`}</button>
     </div>
   )

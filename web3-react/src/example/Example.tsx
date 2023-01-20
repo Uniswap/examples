@@ -36,7 +36,7 @@ const Example = () => {
       {INPUT_CHAIN_URL === '' && <h2 className="error">Please set your RPC URL in config.ts</h2>}
       <h3>{`Block Number: ${blockNumber + 1}`}</h3>
       <ConnectionOptions
-        connectionType={connectionType}
+        activeConnectionType={connectionType}
         isActive={isActive}
         onActivate={setConnectionType}
         onDeactivate={setConnectionType}
