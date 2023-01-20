@@ -41,8 +41,8 @@ const Example = () => {
   })
 
   return (
-    <ErrorBoundary FallbackComponent={FallbackComponent}>
-      <div className="App">
+    <div className="App">
+      <ErrorBoundary FallbackComponent={FallbackComponent}>
         {INPUT_CHAIN_URL === '' && <h2 className="error">Please set your RPC URL in config.ts</h2>}
         <h3>{`Block Number: ${blockNumber + 1}`}</h3>
         <ConnectionOptions
@@ -60,8 +60,8 @@ const Example = () => {
             </button>
           </div>
         ))}
-      </div>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </div>
   )
 }
 
