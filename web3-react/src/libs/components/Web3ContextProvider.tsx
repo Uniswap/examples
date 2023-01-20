@@ -16,10 +16,14 @@ async function connect(connector: Connector) {
   }
 }
 
+const connectEagerly = async () => {
+  await connect(getConnection(ConnectionType.NETWORK).connector)
+  await connect(getConnection(ConnectionType.GNOSIS_SAFE).connector)
+}
+
 export const Web3ContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
-    connect(getConnection(ConnectionType.NETWORK).connector)
-    connect(getConnection(ConnectionType.GNOSIS_SAFE).connector)
+    connectEagerly()
   }, [])
 
   return (
