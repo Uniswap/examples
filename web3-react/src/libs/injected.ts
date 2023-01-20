@@ -4,14 +4,8 @@ import { MetaMask } from '@web3-react/metamask'
 import { Connection, ConnectionType, onConnectionError } from './connections'
 
 export function buildInjectedConnector() {
-  let metaMaskErrorHandler: (error: Error) => void | undefined
-
-  function onMetamaskError(error: Error) {
-    onConnectionError(error)
-    metaMaskErrorHandler?.(error)
-  }
   const [web3MetamaskWallet, web3MetamaskWalletHooks] = initializeConnector<MetaMask>(
-    (actions) => new MetaMask({ actions, onError: onMetamaskError })
+    (actions) => new MetaMask({ actions, onError: onConnectionError })
   )
   const injectedConnection: Connection = {
     connector: web3MetamaskWallet,
