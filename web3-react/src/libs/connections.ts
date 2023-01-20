@@ -96,9 +96,7 @@ export const tryActivateConnector = async (connector: Connector): Promise<Connec
 
 export const tryDeactivateConnector = async (connector: Connector): Promise<null | undefined> => {
   try {
-    if (connector && connector.deactivate) {
-      connector.deactivate()
-    }
+    connector.deactivate?.()
     connector.resetState()
     return null
   } catch (error) {
