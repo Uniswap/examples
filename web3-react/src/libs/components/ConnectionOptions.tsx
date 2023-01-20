@@ -27,7 +27,7 @@ export const ConnectionOptions = ({
     const isOptionConnected = getIsOptionConnected(isActive, activeConnectionType)
     const isNoOptionActive = !isActive || (isActive && activeConnectionType === null)
 
-    const meteMaskOption = hasMetaMaskExtension ? (
+    const metaMaskOption = hasMetaMaskExtension ? (
       <Option
         isDisabled={!isOptionConnected(ConnectionType.INJECTED) && !isNoOptionActive}
         isConnected={isOptionConnected(ConnectionType.INJECTED)}
@@ -63,7 +63,7 @@ export const ConnectionOptions = ({
 
     return (
       <>
-        {meteMaskOption}
+        {metaMaskOption}
         {coinbaseWalletOption}
         {walletConnectOption}
       </>
