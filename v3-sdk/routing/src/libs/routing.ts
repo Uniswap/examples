@@ -32,7 +32,7 @@ export async function generateRoute(): Promise<SwapRoute | null> {
 
   const options: SwapOptionsSwapRouter02 = {
     recipient: CurrentConfig.wallet.address,
-    slippageTolerance: new Percent(5, 100),
+    slippageTolerance: new Percent(50, 10_000),
     deadline: Math.floor(Date.now() / 1000 + 1800),
     type: SwapType.SWAP_ROUTER_02,
   }
