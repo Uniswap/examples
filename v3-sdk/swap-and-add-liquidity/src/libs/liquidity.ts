@@ -105,7 +105,7 @@ export async function swapAndAddLiquidity(
     swapOptions: {
       type: SwapType.SWAP_ROUTER_02,
       recipient: address,
-      slippageTolerance: new Percent(5, 100),
+      slippageTolerance: new Percent(50, 10_000),
       deadline: Math.floor(Date.now() / 1000) + 60 * 20,
     },
     addLiquidityOptions: {
