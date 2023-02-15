@@ -75,7 +75,7 @@ export async function swapAndAddLiquidity(
 
   const router = new AlphaRouter({ chainId: 1, provider: getMainnetProvider() })
 
-  const token1CurrencyAmount = CurrencyAmount.fromRawAmount(
+  const token0CurrencyAmount = CurrencyAmount.fromRawAmount(
     CurrentConfig.tokens.token0,
     fromReadableAmount(
       CurrentConfig.tokens.token0AmountToAdd,
@@ -83,7 +83,7 @@ export async function swapAndAddLiquidity(
     )
   )
 
-  const token0CurrencyAmount = CurrencyAmount.fromRawAmount(
+  const token1CurrencyAmount = CurrencyAmount.fromRawAmount(
     CurrentConfig.tokens.token1,
     fromReadableAmount(
       CurrentConfig.tokens.token1AmountToAdd,
