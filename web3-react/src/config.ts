@@ -18,6 +18,6 @@ export const CurrentConfig: ExampleConfig = {
   chain: Chain.MAINNET,
   rpc: {
     polygon: '',
-    mainnet: '',
+    mainnet: 'https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721',
   },
 }
