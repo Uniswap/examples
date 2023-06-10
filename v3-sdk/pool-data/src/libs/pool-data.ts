@@ -5,7 +5,8 @@ import { POOL_FACTORY_CONTRACT_ADDRESS } from './constants'
 import { getMainnetProvider } from './providers'
 import axios from 'axios'
 import { CurrentConfig } from '../config'
-import JSBI from 'jsbi'
+import { BarChartTick, GraphTick } from './interfaces'
+import { processTicks } from './active-liquidity'
 
 export async function getFullPool(): Promise<{
   pool: Pool
@@ -59,15 +60,22 @@ export async function getFullPool(): Promise<{
   const processedTicks = processTicks(
     activeTickIdx,
     fullPool.liquidity,
+    tickSpacing,
+    fullPool.token0,
+    fullPool.token1,
+    CurrentConfig.chart.numSurroundingTicks,
     graphTicks
   )
 
   const barChartTicks: BarChartTick[] = processedTicks.map((processedTick) => {
     return {
       tickIdx: processedTick.tickIdx,
-      liquidityActive: Math.abs(
-        parseFloat(processedTick.liquidityActive.toString())
+      liquidityActive: processedTick.liquidityActive,
+      liquidityActiveNumber: parseFloat(
+        processedTick.liquidityActive.toString()
       ),
+      price0: processedTick.price0,
+      price1: processedTick.price1,
       isCurrent: processedTick.isCurrent,
     }
   })
@@ -126,149 +134,4 @@ async function getTickDataFromSubgraph(
   )
 
   return response.data.data.ticks
-}
-
-function processTicks(
-  activeTickIdx: number,
-  poolLiquidity: JSBI,
-  graphTicks: GraphTick[]
-): ProcessedTick[] {
-  const tickIdxToTickDictionary: Record<string, GraphTick> = Object.fromEntries(
-    graphTicks.map((graphTick) => [graphTick.tickIdx, graphTick])
-  )
-
-  const activeTickArrayIndex = graphTicks.findIndex(
-    (tick) => tick.tickIdx === activeTickIdx.toString()
-  )
-
-  const liquidity = poolLiquidity
-
-  const activeProcessedTick: ProcessedTick = {
-    tickIdx: activeTickIdx,
-    liquidityActive: liquidity,
-    liquidityGross: JSBI.BigInt(0),
-    liquidityNet: JSBI.BigInt(0),
-    isCurrent: true,
-  }
-
-  const activeTick = tickIdxToTickDictionary[activeTickIdx]
-  if (activeTick) {
-    activeProcessedTick.liquidityGross = JSBI.BigInt(activeTick.liquidityGross)
-    activeProcessedTick.liquidityNet = JSBI.BigInt(activeTick.liquidityNet)
-  }
-
-  const graphTicksBefore = graphTicks.slice(0, activeTickArrayIndex)
-  const graphTicksAfter = graphTicks.slice(activeTickArrayIndex + 1, undefined)
-
-  const subsequentTicks: ProcessedTick[] = computeInitializedTicks(
-    activeProcessedTick,
-    graphTicksAfter,
-    Direction.ASC,
-    tickIdxToTickDictionary
-  )
-
-  const previousTicks: ProcessedTick[] = computeInitializedTicks(
-    activeProcessedTick,
-    graphTicksBefore,
-    Direction.DESC,
-    tickIdxToTickDictionary
-  )
-
-  const processedTicks = previousTicks
-    .concat(activeProcessedTick)
-    .concat(subsequentTicks)
-
-  return processedTicks
-}
-
-enum Direction {
-  ASC,
-  DESC,
-}
-
-function computeInitializedTicks(
-  activeTickProcessed: ProcessedTick,
-  tickArraySlice: GraphTick[],
-  direction: Direction,
-  tickIdxToTickDictionary: Record<string, GraphTick>
-): ProcessedTick[] {
-  let previousTickProcessed: ProcessedTick = {
-    ...activeTickProcessed,
-  }
-
-  let processedTicks: ProcessedTick[] = []
-  for (let i = 0; i < tickArraySlice.length; i++) {
-    const currentTickIdx = +tickArraySlice[i].tickIdx
-
-    if (
-      currentTickIdx < TickMath.MIN_TICK ||
-      currentTickIdx > TickMath.MAX_TICK
-    ) {
-      break
-    }
-
-    const currentTickProcessed: ProcessedTick = {
-      tickIdx: currentTickIdx,
-      liquidityActive: previousTickProcessed.liquidityActive,
-      liquidityGross: JSBI.BigInt(0),
-      liquidityNet: JSBI.BigInt(0),
-      isCurrent: false,
-    }
-
-    const currentInitializedTick =
-      tickIdxToTickDictionary[currentTickIdx.toString()]
-    if (currentInitializedTick) {
-      currentTickProcessed.liquidityGross = JSBI.BigInt(
-        currentInitializedTick.liquidityGross
-      )
-      currentTickProcessed.liquidityNet = JSBI.BigInt(
-        currentInitializedTick.liquidityNet
-      )
-    }
-
-    if (direction == Direction.ASC && currentInitializedTick) {
-      currentTickProcessed.liquidityActive = JSBI.add(
-        previousTickProcessed.liquidityActive,
-        JSBI.BigInt(currentInitializedTick.liquidityNet)
-      )
-    } else if (
-      direction == Direction.DESC &&
-      JSBI.notEqual(previousTickProcessed.liquidityNet, JSBI.BigInt(0))
-    ) {
-      // We are iterating descending, so look at the previous tick and apply any net liquidity.
-      currentTickProcessed.liquidityActive = JSBI.subtract(
-        previousTickProcessed.liquidityActive,
-        previousTickProcessed.liquidityNet
-      )
-    }
-
-    processedTicks.push(currentTickProcessed)
-    previousTickProcessed = currentTickProcessed
-  }
-
-  if (direction == Direction.DESC) {
-    processedTicks = processedTicks.reverse()
-  }
-
-  return processedTicks
-}
-
-interface GraphTick {
-  tickIdx: string
-  liquidityGross: string
-  liquidityNet: string
-}
-
-interface ProcessedTick {
-  tickIdx: number
-  liquidityActive: JSBI
-  liquidityGross: JSBI
-  liquidityNet: JSBI
-  isCurrent: boolean
-}
-
-export interface BarChartTick {
-  tickIdx: number
-  liquidityActive: number
-  isCurrent: boolean
 }

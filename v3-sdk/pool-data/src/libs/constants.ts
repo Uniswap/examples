@@ -25,12 +25,12 @@ export const WETH_TOKEN = new Token(
   'Wrapped Ether'
 )
 
-export const USDC_TOKEN = new Token(
-  SupportedChainId.MAINNET,
-  '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-  6,
-  'USDC',
-  'USD//C'
+export const WBTC_TOKEN = new Token(
+  1,
+  '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+  8,
+  'WBTC',
+  'Wrapped BTC'
 )
 
 // ABI's

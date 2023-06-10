@@ -31,3 +31,16 @@
 .error {
   color: red;
 }
+
+.custom-tooltip{
+  padding: 8px;
+  border-radius: 8px;
+  border-color: #282c34;
+  background-color: rgba(0, 0, 0, 0.89);
+}
+
+.tooltip-label {
+
+  line-height: 20px;
+  font-size: 16px;
+}
