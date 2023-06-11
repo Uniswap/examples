@@ -74,8 +74,12 @@ function processTicks(
     tickIdx: activeTickIdx,
     liquidityActive: liquidity,
     liquidityNet: JSBI.BigInt(0),
-    price0: tickToPrice(token0, token1, activeTickIdx).toFixed(6),
-    price1: tickToPrice(token1, token0, activeTickIdx).toFixed(6),
+    price0: parseFloat(
+      tickToPrice(token0, token1, activeTickIdx).toSignificant(18)
+    ),
+    price1: parseFloat(
+      tickToPrice(token1, token0, activeTickIdx).toSignificant(18)
+    ),
     isCurrent: true,
   }
 
@@ -147,8 +151,12 @@ function computeInitializedTicks(
       tickIdx: currentTickIdx,
       liquidityActive: previousTickProcessed.liquidityActive,
       liquidityNet: JSBI.BigInt(0),
-      price0: tickToPrice(token0, token1, currentTickIdx).toFixed(6),
-      price1: tickToPrice(token1, token0, currentTickIdx).toFixed(6),
+      price0: parseFloat(
+        tickToPrice(token0, token1, currentTickIdx).toSignificant(18)
+      ),
+      price1: parseFloat(
+        tickToPrice(token1, token0, currentTickIdx).toSignificant(18)
+      ),
       isCurrent: false,
     }
 
@@ -235,7 +243,7 @@ async function calculateLockedLiqudity(
   const token1Amount = outputRes0?.[0] as CurrencyAmount<Token> | undefined
 
   const amount0 = token1Amount
-    ? parseFloat(token1Amount.toExact()) * parseFloat(tick.price1)
+    ? parseFloat(token1Amount.toExact()) * tick.price1
     : 0
   const amount1 = token1Amount ? parseFloat(token1Amount.toExact()) : 0
 

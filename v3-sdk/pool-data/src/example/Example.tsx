@@ -61,11 +61,11 @@ const Example = () => {
             </p>
           )}
           <p className="tooltip-label">
-            Price {pool.token0.symbol}: {tick.price0}
+            Price {pool.token0.symbol}: {tick.price0.toFixed(4)}
             {pool.token1.symbol}
           </p>
           <p className="tooltip-label">
-            Price {pool.token1.symbol}: {tick.price1}
+            Price {pool.token1.symbol}: {tick.price1.toFixed(4)}
             {pool.token0.symbol}
           </p>
         </div>

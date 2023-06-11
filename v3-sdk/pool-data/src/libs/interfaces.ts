@@ -10,8 +10,8 @@ export interface TickProcessed {
   tickIdx: number
   liquidityActive: JSBI
   liquidityNet: JSBI
-  price0: string
-  price1: string
+  price0: number
+  price1: number
   isCurrent: boolean
 }
 
@@ -20,7 +20,7 @@ export interface BarChartTick {
   liquidityActive: number
   liquidityLockedToken0: number
   liquidityLockedToken1: number
-  price0: string
-  price1: string
+  price0: number
+  price1: number
   isCurrent: boolean
 }
