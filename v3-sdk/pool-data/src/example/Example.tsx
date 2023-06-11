@@ -12,8 +12,7 @@ import {
   YAxis,
   Tooltip,
 } from 'recharts'
-import { Pool, tickToPrice } from '@uniswap/v3-sdk'
-import { CurrencyAmount } from '@uniswap/sdk-core'
+import { Pool } from '@uniswap/v3-sdk'
 
 export interface PoolData {
   pool: Pool
@@ -32,86 +31,45 @@ const Example = () => {
     getFullPool().then((data) => setPool(data))
   }, [])
 
-  const calculateLockedLiqudity = (chartTick: BarChartTick) => {
-    const pool = poolData?.pool
-    if (pool) {
-      const price = parseFloat(
-        tickToPrice(
-          pool.token0,
-          pool.token1,
-          chartTick.tickIdx
-        ).asFraction.toFixed(pool.token0.decimals)
-      )
-      const sqrtPrice = Math.sqrt(price)
-      let totalvalueLocked0 =
-        parseFloat(chartTick.liquidityActive.toString()) / sqrtPrice
-      let totalValueLocked1 =
-        parseFloat(chartTick.liquidityActive.toString()) * sqrtPrice
-
-      if (chartTick.tickIdx < pool.tickCurrent) {
-        const priceBefore = parseFloat(
-          tickToPrice(
-            pool.token0,
-            pool.token1,
-            chartTick.tickIdx - pool.tickSpacing
-          ).asFraction.toFixed(pool.token0.decimals)
-        )
-        const sqrtPriceBefore = Math.sqrt(priceBefore)
-        const totalvalueLocked0Before =
-          parseFloat(chartTick.liquidityActive.toString()) / sqrtPriceBefore
-        totalvalueLocked0 -= totalvalueLocked0Before
-
-        return CurrencyAmount.fromRawAmount(
-          pool.token0,
-          Math.floor(totalvalueLocked0)
-        )
-      } else {
-        const priceAfter = parseFloat(
-          tickToPrice(
-            pool.token0,
-            pool.token1,
-            chartTick.tickIdx + pool.tickSpacing
-          ).asFraction.toFixed(pool.token0.decimals)
-        )
-        const sqrtPriceAfter = Math.sqrt(priceAfter)
-        const totalValueLocked1After =
-          parseFloat(chartTick.liquidityActive.toString()) * sqrtPriceAfter
-
-        totalValueLocked1 -= totalValueLocked1After
-
-        return CurrencyAmount.fromRawAmount(
-          pool.token1,
-          Math.floor(totalValueLocked1)
-        )
-      }
-    } else {
-      return null
-    }
-  }
-
   const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload) {
-      const liquidityLocked = calculateLockedLiqudity(payload[0].payload)
-      if (liquidityLocked) {
-        return (
-          <div className="custom-tooltip">
+    if (active && payload && poolData) {
+      console.log(payload)
+      const tick = payload[0].payload
+      const pool = poolData.pool
+      return (
+        <div className="custom-tooltip">
+          {tick.isCurrent ? (
+            <div>
+              <p className="tooltip-label">
+                {pool.token0.symbol} locked:{' '}
+                {tick.liquidityLockedToken0.toFixed(3)}
+              </p>
+              <p className="tooltip-label">
+                {pool.token1.symbol} locked:{' '}
+                {tick.liquidityLockedToken1.toFixed(3)}
+              </p>
+            </div>
+          ) : tick.tickIdx < pool.tickCurrent ? (
             <p className="tooltip-label">
-              Liquidity: {liquidityLocked.toSignificant(6)}
-              {liquidityLocked.currency.symbol}
+              {pool.token0.symbol} locked:{' '}
+              {tick.liquidityLockedToken0.toFixed(3)}
             </p>
+          ) : (
             <p className="tooltip-label">
-              Price {poolData?.pool.token0.symbol}: {payload[0].payload.price0}
-              {poolData?.pool.token1.symbol}
+              {pool.token1.symbol} locked:{' '}
+              {tick.liquidityLockedToken1.toFixed(3)}
             </p>
-            <p className="tooltip-label">
-              Price {poolData?.pool.token1.symbol}: {payload[0].payload.price1}
-              {poolData?.pool.token0.symbol}
-            </p>
-          </div>
-        )
-      } else {
-        return null
-      }
+          )}
+          <p className="tooltip-label">
+            Price {pool.token0.symbol}: {tick.price0}
+            {pool.token1.symbol}
+          </p>
+          <p className="tooltip-label">
+            Price {pool.token1.symbol}: {tick.price1}
+            {pool.token0.symbol}
+          </p>
+        </div>
+      )
     } else {
       return null
     }
@@ -149,7 +107,7 @@ const Example = () => {
             />
             <Tooltip isAnimationActive={true} content={<CustomTooltip />} />
             <Bar
-              dataKey="liquidityActiveNumber"
+              dataKey="liquidityActive"
               fill="#2172E5"
               isAnimationActive={true}>
               {poolData.ticks?.map((entry, index) => {

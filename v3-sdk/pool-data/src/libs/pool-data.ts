@@ -6,7 +6,7 @@ import { getMainnetProvider } from './providers'
 import axios from 'axios'
 import { CurrentConfig } from '../config'
 import { BarChartTick, GraphTick } from './interfaces'
-import { processTicks } from './active-liquidity'
+import { createBarChartTicks } from './active-liquidity'
 
 export async function getFullPool(): Promise<{
   pool: Pool
@@ -57,28 +57,16 @@ export async function getFullPool(): Promise<{
     )
   )[0]
 
-  const processedTicks = processTicks(
+  const barChartTicks = await createBarChartTicks(
     activeTickIdx,
     fullPool.liquidity,
     tickSpacing,
     fullPool.token0,
     fullPool.token1,
     CurrentConfig.chart.numSurroundingTicks,
+    fullPool.fee,
     graphTicks
   )
-
-  const barChartTicks: BarChartTick[] = processedTicks.map((processedTick) => {
-    return {
-      tickIdx: processedTick.tickIdx,
-      liquidityActive: processedTick.liquidityActive,
-      liquidityActiveNumber: parseFloat(
-        processedTick.liquidityActive.toString()
-      ),
-      price0: processedTick.price0,
-      price1: processedTick.price1,
-      isCurrent: processedTick.isCurrent,
-    }
-  })
 
   return {
     pool: fullPool,
