@@ -30,14 +30,7 @@ export async function createBarChartTicks(
 
   const barTicks = await Promise.all(
     processedTicks.map(async (tick: TickProcessed) => {
-      return calculateLockedLiqudity(
-        tick,
-        token0,
-        token1,
-        tickSpacing,
-        tickCurrent,
-        feeTier
-      )
+      return calculateLockedLiqudity(tick, token0, token1, tickSpacing, feeTier)
     })
   )
   barTicks.map((entry, i) => {
@@ -200,7 +193,6 @@ async function calculateLockedLiqudity(
   token0: Token,
   token1: Token,
   tickSpacing: number,
-  tickCurrent: number,
   feeTier: FeeAmount
 ): Promise<BarChartTick> {
   const sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick.tickIdx)
