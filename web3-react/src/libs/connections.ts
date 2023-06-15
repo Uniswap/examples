@@ -65,6 +65,7 @@ export function getConnection(c: Connector | ConnectionType) {
   }
 }
 
+// eslint-disable-next-line
 export const switchNetwork = async (chainId: number, connectionType: ConnectionType | null) => {
   if (!connectionType) {
     return
