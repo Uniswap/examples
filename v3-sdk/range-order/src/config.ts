@@ -1,6 +1,6 @@
 import { Token } from '@uniswap/sdk-core'
 import { FeeAmount } from '@uniswap/v3-sdk'
-import { USDC_TOKEN, WETH_TOKEN } from './libs/constants'
+import { USDT_TOKEN, WETH_TOKEN } from './libs/constants'
 
 // Sets if the example should run locally or on chain
 export enum Environment {
@@ -55,11 +55,11 @@ export const CurrentConfig: ExampleConfig = {
   tokens: {
     token0: WETH_TOKEN,
     token0Amount: 1,
-    token1: USDC_TOKEN,
+    token1: USDT_TOKEN,
     token1Amount: 0,
     poolFee: FeeAmount.HIGH,
   },
-  targetPercentageUp: 10,
+  targetPercentageUp: 2,
   mockMarketMakerWallet: {
     address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
     privateKey:
@@ -67,7 +67,7 @@ export const CurrentConfig: ExampleConfig = {
   },
   mockMarketMakerPool: {
     token0: WETH_TOKEN,
-    token1: USDC_TOKEN,
+    token1: USDT_TOKEN,
     poolFee: FeeAmount.LOW,
   },
 }

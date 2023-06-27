@@ -34,6 +34,7 @@
 }
 .positions {
   grid-area: positions;
+  padding-bottom: 32px;
 }
 
 .grid-container {

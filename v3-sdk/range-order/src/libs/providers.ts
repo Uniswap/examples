@@ -1,4 +1,4 @@
-import { ethers, providers, BigNumber } from 'ethers'
+import { ethers, providers, BigNumber, Wallet } from 'ethers'
 import { Environment, CurrentConfig } from '../config'
 import { BaseProvider } from '@ethersproject/providers'
 
@@ -35,6 +35,10 @@ export function getWalletAddress(): string | null {
   return CurrentConfig.env === Environment.WALLET_EXTENSION
     ? walletExtensionAddress
     : wallet.address
+}
+
+export function getWallet(): Wallet {
+  return wallet
 }
 
 export async function sendTransaction(

@@ -27,10 +27,10 @@ import { getPoolInfo } from './pool'
 import JSBI from 'jsbi'
 import { getCurrencyBalance } from './balance'
 
-// MMM buys 100 WETH on the observed Pool every time this function is called. For use on local chain only.
+// MMM buys 250 WETH on the observed Pool every time this function is called. For use on local chain only.
 export async function buyWETH() {
   try {
-    const ethAmount = 100
+    const ethAmount = 250
 
     const poolInfo = await getPoolInfo()
 
@@ -61,8 +61,6 @@ export async function buyWETH() {
       }
     )
 
-    console.log(calldata)
-
     const quoteCallReturnData = await getProvider().call({
       to: QUOTER_CONTRACT_ADDRESS,
       data: calldata,
@@ -72,8 +70,6 @@ export async function buyWETH() {
       ['uint256'],
       quoteCallReturnData
     )
-
-    console.log(quotedAmountIn)
 
     // We swap locally, so we do not care about frontrunning - never use outputAmount 0 in production
     const uncheckedTrade = Trade.createUncheckedTrade({
@@ -123,10 +119,10 @@ export async function buyWETH() {
   }
 }
 
-// MMM sells 100 WETH on the observed Pool every time this function is called. For use on local chain only.
+// MMM sells 250 WETH on the observed Pool every time this function is called. For use on local chain only.
 export async function sellWETH() {
   try {
-    const ethAmount = 100
+    const ethAmount = 250
 
     const poolInfo = await getPoolInfo()
 
@@ -212,13 +208,6 @@ export async function getToken1FromMockPool(sellETHAmount: number) {
     CurrentConfig.mockMarketMakerWallet.address,
     CurrentConfig.mockMarketMakerPool.token0
   )
-  const balance1 = await getCurrencyBalance(
-    getProvider(),
-    CurrentConfig.mockMarketMakerWallet.address,
-    CurrentConfig.mockMarketMakerPool.token1
-  )
-  console.log(balance0)
-  console.log(balance1)
   if (Number(balance0) < sellETHAmount) {
     await wrapETHMMM(sellETHAmount)
   }
@@ -402,7 +391,6 @@ async function getTokenTransferApproval(
 ): Promise<TransactionState> {
   const provider = getProvider()
   if (!provider || !address) {
-    console.log('No Provider Found')
     return TransactionState.Failed
   }
 

@@ -1,15 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/balance'
+import { getPositionInfo, PositionInfo } from '../libs/positions'
 import {
-  getPositionIds,
-  getPositionInfo,
-  mintPosition,
-  PositionInfo,
-} from '../libs/positions'
-import {
-  connectBrowserExtensionWallet,
   getProvider,
   TransactionState,
   getWalletAddress,
@@ -24,6 +18,12 @@ import {
   getToken1FromMockPool,
   sellWETH,
 } from '../libs/mockMarketMaker'
+import {
+  TakeProfitOrder,
+  constructTakeProfitOrder,
+  mintTakeProfitOrder,
+  watchTakeProfitOrder,
+} from '../libs/range-order'
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   useEffect(() => {
@@ -39,8 +39,9 @@ const Example = () => {
   const [token1Balance, setToken1Balance] = useState<string>()
   const [mmmBalance1, setMMMBalance1] = useState<string>()
   const [mmmBalance0, setMMMBalance0] = useState<string>()
-  const [positionIds, setPositionIds] = useState<number[]>([])
-  const [positionsInfo, setPositionsInfo] = useState<PositionInfo[]>([])
+  const [positionId, setPositionId] = useState<number>()
+  const [positionInfo, setPositionInfo] = useState<PositionInfo>()
+  const [rangeOrder, setRangeOrder] = useState<TakeProfitOrder>()
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
   const [price, setPrice] = useState<Price<Token, Token>>()
@@ -48,9 +49,11 @@ const Example = () => {
   // Listen for new blocks and update the wallet
   useOnBlockUpdated(async (blockNumber: number) => {
     refreshBalances()
+    refreshPosition()
     refreshPoolPrice()
     setBlockNumber(blockNumber)
     setupMMM()
+    watchRangeOrder()
   })
 
   // Update Pool Price on every block
@@ -59,7 +62,7 @@ const Example = () => {
   }, [])
 
   // Update wallet state given a block number
-  // If environment is local and account has no WETH, wraps 1 ETH
+  // If environment is local and account has no WETH and no position, wraps 1 ETH
   const refreshBalances = useCallback(async () => {
     const provider = getProvider()
     const address = getWalletAddress()
@@ -76,7 +79,8 @@ const Example = () => {
     if (
       Number(balance0) < CurrentConfig.tokens.token0Amount &&
       CurrentConfig.env === Environment.LOCAL &&
-      CurrentConfig.tokens.token0 === WETH_TOKEN
+      CurrentConfig.tokens.token0 === WETH_TOKEN &&
+      rangeOrder === undefined
     ) {
       wrapETH(CurrentConfig.tokens.token0Amount)
     }
@@ -85,12 +89,24 @@ const Example = () => {
     setToken1Balance(
       await getCurrencyBalance(provider, address, CurrentConfig.tokens.token1)
     )
+  }, [rangeOrder])
 
+  const refreshPosition = useCallback(async () => {
     // Set Position Info
-    const ids = await getPositionIds()
-    setPositionIds(ids)
-    setPositionsInfo(await Promise.all(ids.map(getPositionInfo)))
-  }, [])
+    if (positionId !== undefined) {
+      setPositionInfo(await getPositionInfo(positionId))
+    }
+  }, [positionId])
+
+  const watchRangeOrder = useCallback(async () => {
+    if (positionId !== undefined && rangeOrder !== undefined) {
+      const state = await watchTakeProfitOrder(positionId, rangeOrder)
+      if (state === TransactionState.Sent) {
+        setRangeOrder(undefined)
+        setPositionId(undefined)
+      }
+    }
+  }, [positionId, rangeOrder])
 
   // MMM gets Token1 for half his ETH balance.
   const setupMMM = useCallback(async () => {
@@ -123,16 +139,23 @@ const Example = () => {
 
   // Event Handlers
 
-  const onConnectWallet = useCallback(async () => {
-    if (await connectBrowserExtensionWallet()) {
-      refreshBalances()
+  const onCreateTakeProfitOrder = useCallback(async () => {
+    if (!price || token0Balance === '0') {
+      return
     }
-  }, [refreshBalances])
 
-  const onMintPosition = useCallback(async () => {
     setTxState(TransactionState.Sending)
-    setTxState(await mintPosition())
-  }, [])
+    const order = await constructTakeProfitOrder(true, Number(token0Balance))
+    const orderId = await mintTakeProfitOrder(order)
+    if (orderId === undefined) {
+      setTxState(TransactionState.Failed)
+    } else {
+      setRangeOrder(order)
+      setPositionId(orderId)
+      setPositionInfo(await getPositionInfo(orderId))
+      setTxState(TransactionState.Sent)
+    }
+  }, [price, token0Balance])
 
   // Mock Market Maker Calls. Only used locally.
   const onBuyWETH = useCallback(async () => {
@@ -144,135 +167,99 @@ const Example = () => {
     setTxState(TransactionState.Sending)
     setTxState(await sellWETH())
   }, [])
-  // const onCreateTakeProfitOrder = useCallback(async () => {
-  //   setTxState(TransactionState.Sending)
-  //   setTxState(await mintPosition())
-  // }, [])
-
-  // Formatted Data
-
-  const positionInfoStrings: string[] = useMemo(() => {
-    if (positionIds.length !== positionsInfo.length) {
-      return []
-    }
-
-    return positionIds
-      .map((id, index) => [id, positionsInfo[index]])
-      .map((info) => {
-        const id = info[0]
-        const posInfo = info[1] as PositionInfo
-        return `${id}: ${posInfo.liquidity.toString()} liquidity, owed ${posInfo.tokensOwed0.toString()} and ${posInfo.tokensOwed1.toString()}`
-      })
-  }, [positionIds, positionsInfo])
 
   return (
     <div className="App">
-      <div className="grid-container">
-        <div className="chain">
-          <h2>Chain:</h2>
-          <h4>Environment: {Environment[CurrentConfig.env]}</h4>
-          {CurrentConfig.rpc.mainnet === '' &&
-            CurrentConfig.env === Environment.MAINNET && (
-              <h2 className="error">
-                Please set your mainnet RPC URL in config.ts
-              </h2>
-            )}
-          {CurrentConfig.env === Environment.WALLET_EXTENSION &&
-            getProvider() === null && (
-              <h2 className="error">
-                Please install a wallet to use this example configuration
-              </h2>
-            )}
-          {CurrentConfig.env === Environment.WALLET_EXTENSION &&
-            getProvider() === null && (
-              <h2 className="error">
-                Please install a wallet to use this example configuration
-              </h2>
-            )}
-          <h4>{`Block Number: ${blockNumber + 1}`}</h4>
-        </div>
-        <div className="pool">
-          <h2>Pool:</h2>
-          <p>
-            {CurrentConfig.tokens.token0.symbol} /{' '}
-            {CurrentConfig.tokens.token1.symbol} Pool with{' '}
-            {FeeAmount[CurrentConfig.tokens.poolFee]} fee
-          </p>
-          <h4>Price:</h4>
-          {price === undefined ? (
-            <p>Fetching...</p>
-          ) : (
+      {CurrentConfig.env === Environment.LOCAL && (
+        <div className="grid-container">
+          <div className="chain">
+            <h2>Chain:</h2>
+            <h4>Environment: {Environment[CurrentConfig.env]}</h4>
+            <h4>{`Block Number: ${blockNumber + 1}`}</h4>
+          </div>
+          <div className="pool">
+            <h2>Pool:</h2>
             <p>
-              1 {CurrentConfig.tokens.token0.symbol} = {price.toSignificant(6)}{' '}
-              {CurrentConfig.tokens.token1.symbol}
+              {CurrentConfig.tokens.token0.symbol} /{' '}
+              {CurrentConfig.tokens.token1.symbol} Pool with{' '}
+              {FeeAmount[CurrentConfig.tokens.poolFee]} fee
             </p>
-          )}
-          {CurrentConfig.env === Environment.LOCAL && (
-            <div>
-              <p>Simulate swaps by other market participants:</p>
-              {mmmBalance1 === '0' && <p>...Loading</p>}
-              {mmmBalance1 !== '0' && (
-                <p>
-                  MM Balance:{' '}
-                  {mmmBalance1 +
-                    ' ' +
-                    CurrentConfig.mockMarketMakerPool.token1.symbol}{' '}
-                  {mmmBalance0} ETH
-                </p>
-              )}
-              <button
-                className="trade-button"
-                onClick={() => onBuyWETH()}
-                disabled={
-                  txState === TransactionState.Sending ||
-                  getProvider() === null ||
-                  mmmBalance1 === '0'
-                }>
-                Buy WETH
-              </button>
-              <button
-                className="trade-button"
-                onClick={() => onSellWETH()}
-                disabled={
-                  txState === TransactionState.Sending ||
-                  getProvider() === null ||
-                  mmmBalance1 === '0'
-                }>
-                Sell WETH
-              </button>
-            </div>
-          )}
-        </div>
-        <div className="wallet">
-          <h2>Wallet:</h2>
-          <div>
-            <h4>Wallet Address:</h4>
-            {`${getWalletAddress()}`}
-          </div>
-          {CurrentConfig.env === Environment.WALLET_EXTENSION &&
-            !getWalletAddress() && (
-              <button onClick={onConnectWallet}>Connect Wallet</button>
+            <h4>Price:</h4>
+            {price === undefined ? (
+              <p>Fetching...</p>
+            ) : (
+              <p>
+                1 {CurrentConfig.tokens.token0.symbol} ={' '}
+                {price.toSignificant(6)} {CurrentConfig.tokens.token1.symbol}
+              </p>
             )}
-          <h4>{`Transaction State: ${txState}`}</h4>
-          <p>{`${CurrentConfig.tokens.token0.symbol} Balance: ${token0Balance}`}</p>
-          <p>{`${CurrentConfig.tokens.token1.symbol} Balance: ${token1Balance}`}</p>
-        </div>
-        <div className="positions">
-          <div>
-            Positions:{' '}
-            {positionInfoStrings.map((s, i) => (
-              <p key={i}>{s}</p>
-            ))}
+            {CurrentConfig.env === Environment.LOCAL && (
+              <div>
+                <p>Simulate swaps by other market participants:</p>
+                {mmmBalance1 === '0' && mmmBalance0 === '0' && (
+                  <p>...Loading</p>
+                )}
+                <button
+                  className="trade-button"
+                  onClick={() => onBuyWETH()}
+                  disabled={
+                    txState === TransactionState.Sending ||
+                    getProvider() === null ||
+                    mmmBalance1 === '0'
+                  }>
+                  Buy WETH
+                </button>
+                <button
+                  className="trade-button"
+                  onClick={() => onSellWETH()}
+                  disabled={
+                    txState === TransactionState.Sending ||
+                    getProvider() === null ||
+                    mmmBalance1 === '0'
+                  }>
+                  Sell WETH
+                </button>
+              </div>
+            )}
           </div>
-          <button
-            onClick={() => onMintPosition()}
-            disabled={
-              txState === TransactionState.Sending || getProvider() === null
-            }>
-            <p>Mint Position</p>
-          </button>
+          <div className="wallet">
+            <h2>Wallet:</h2>
+            <div>
+              <h4>Wallet Address:</h4>
+              {`${getWalletAddress()}`}
+            </div>
+            <h4>{`Transaction State: ${txState}`}</h4>
+            <p>{`${CurrentConfig.tokens.token0.symbol} Balance: ${token0Balance}`}</p>
+            <p>{`${CurrentConfig.tokens.token1.symbol} Balance: ${token1Balance}`}</p>
+          </div>
+          <div className="positions">
+            <h2>Range Orders:</h2>
+            {positionId === undefined && <p>No active order</p>}
+            {positionId && positionInfo && rangeOrder && (
+              <div>
+                Active Order:
+                <p>
+                  {positionId}: {positionInfo.liquidity.toString()} liquidity
+                </p>
+                <p>
+                  Target price: 1 {rangeOrder.position.amount0.currency.symbol}{' '}
+                  = {rangeOrder.targetPrice.toSignificant(6)}{' '}
+                  {rangeOrder.position.amount1.currency.symbol}
+                </p>
+              </div>
+            )}
+            <button
+              onClick={() => onCreateTakeProfitOrder()}
+              disabled={
+                txState === TransactionState.Sending ||
+                getProvider() === null ||
+                positionId !== undefined
+              }>
+              <p>Create Order</p>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
