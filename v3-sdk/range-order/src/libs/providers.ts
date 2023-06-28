@@ -127,6 +127,13 @@ async function sendTransactionViaWallet(
 
       if (receipt === null) {
         continue
+      } else {
+        const jsonrpcprovider = new ethers.providers.JsonRpcProvider(
+          CurrentConfig.rpc.local
+        )
+        const _res = await jsonrpcprovider.send('trace_transaction', [
+          txRes.hash,
+        ])
       }
     } catch (e) {
       console.log(`Receipt error:`, e)

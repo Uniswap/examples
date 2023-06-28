@@ -59,7 +59,7 @@ export const CurrentConfig: ExampleConfig = {
     token1Amount: 0,
     poolFee: FeeAmount.HIGH,
   },
-  targetPercentageUp: 2,
+  targetPercentageUp: 5,
   mockMarketMakerWallet: {
     address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
     privateKey:

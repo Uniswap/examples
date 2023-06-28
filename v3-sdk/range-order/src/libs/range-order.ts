@@ -264,14 +264,12 @@ async function constructRangeOrderPosition(
 ): Promise<Position> {
   if (zeroForOne) {
     // Create position from next tick above or one tick above current tick to boundary tick
-    let tickLower = nearestUsableTick(pool.tickCurrent, pool.tickSpacing)
-    if (tickLower < pool.tickCurrent) {
-      tickLower += pool.tickSpacing
-    }
     let tickUpper = tickBoundary
+    let tickLower = tickUpper - pool.tickSpacing
 
-    if (tickLower >= tickUpper) {
-      tickUpper = tickLower + pool.tickSpacing
+    if (tickLower <= pool.tickCurrent) {
+      tickLower += pool.tickSpacing
+      tickUpper += pool.tickSpacing
     }
 
     return Position.fromAmounts({
@@ -303,7 +301,7 @@ async function constructRangeOrderPosition(
   } else {
     // Create position from next tick below or one tick below the current tick to boundary tick
     let tickLower = tickBoundary
-    let tickUpper = nearestUsableTick(pool.tickCurrent, pool.tickSpacing)
+    let tickUpper = tickLower + pool.tickSpacing
     if (tickUpper > pool.tickCurrent) {
       tickUpper -= pool.tickSpacing
     }
