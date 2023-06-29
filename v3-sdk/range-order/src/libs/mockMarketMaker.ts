@@ -27,10 +27,10 @@ import { getPoolInfo } from './pool'
 import JSBI from 'jsbi'
 import { getCurrencyBalance } from './balance'
 
-// MMM buys 250 WETH on the observed Pool every time this function is called. For use on local chain only.
+// MMM buys WETH on the observed Pool every time this function is called. For use on local chain only.
 export async function buyWETH() {
   try {
-    const ethAmount = 250
+    const ethAmount = CurrentConfig.mockMarketMakerPool.buyAmount
 
     const poolInfo = await getPoolInfo()
 
@@ -119,10 +119,10 @@ export async function buyWETH() {
   }
 }
 
-// MMM sells 250 WETH on the observed Pool every time this function is called. For use on local chain only.
+// MMM sells WETH on the observed Pool every time this function is called. For use on local chain only.
 export async function sellWETH() {
   try {
-    const ethAmount = 250
+    const ethAmount = CurrentConfig.mockMarketMakerPool.sellAmount
 
     const poolInfo = await getPoolInfo()
 

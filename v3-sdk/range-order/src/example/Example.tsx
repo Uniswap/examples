@@ -253,7 +253,8 @@ const Example = () => {
               disabled={
                 txState === TransactionState.Sending ||
                 getProvider() === null ||
-                positionId !== undefined
+                positionId !== undefined ||
+                token0Balance == '0'
               }>
               <p>Create Order</p>
             </button>

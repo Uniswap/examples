@@ -6,6 +6,20 @@ This is an example of minting a range-order position in a liquidity pool on a lo
 
 The core functionality of this example can be found in [`range-order`](./src/libs/range-order.ts).
 
+## Usage
+
+This example only works on a local fork of mainnet.
+
+A wallet with 10,000 ETH is available to create Limit orders. On startup and execution of an order, the wallet wraps 1 ETH to get 1 WETH.
+Clicking on Create Order creates a Take Profit order to a target Price specified in the configuration.
+
+A second wallet is available to simulate swaps by other market participants on the pool.
+It also has 10,000 ETH available, half of which it sells for token1 on startup.
+Clicking on buy or sell WETH buys or sells the amounts specified in the `config.ts` file on the pool where the Range Order is created.
+
+To simulate listening for new blocks, the local chain is created with interval mining. This means transactions take some time to execute. The block time is therefore set to 6s.
+The application needs 2-4 blocks to startup when a new local chain is created.
+
 ## Configuration
 
 This application can be configured to interact with a locally deployed mainnet fork.
@@ -26,7 +40,7 @@ The [configuration](./src/config.ts) includes control of the environment as well
 
 ### Run your local chain
 
-1. Run `yarn start:chain <provider_API_URL>` in a separate terminal session to start up a copy of the mainnet blockchain locally
+1. Run `yarn start:chain` in a separate terminal session to start up a copy of the mainnet blockchain locally
 
 ### Setup your wallet
 

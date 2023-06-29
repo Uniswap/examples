@@ -33,6 +33,8 @@ export interface ExampleConfig {
     privateKey: string
   }
   mockMarketMakerPool: {
+    buyAmount: number
+    sellAmount: number
     token0: Token
     token1: Token
     poolFee: FeeAmount
@@ -66,6 +68,8 @@ export const CurrentConfig: ExampleConfig = {
       '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
   },
   mockMarketMakerPool: {
+    buyAmount: 250,
+    sellAmount: 250,
     token0: WETH_TOKEN,
     token1: USDT_TOKEN,
     poolFee: FeeAmount.LOW,
