@@ -33,7 +33,6 @@ const Example = () => {
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && poolData) {
-      console.log(payload)
       const tick = payload[0].payload
       const pool = poolData.pool
       return (
@@ -84,6 +83,10 @@ const Example = () => {
         <h2>
           Pool: {poolData?.pool.token0.symbol} / {poolData?.pool.token1.symbol}
         </h2>
+        <h3>
+          Price: 1 {poolData?.pool.token0.symbol} ={' '}
+          {poolData?.pool.token0Price.toFixed(2)} {poolData?.pool.token1.symbol}
+        </h3>
         <h3>Liquidity density:</h3>
       </div>
       <ResponsiveContainer width="60%" height={400}>
