@@ -11,7 +11,7 @@ The core functionality of this example can be found in [`range-order`](./src/lib
 This example only works on a local fork of mainnet.
 
 A wallet with 10,000 ETH is available to create Limit orders. On startup and execution of an order, the wallet wraps 1 ETH to get 1 WETH.
-Clicking on Create Order creates a Take Profit order to a target Price specified in the configuration.
+Clicking on Create Order creates a Take Profit order as close as possible to a target Price specified in the configuration.
 
 A second wallet is available to simulate swaps by other market participants on the pool.
 It also has 10,000 ETH available, half of which it sells for token1 on startup.
@@ -19,6 +19,7 @@ Clicking on buy or sell WETH buys or sells the amounts specified in the `config.
 
 To simulate listening for new blocks, the local chain is created with interval mining. This means transactions take some time to execute. The block time is therefore set to 6s.
 The application needs 2-4 blocks to startup when a new local chain is created.
+Transactions take 1 block to get included and the displayed values need another block to update as new read calls are made. Be aware that some functions include multiple transactions that are included sequentially.
 
 ## Configuration
 

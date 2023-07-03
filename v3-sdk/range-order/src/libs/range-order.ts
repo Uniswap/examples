@@ -14,6 +14,7 @@ import {
   MintOptions,
   CollectOptions,
   RemoveLiquidityOptions,
+  tickToPrice,
 } from '@uniswap/v3-sdk'
 import { getPoolInfo, getPrice } from './pool'
 import { CurrentConfig } from '../config'
@@ -246,10 +247,15 @@ export async function constructTakeProfitOrder(
     configuredPool,
     zeroForOne
   )
+  const closestTargetPrice = tickToPrice(
+    position.amount0.currency,
+    position.amount1.currency,
+    targetTick
+  )
 
   return {
     targetTick,
-    targetPrice: priceTarget,
+    targetPrice: closestTargetPrice,
     position,
     zeroForOne,
   }
