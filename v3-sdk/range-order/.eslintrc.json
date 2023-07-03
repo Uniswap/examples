@@ -1,0 +1,62 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true
+    },
+    "root": true,
+    "extends": [
+        "plugin:react/recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:react-hooks/recommended",
+        "plugin:prettier/recommended"
+    ],
+    "overrides": [],
+    "parserOptions": {
+        "ecmaVersion": "latest",
+        "sourceType": "module"
+    },
+    "plugins": [
+        "typescript-sort-keys"
+    ],
+    "rules": {
+        "prettier/prettier": [
+            "error",
+            {
+                "semi": false,
+                "singleQuote": true,
+                "printWidth": 80,
+                "bracketSameLine": true
+            }
+        ],
+        "typescript-sort-keys/string-enum": [
+            "error",
+            "asc",
+            {
+                "caseSensitive": true
+            }
+        ],
+        "@typescript-eslint/explicit-module-boundary-types": "off",
+        "@typescript-eslint/naming-convention": [
+            "warn",
+            {
+                "selector": "enum",
+                "format": [
+                    "StrictPascalCase"
+                ]
+            }
+        ],
+        "curly": [
+            "warn",
+            "all"
+        ],
+        "no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": [
+            "error",
+            {
+                "argsIgnorePattern": "_",
+                "varsIgnorePattern": "_",
+                "caughtErrorsIgnorePattern": "_"
+            }
+        ]
+    }
+}
