@@ -30,10 +30,6 @@ The configuration includes control of the environment as well as inputs to the e
 
 1. Run `yarn start:chain <provider_API_URL>` in a separate terminal session to start up a copy of the mainnet blockchain locally
 
-### Select your wallet
-
-This example uses the first sample wallet offered by Foundry (listed in the terminal output upon starting your local chain). If you'd like to use a different wallet, modify the [config](./src/config.ts)'s wallet `address` and `privateKey`.
-
 ### Run the script
 
 Run `yarn start` and inspect the data returned in your console.
