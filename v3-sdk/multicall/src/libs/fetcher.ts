@@ -59,8 +59,8 @@ export async function getTickIndicesInWordRange(
   startWord: number,
   endWord: number
 ): Promise<number[]> {
-  const ethcallProvider = new Provider(getProvider())
-  await ethcallProvider.init()
+  const multicallProvider = new Provider(getProvider())
+  await multicallProvider.init()
   const poolContract = new Contract(poolAddress, IUniswapV3PoolABI.abi)
 
   const calls: any[] = []
@@ -71,7 +71,7 @@ export async function getTickIndicesInWordRange(
     calls.push(poolContract.tickBitmap(i))
   }
 
-  const results: bigint[] = (await ethcallProvider.all(calls)).map(
+  const results: bigint[] = (await multicallProvider.all(calls)).map(
     (ethersResponse) => {
       return BigInt(ethersResponse.toString())
     }
@@ -102,8 +102,8 @@ export async function getAllTicks(
   poolAddress: string,
   tickIndices: number[]
 ): Promise<Tick[]> {
-  const ethcallProvider = new Provider(getProvider())
-  await ethcallProvider.init()
+  const multicallProvider = new Provider(getProvider())
+  await multicallProvider.init()
   const poolContract = new Contract(poolAddress, IUniswapV3PoolABI.abi)
 
   const calls: any[] = []
@@ -112,7 +112,7 @@ export async function getAllTicks(
     calls.push(poolContract.ticks(index))
   }
 
-  const results = await ethcallProvider.all(calls)
+  const results = await multicallProvider.all(calls)
   const allTicks: Tick[] = []
 
   for (let i = 0; i < tickIndices.length; i++) {
