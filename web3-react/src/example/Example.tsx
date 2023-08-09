@@ -38,7 +38,6 @@ const API_URL = 'https://beta.api.uniswap.org/v2/trade'
 const headers = {
   'Content-Type': 'application/json',
   'x-api-key': API_KEY,
-  Origin: 'https://api.uniswap.org',
 }
 const forceGasless = false
 
