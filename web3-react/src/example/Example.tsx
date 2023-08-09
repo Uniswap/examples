@@ -1,13 +1,14 @@
 import './Example.css'
 
+import { BigNumber } from '@ethersproject/bignumber'
 import { useWeb3React } from '@web3-react/core'
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
 
 import { ConnectionOptions } from '../libs/components/ConnectionOptions'
-import { ConnectionType, switchNetwork } from '../libs/connections'
-import { CHAIN_INFO, INPUT_CHAIN_URL } from '../libs/constants'
+import { ConnectionType } from '../libs/connections'
+import { INPUT_CHAIN_URL } from '../libs/constants'
 
 const FallbackComponent = ({ error }: FallbackProps) => {
   return (
@@ -31,7 +32,17 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   })
 }
 
-const API_KEY = 'dWNFgYELVh399N2C1UvYy4ORmJnjHwEL3BqAOOf4'
+// Parameters
+const API_KEY = ''
+const API_URL = 'https://beta.api.uniswap.org/v2/trade'
+const headers = {
+  'Content-Type': 'application/json',
+  'x-api-key': API_KEY,
+  Origin: 'https://api.uniswap.org',
+}
+const forceGasless = false
+
+// UI
 const Example = () => {
   const { chainId, account, isActive, provider } = useWeb3React()
   const [blockNumber, setBlockNumber] = useState<number>(0)
@@ -41,51 +52,40 @@ const Example = () => {
   // Listen for new blocks and update the wallet
   useOnBlockUpdated(async (blockNumber: number) => {
     setBlockNumber(blockNumber)
-    const ordersResponse = await axios.get(
-      'https://gz5f7oqmuj.execute-api.us-east-2.amazonaws.com/prod/trade/orders?offerer=0xDb8844D4cc6d6Daed718828edc1C30DFd412745F&limit=2',
-      {
+    if (provider && provider.getSigner()) {
+      const ordersResponse = await axios.get(`${API_URL}/orders`, {
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': API_KEY,
         },
-      }
-    )
-    setOrders(ordersResponse.data.orders)
+        params: {
+          desc: true,
+          sortKey: 'createdAt',
+          swapper: await provider.getSigner().getAddress(),
+          limit: 2,
+        },
+      })
+      setOrders(ordersResponse.data.orders)
+    }
   })
 
-  // const onActionSendTx = async () => {
-  //   if (!provider) return
-  //   console.log('onAction')
-  //   console.log(provider.blockNumber)
-  //   const data =
-  //     '0x24856bc300000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000210040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000007600000000000000000000000000000000000000000000000000000000000000700000000000000000000000000000000000000000000000000001168862766400000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000684e7acab24000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000006600000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f00000000000000000000000000008322b84904ec0f21de280c2711e56ca8d49cb33300000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000052000000000000000000000000000000000000000000000000000000000000005a0000000000000000000000000062f832261e769457d1d700cfea3bae6a43ccec2000000000000000000000000004c00500000ad104d7dbd00e3ae0a5c00560c000000000000000000000000000000000000000000000000000000000000000160000000000000000000000000000000000000000000000000000000000000022000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000063fc9e460000000000000000000000000000000000000000000000000000000063fdefc60000000000000000000000000000000000000000000000000000000000000000360c6ebe000000000000000000000000000000000000000059739e39ecb0317f0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002000000000000000000000000dfb3f316da3d29a134f2d83f529c068a735de3c500000000000000000000000000000000000000000000000000000000000005bb00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000101ebdc334300000000000000000000000000000000000000000000000000000101ebdc3343000000000000000000000000000062f832261e769457d1d700cfea3bae6a43ccec20000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000164859cc08000000000000000000000000000000000000000000000000000000164859cc08000000000000000000000000000000a26b00c1f0df003000390027140000faa719000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000133800a660800000000000000000000000000000000000000000000000000000133800a66080000000000000000000000000011abd336d1a59671853cd6da1fb4527d79ba8f56000000000000000000000000000000000000000000000000000000000000004154f66d6e75930fd897f302713c043d049eb7d844509334c586cb4a3491447fe015c47e494a8ecfcbe5e03977e781dad11fb530a8378e20dcebb3734e553fa9801c00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000'
-  //   const tx = {
-  //     data,
-  //     to: '0xEf1c6E67703c7BD7107eed8303Fbe6EC2554BF6B',
-  //     value: '4900000000000000',
-  //   }
-
-  //   const gasLimit = await provider.estimateGas(tx)
-  //   await provider.getSigner().sendTransaction({ ...tx, gasLimit })
-  //   console.log('gas', gasLimit)
-  // }
-
-  const onPerformAction = async () => {
-    if (!provider) return
+  const onPerformAction = async (tokenIn: string, tokenOut: string, amount: string) => {
+    if (!provider) {
+      console.error('Error: No provider')
+      return
+    }
     const signer = provider.getSigner()
 
     const approvalResponse = await axios.post(
-      'https://gz5f7oqmuj.execute-api.us-east-2.amazonaws.com/prod/check_approval',
+      `${API_URL}/check_approval`,
       {
-        walletAddress: '0xDb8844D4cc6d6Daed718828edc1C30DFd412745F',
-        amount: '100000000000',
-        token: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+        walletAddress: await signer.getAddress(),
+        amount: BigNumber.from(amount).mul(2).toString(),
+        token: tokenIn,
+        chainId: 1,
       },
       {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
-        },
+        headers,
       }
     )
 
@@ -94,49 +94,60 @@ const Example = () => {
     }
 
     const quoteResponse = await axios.post(
-      'https://gz5f7oqmuj.execute-api.us-east-2.amazonaws.com/prod/trade/quote',
+      `${API_URL}/quote`,
       {
         type: 'EXACT_INPUT',
         tokenInChainId: 1,
         tokenOutChainId: 1,
-        tokenIn: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-        tokenOut: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-        amount: '20000000',
-        offerer: '0xDb8844D4cc6d6Daed718828edc1C30DFd412745F',
-        forceGassless: true,
+        tokenIn,
+        tokenOut,
+        amount,
+        swapper: await signer.getAddress(),
+        forceGasless,
       },
       {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
-        },
+        headers,
       }
     )
 
-    const { quote, permitData } = quoteResponse.data
-    const signature = await signer._signTypedData(permitData.domain, permitData.types, permitData.values)
+    const { quote, permitData, routing } = quoteResponse.data
+
+    let signature
+    if (permitData) {
+      signature = await signer._signTypedData(permitData.domain, permitData.types, permitData.values)
+    }
 
     let postOrderResponse
-    try {
+    if (routing === 'CLASSIC') {
       postOrderResponse = await axios.post(
-        'https://gz5f7oqmuj.execute-api.us-east-2.amazonaws.com/prod/trade/order',
+        `${API_URL}/swap`,
+        {
+          signature,
+          quote,
+          permitData,
+        },
+        {
+          headers,
+        }
+      )
+      await signer.sendTransaction(postOrderResponse.data.swap)
+    } else if (routing === 'DUTCH_LIMIT') {
+      postOrderResponse = await axios.post(
+        `${API_URL}/order`,
         {
           signature,
           quote,
         },
         {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': API_KEY,
-          },
+          headers,
         }
       )
-    } catch (e) {
-      console.log(e)
     }
-
-    console.log(postOrderResponse?.data)
   }
+
+  const [tokenIn, setTokenIn] = useState('')
+  const [tokenOut, setTokenOut] = useState('')
+  const [amount, setAmount] = useState('')
 
   return (
     <div className="App">
@@ -149,21 +160,64 @@ const Example = () => {
           onActivate={setConnectionType}
           onDeactivate={setConnectionType}
         />
-        <h3>{`ChainId: ${chainId}`}</h3>
-        <h3>{`Connected Account: ${account}`}</h3>
-        {Object.keys(CHAIN_INFO).map((chainId) => (
+        <p>{`ChainId: ${chainId}`}</p>
+        <p>{`Connected Account: ${account}`}</p>
+        <form>
+          <label>
+            Token in:
+            <p />
+            <input
+              style={{ width: 400 }}
+              type="text"
+              value={tokenIn}
+              onChange={(event) => setTokenIn(event.target.value)}
+            />
+          </label>
+          <p />
+          <label>
+            Token out:
+            <p />
+            <input
+              style={{ width: 400 }}
+              type="text"
+              value={tokenOut}
+              onChange={(event) => setTokenOut(event.target.value)}
+            />
+          </label>
+          <p />
+          <label>
+            Amount:
+            <p />
+            <input
+              style={{ width: 400 }}
+              type="text"
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
+            />
+          </label>
+        </form>
+        {/* {Object.keys(CHAIN_INFO).map((chainId) => (
           <div key={chainId}>
             <button onClick={() => switchNetwork(parseInt(chainId), connectionType)}>
               {`Switch to ${CHAIN_INFO[chainId].label}`}
             </button>
           </div>
-        ))}
+        ))} */}
+        <div>
+          <button
+            disabled={tokenIn === '0' || tokenOut === '0' || amount === '0'}
+            onClick={() => {
+              onPerformAction(tokenIn, tokenOut, amount)
+            }}
+          >
+            Trade
+          </button>
+        </div>
         {orders.map((order) => (
           <div key={order.orderId}>
             <p>{`Order created at: ${order.createdAt}`}</p>
           </div>
         ))}
-        <button onClick={onPerformAction}>Do Action</button>
       </ErrorBoundary>
     </div>
   )
