@@ -36,7 +36,6 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 const API_KEY = ''
 const API_URL = 'https://beta.api.uniswap.org/v2/trade'
 const headers = {
-  'Content-Type': 'application/json',
   'x-api-key': API_KEY,
 }
 const forceGasless = false
