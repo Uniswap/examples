@@ -33,12 +33,17 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 }
 
 // Parameters
-const API_KEY = ''
-const API_URL = 'https://beta.api.uniswap.org/v2/trade'
+const LOCAL_API_KEY = ''
+const BETA_API_KEY = ''
+const API_KEY = BETA_API_KEY
+
+const LOCAL_API_URL = ''
+const BETA_API_URL = 'https://beta.api.uniswap.org/v2/trade'
+const API_URL = BETA_API_URL
+
 const headers = {
   'x-api-key': API_KEY,
 }
-const forceGasless = false
 
 // UI
 const Example = () => {
@@ -67,7 +72,7 @@ const Example = () => {
     }
   })
 
-  const onPerformAction = async (tokenIn: string, tokenOut: string, amount: string) => {
+  const onPerformAction = async (tokenIn: string, tokenOut: string, amount: string, forceGasless: string) => {
     if (!provider) {
       console.error('Error: No provider')
       return
@@ -101,7 +106,7 @@ const Example = () => {
         tokenOut,
         amount,
         swapper: await signer.getAddress(),
-        forceGasless,
+        forceGasless: !!forceGasless,
       },
       {
         headers,
@@ -122,7 +127,7 @@ const Example = () => {
         {
           signature,
           quote,
-          permitData,
+          permitData: permitData ?? undefined,
         },
         {
           headers,
@@ -146,6 +151,7 @@ const Example = () => {
   const [tokenIn, setTokenIn] = useState('')
   const [tokenOut, setTokenOut] = useState('')
   const [amount, setAmount] = useState('')
+  const [forceGasless, setForceGasless] = useState('')
 
   return (
     <div className="App">
@@ -193,19 +199,23 @@ const Example = () => {
               onChange={(event) => setAmount(event.target.value)}
             />
           </label>
+          <p />
+          <label>
+            ForceGasless:
+            <p />
+            <input
+              style={{ width: 400 }}
+              type="text"
+              value={forceGasless}
+              onChange={(event) => setForceGasless(event.target.value)}
+            />
+          </label>
         </form>
-        {/* {Object.keys(CHAIN_INFO).map((chainId) => (
-          <div key={chainId}>
-            <button onClick={() => switchNetwork(parseInt(chainId), connectionType)}>
-              {`Switch to ${CHAIN_INFO[chainId].label}`}
-            </button>
-          </div>
-        ))} */}
         <div>
           <button
             disabled={tokenIn === '0' || tokenOut === '0' || amount === '0'}
             onClick={() => {
-              onPerformAction(tokenIn, tokenOut, amount)
+              onPerformAction(tokenIn, tokenOut, amount, forceGasless)
             }}
           >
             Trade
