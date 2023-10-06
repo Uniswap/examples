@@ -1,0 +1,69 @@
+.App {
+  text-align: center;
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.error {
+  color: red;
+}
+
+.chain {
+  grid-area: chain;
+  background-color: #4a4f58;
+  padding: 16px;
+}
+.wallet {
+  grid-area: wallet;
+}
+.pool {
+  grid-area: pool;
+  background-color: #4a4f58;
+  padding: 16px;
+
+  .trade-button {
+    margin: 8px;
+    padding: 8px;
+  }
+}
+.positions {
+  grid-area: positions;
+  padding-bottom: 32px;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-areas:
+    'chain wallet'
+    'pool wallet'
+    'pool positions';
+  gap: 32px;
+  padding: 10px;
+}
+
+@media (max-width: 1200px) {
+  .grid-container {
+    grid-template-areas:
+    'chain wallet'
+    'pool pool' 
+    'positions positions';
+  gap: 16px;
+  }
+}
+
+@media (max-width: 800px) {
+  .grid-container {
+    grid-template-areas:
+    'chain'
+    'pool'
+    'wallet' 
+    'positions';
+  gap: 16px;
+  }
+}

@@ -1,0 +1,46 @@
+.App {
+  text-align: center;
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.btn {
+  border-radius: 8px;
+  margin-top: 16px;
+  padding: 0 16px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset;
+}
+
+.btn-inactive {
+  border-radius: 8px;
+  margin-top: 16px;
+  padding: 0 16px;
+  color:rgba(0, 0, 0, 0.67)
+}
+
+.error {
+  color: red;
+}
+
+.custom-tooltip{
+  padding: 8px;
+  border-radius: 8px;
+  border-color: #282c34;
+  background-color: rgba(0, 0, 0, 0.89);
+}
+
+.tooltip-label {
+
+  line-height: 20px;
+  font-size: 16px;
+}
