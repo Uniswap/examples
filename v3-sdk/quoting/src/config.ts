@@ -21,7 +21,8 @@ export interface ExampleConfig {
 export const CurrentConfig: ExampleConfig = {
   rpc: {
     local: 'http://localhost:8545',
-    mainnet: '',
+    mainnet:
+      'https://mainnet.chainnodes.org/f8df1ee3-8aaa-471e-bc3b-b3d18af3bd3c',
   },
   tokens: {
     in: USDC_TOKEN,

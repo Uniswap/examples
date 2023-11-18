@@ -1,6 +1,6 @@
 // This file stores web3 related constants such as addresses, token definitions, ETH currency references and ABI's
 
-import { SupportedChainId, Token } from '@uniswap/sdk-core'
+import { SUPPORTED_CHAINS, Token } from '@uniswap/sdk-core'
 
 // Addresses
 
@@ -12,7 +12,7 @@ export const QUOTER_CONTRACT_ADDRESS =
 // Currencies and Tokens
 
 export const WETH_TOKEN = new Token(
-  SupportedChainId.MAINNET,
+  SUPPORTED_CHAINS[0],
   '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
   18,
   'WETH',
@@ -20,7 +20,7 @@ export const WETH_TOKEN = new Token(
 )
 
 export const USDC_TOKEN = new Token(
-  SupportedChainId.MAINNET,
+  SUPPORTED_CHAINS[0],
   '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
   6,
   'USDC',

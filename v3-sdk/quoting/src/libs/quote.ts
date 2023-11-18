@@ -1,41 +1,54 @@
 import { ethers } from 'ethers'
 import { CurrentConfig } from '../config'
-import { computePoolAddress } from '@uniswap/v3-sdk'
-import Quoter from '@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json'
+import { computePoolAddress, Pool, Route, SwapQuoter } from '@uniswap/v3-sdk'
 import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
-import {
-  POOL_FACTORY_CONTRACT_ADDRESS,
-  QUOTER_CONTRACT_ADDRESS,
-} from '../libs/constants'
+import { POOL_FACTORY_CONTRACT_ADDRESS } from '../libs/constants'
 import { getProvider } from '../libs/providers'
-import { toReadableAmount, fromReadableAmount } from '../libs/conversion'
+import { toReadableAmount } from '../libs/conversion'
+import { CurrencyAmount, TradeType } from '@uniswap/sdk-core'
 
 export async function quote(): Promise<string> {
-  const quoterContract = new ethers.Contract(
-    QUOTER_CONTRACT_ADDRESS,
-    Quoter.abi,
-    getProvider()
-  )
   const poolConstants = await getPoolConstants()
 
-  const quotedAmountOut = await quoterContract.callStatic.quoteExactInputSingle(
-    poolConstants.token0,
-    poolConstants.token1,
+  console.log(poolConstants)
+  const pool = new Pool(
+    CurrentConfig.tokens.in,
+    CurrentConfig.tokens.out,
     poolConstants.fee,
-    fromReadableAmount(
-      CurrentConfig.tokens.amountIn,
-      CurrentConfig.tokens.in.decimals
-    ).toString(),
-    0
+    poolConstants.sqrtRatioX96,
+    poolConstants.liquidity,
+    poolConstants.tickCurrent
   )
 
-  return toReadableAmount(quotedAmountOut, CurrentConfig.tokens.out.decimals)
+  const route = new Route(
+    [pool],
+    CurrentConfig.tokens.in,
+    CurrentConfig.tokens.out
+  )
+
+  const quotedAmountOut = await SwapQuoter.callQuoter(
+    route,
+    CurrencyAmount.fromRawAmount(
+      CurrentConfig.tokens.in,
+      CurrentConfig.tokens.amountIn
+    ),
+    TradeType.EXACT_INPUT,
+    getProvider()
+  )
+
+  return toReadableAmount(
+    quotedAmountOut.quotientBigInt,
+    CurrentConfig.tokens.out.decimals
+  )
 }
 
 async function getPoolConstants(): Promise<{
   token0: string
   token1: string
   fee: number
+  sqrtRatioX96: string
+  liquidity: string
+  tickCurrent: number
 }> {
   const currentPoolAddress = computePoolAddress({
     factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
@@ -49,15 +62,20 @@ async function getPoolConstants(): Promise<{
     IUniswapV3PoolABI.abi,
     getProvider()
   )
-  const [token0, token1, fee] = await Promise.all([
+  const [token0, token1, fee, slot0, liquidity] = await Promise.all([
     poolContract.token0(),
     poolContract.token1(),
     poolContract.fee(),
+    poolContract.slot0(),
+    poolContract.liquidity(),
   ])
 
   return {
     token0,
     token1,
     fee,
+    sqrtRatioX96: slot0.sqrtPriceX96.toString(),
+    liquidity: liquidity.toString(),
+    tickCurrent: slot0.tick,
   }
 }
