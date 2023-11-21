@@ -70,6 +70,10 @@ export async function connectBrowserExtensionWallet() {
   return walletExtensionAddress
 }
 
+export function getWallet() {
+  return wallet
+}
+
 // Internal Functionality
 
 function createWallet(): ethers.Wallet {

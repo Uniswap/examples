@@ -88,7 +88,7 @@ const Example = () => {
       </h3>
       <h3>{trade && `Constructed Trade: ${displayTrade(trade)}`}</h3>
       <button onClick={onCreateTrade}>
-        <p>Create Trade</p>
+        <p>Get Quote</p>
       </button>
       <h3>{`Wallet Address: ${getWalletAddress()}`}</h3>
       {CurrentConfig.env === Environment.WALLET_EXTENSION &&
@@ -99,9 +99,7 @@ const Example = () => {
       <h3>{`Transaction State: ${txState}`}</h3>
       <h3>{`${CurrentConfig.tokens.in.symbol} Balance: ${tokenInBalance}`}</h3>
       <h3>{`${CurrentConfig.tokens.out.symbol} Balance: ${tokenOutBalance}`}</h3>
-      <button
-        onClick={() => wrapETH(100)}
-        disabled={getProvider() === null || CurrentConfig.rpc.mainnet === ''}>
+      <button onClick={() => wrapETH(100)} disabled={getProvider() === null}>
         <p>Wrap ETH</p>
       </button>
       <button
@@ -109,8 +107,7 @@ const Example = () => {
         disabled={
           trade === undefined ||
           txState === TransactionState.Sending ||
-          getProvider() === null ||
-          CurrentConfig.rpc.mainnet === ''
+          getProvider() === null
         }>
         <p>Trade</p>
       </button>
