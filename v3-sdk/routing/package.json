@@ -8,7 +8,7 @@
     "@types/react-dom": "^18.0.0",
     "@uniswap/sdk-core": "npm:@koraykoska/uniswap-sdk-core@^6.0.9",
     "@uniswap/v3-sdk": "npm:@florian-s-a-w/uniswap-v3-sdk@3.15.12",
-    "@uniswap/smart-order-router": "npm:@florian-s-a-w/uniswap-smart-order-router@^3.18.7",
+    "@uniswap/smart-order-router": "npm:@florian-s-a-w/uniswap-smart-order-router@^3.18.8",
     "ethers": "^5.7.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

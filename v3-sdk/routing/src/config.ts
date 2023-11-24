@@ -29,11 +29,10 @@ export interface ExampleConfig {
 // Example Configuration
 
 export const CurrentConfig: ExampleConfig = {
-  env: Environment.LOCAL,
+  env: Environment.MAINNET,
   rpc: {
     local: 'http://localhost:8545',
-    mainnet:
-      'https://mainnet.chainnodes.org/f8df1ee3-8aaa-471e-bc3b-b3d18af3bd3c',
+    mainnet: '',
   },
   wallet: {
     address: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
