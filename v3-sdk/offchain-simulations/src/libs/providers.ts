@@ -33,6 +33,10 @@ export function getProvider(): providers.Provider | null {
     : wallet.provider
 }
 
+export function getWallet() {
+  return wallet
+}
+
 export function getWalletAddress(): string | null {
   return CurrentConfig.env === Environment.WALLET_EXTENSION
     ? walletExtensionAddress

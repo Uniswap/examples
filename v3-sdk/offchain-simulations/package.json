@@ -1,13 +1,13 @@
 {
-  "name": "template",
-  "version": "0.1.0",
+  "name": "offchain-simulations",
+  "version": "1.0.0",
   "private": true,
   "dependencies": {
     "@types/node": "^16.7.13",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "@uniswap/sdk-core": "npm:@koraykoska/uniswap-sdk-core@^6.0.9",
-    "@uniswap/v3-sdk": "npm:@florian-s-a-w/uniswap-v3-sdk@3.15.12",
+    "@uniswap/v3-sdk": "npm:@florian-s-a-w/uniswap-v3-sdk@3.15.13",
     "ethers": "^5.7.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -19,7 +19,7 @@
     "build": "react-scripts build",
     "lint": "yarn eslint .",
     "install:chain": "curl -L https://foundry.paradigm.xyz | bash && clear && echo $0 | exec && foundryup",
-    "start:chain": "anvil --chain-id 1337 --fork-url"
+    "start:chain": "anvil --chain-id 1 --fork-url"
   },
   "eslintConfig": {
     "extends": [

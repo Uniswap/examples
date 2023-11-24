@@ -4,13 +4,7 @@ import { Currency } from '@uniswap/sdk-core'
 import { BigNumber, ethers } from 'ethers'
 import { providers } from 'ethers'
 import JSBI from 'jsbi'
-import {
-  ERC20_ABI,
-  MAX_FEE_PER_GAS,
-  MAX_PRIORITY_FEE_PER_GAS,
-  WETH_ABI,
-  WETH_CONTRACT_ADDRESS,
-} from './constants'
+import { ERC20_ABI, WETH_ABI, WETH_CONTRACT_ADDRESS } from './constants'
 import { toReadableAmount } from './conversion'
 import { getProvider, getWalletAddress, sendTransaction } from './providers'
 
@@ -58,8 +52,6 @@ export async function wrapETH(eth: number) {
       .toString(),
     from: address,
     to: WETH_CONTRACT_ADDRESS,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
   }
 
   await sendTransaction(transaction)
@@ -87,8 +79,6 @@ export async function unwrapETH(eth: number) {
     ]),
     from: address,
     to: WETH_CONTRACT_ADDRESS,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
   }
 
   await sendTransaction(transaction)

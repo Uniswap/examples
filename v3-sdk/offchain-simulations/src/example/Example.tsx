@@ -1,13 +1,21 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
 import { Environment, CurrentConfig } from '../config'
-import { getCurrencyBalance } from '../libs/wallet'
+import { getCurrencyBalance, wrapETH } from '../libs/wallet'
 import {
   connectBrowserExtensionWallet,
   getProvider,
   getWalletAddress,
   TransactionState,
 } from '../libs/providers'
+import { Token, TradeType } from '@uniswap/sdk-core'
+import { Pool, Trade } from '@uniswap/v3-sdk'
+import {
+  executeTrade,
+  getBestTradeExactIn,
+  initializePools,
+} from '../libs/simulate'
+import { displayTrade } from '../libs/conversion'
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   useEffect(() => {
@@ -19,6 +27,10 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 }
 
 const Example = () => {
+  const [trade, setTrade] = useState<Trade<Token, Token, TradeType>>()
+
+  const [pools, setPools] = useState<Pool[]>()
+
   const [tokenInBalance, setTokenInBalance] = useState<string>()
   const [tokenOutBalance, setTokenOutBalance] = useState<string>()
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
@@ -39,10 +51,10 @@ const Example = () => {
     }
 
     setTokenInBalance(
-      await getCurrencyBalance(provider, address, CurrentConfig.currencies.in)
+      await getCurrencyBalance(provider, address, CurrentConfig.tokens.in)
     )
     setTokenOutBalance(
-      await getCurrencyBalance(provider, address, CurrentConfig.currencies.out)
+      await getCurrencyBalance(provider, address, CurrentConfig.tokens.out)
     )
   }, [])
 
@@ -54,10 +66,26 @@ const Example = () => {
     }
   }, [refreshBalances])
 
-  const onAction = useCallback(async () => {
-    // TODO do your action here
-    setTxState(TransactionState.Sent)
+  const onInitializePools = useCallback(async () => {
+    console.log('UI init')
+    setPools(await initializePools())
   }, [])
+
+  const onCreateTrade = useCallback(async () => {
+    refreshBalances()
+    const bestTrade = await getBestTradeExactIn(pools)
+    console.log(bestTrade.outputAmount.currency.address)
+    setTrade(bestTrade)
+  }, [refreshBalances, pools])
+
+  const onTrade = useCallback(
+    async (trade: Trade<Token, Token, TradeType> | undefined) => {
+      if (trade) {
+        setTxState(await executeTrade(trade))
+      }
+    },
+    []
+  )
 
   return (
     <div className="App">
@@ -77,14 +105,28 @@ const Example = () => {
         )}
       <h3>{`Block Number: ${blockNumber + 1}`}</h3>
       <h3>{`Transaction State: ${txState}`}</h3>
-      <h3>{`Token In (${CurrentConfig.currencies.in.symbol}) Balance: ${tokenInBalance}`}</h3>
-      <h3>{`Token Out (${CurrentConfig.currencies.out.symbol}) Balance: ${tokenOutBalance}`}</h3>
+      <h3>{`Token In (${CurrentConfig.tokens.in.symbol}) Balance: ${tokenInBalance}`}</h3>
+      <h3>{`Token Out (${CurrentConfig.tokens.out.symbol}) Balance: ${tokenOutBalance}`}</h3>
+      <button onClick={() => wrapETH(100)} disabled={getProvider() === null}>
+        <p>Wrap ETH</p>
+      </button>
+      {pools === undefined && <h3>{`Initialize Pools to simulate trade`}</h3>}
+      {pools !== undefined && <h3>{`Pools initialized successfully`}</h3>}
+      <button onClick={onInitializePools} disabled={getProvider() === null}>
+        <p>Initialize Pools</p>
+      </button>
+
+      <button onClick={onCreateTrade} disabled={pools === undefined}>
+        <p>Create Trade offchain</p>
+      </button>
+
+      <h3>{trade && `Constructed Trade: ${displayTrade(trade)}`}</h3>
       <button
-        onClick={onAction}
+        onClick={() => onTrade(trade)}
         disabled={
+          trade === undefined ||
           txState === TransactionState.Sending ||
-          getProvider() === null ||
-          CurrentConfig.rpc.mainnet === ''
+          getProvider() === null
         }>
         <p>Trade</p>
       </button>

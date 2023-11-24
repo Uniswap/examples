@@ -1,14 +1,13 @@
+import { Token, TradeType } from '@uniswap/sdk-core'
+import { Trade } from '@uniswap/v3-sdk'
 import JSBI from 'jsbi'
 
-export function fromReadableAmount(amount: number, decimals: number): JSBI {
+export function fromReadableAmount(amount: number, decimals: number): bigint {
   const extraDigits = Math.pow(10, countDecimals(amount))
   const adjustedAmount = amount * extraDigits
-  return JSBI.divide(
-    JSBI.multiply(
-      JSBI.BigInt(adjustedAmount),
-      JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(decimals))
-    ),
-    JSBI.BigInt(extraDigits)
+  return (
+    (BigInt(adjustedAmount) * BigInt(10) ** BigInt(decimals)) /
+    BigInt(extraDigits)
   )
 }
 
@@ -24,4 +23,10 @@ function countDecimals(x: number) {
     return 0
   }
   return x.toString().split('.')[1].length || 0
+}
+
+export function displayTrade(trade: Trade<Token, Token, TradeType>): string {
+  return `${trade.inputAmount.toExact()} ${
+    trade.inputAmount.currency.symbol
+  } for ${trade.outputAmount.toExact()} ${trade.outputAmount.currency.symbol}`
 }
