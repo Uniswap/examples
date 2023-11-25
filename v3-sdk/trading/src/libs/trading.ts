@@ -15,7 +15,6 @@ import {
 } from '@uniswap/v3-sdk'
 
 import { CurrentConfig } from '../config'
-import { getPoolInfo } from './pool'
 import {
   getProvider,
   getWallet,
@@ -29,15 +28,17 @@ export type TokenTrade = Trade<Token, Token, TradeType>
 // Trading Functions
 
 export async function createTrade(): Promise<TokenTrade> {
-  const poolInfo = await getPoolInfo()
+  const provider = getProvider()
 
-  const pool = new Pool(
+  if (provider === null) {
+    throw new Error('No network connection to fetch Pool metadata')
+  }
+
+  const pool = await Pool.initFromChain(
+    provider,
     CurrentConfig.tokens.in,
     CurrentConfig.tokens.out,
-    CurrentConfig.tokens.poolFee,
-    poolInfo.sqrtPriceX96.toString(),
-    poolInfo.liquidity.toString(),
-    poolInfo.tick
+    CurrentConfig.tokens.poolFee
   )
 
   const swapRoute = new Route(
