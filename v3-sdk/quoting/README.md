@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is an example of getting a quote using the Uniswap V3 guide and includes running against mainnet or a locally deployed chain.
+This is an example of getting a quote using the Uniswap V3 guide and includes running against mainnet.
 
 The core functionality of this example can be found in [`quote.ts`](./src/libs/quote.ts).
 
@@ -14,8 +14,7 @@ This application is a read only quoting application that communicates with the E
 
 ### Install dependencies
 
-1. Run `yarn install` to install the project dependencies
-2. Run `yarn install:chain` to download and install Foundry
+Run `yarn install` to install the project dependencies
 
 ### Get a mainnet RPC URL
 

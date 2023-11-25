@@ -5,7 +5,6 @@ import { USDC_TOKEN, WETH_TOKEN } from './libs/constants'
 // Inputs that configure this example to run
 export interface ExampleConfig {
   rpc: {
-    local: string
     mainnet: string
   }
   tokens: {
@@ -20,9 +19,7 @@ export interface ExampleConfig {
 
 export const CurrentConfig: ExampleConfig = {
   rpc: {
-    local: 'http://localhost:8545',
-    mainnet:
-      'https://mainnet.chainnodes.org/f8df1ee3-8aaa-471e-bc3b-b3d18af3bd3c',
+    mainnet: '',
   },
   tokens: {
     in: USDC_TOKEN,
