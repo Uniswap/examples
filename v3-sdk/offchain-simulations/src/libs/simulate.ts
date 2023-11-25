@@ -11,7 +11,6 @@ import {
 import { fromReadableAmount } from './conversion'
 
 export async function initializePools(): Promise<Pool[]> {
-  console.log('Init pools')
   const promises: Promise<Pool>[] = []
 
   for (const identifier of CurrentConfig.pools) {

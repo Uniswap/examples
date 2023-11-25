@@ -67,14 +67,12 @@ const Example = () => {
   }, [refreshBalances])
 
   const onInitializePools = useCallback(async () => {
-    console.log('UI init')
     setPools(await initializePools())
   }, [])
 
   const onCreateTrade = useCallback(async () => {
     refreshBalances()
     const bestTrade = await getBestTradeExactIn(pools)
-    console.log(bestTrade.outputAmount.currency.address)
     setTrade(bestTrade)
   }, [refreshBalances, pools])
 
