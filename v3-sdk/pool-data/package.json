@@ -1,6 +1,6 @@
 {
-  "name": "template",
-  "version": "0.1.0",
+  "name": "pool-data",
+  "version": "1.0.0",
   "private": true,
   "dependencies": {
     "@types/node": "^16.7.13",
