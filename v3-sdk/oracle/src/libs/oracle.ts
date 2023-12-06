@@ -1,26 +1,28 @@
-import { ethers } from 'ethers'
-import { computePoolAddress, tickToPrice, Pool } from '@uniswap/v3-sdk'
+import { tickToPrice, Pool } from '@uniswap/v3-sdk'
 import { CurrentConfig } from '../config'
-import { FACTORY_ADDRESS } from '@uniswap/v3-sdk'
-import { createWallet } from './providers'
-import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
+import { createWallet, getProvider } from './providers'
 import { Price, Token } from '@uniswap/sdk-core'
-
-// constants
-const poolAddress = computePoolAddress({
-  factoryAddress: FACTORY_ADDRESS,
-  tokenA: CurrentConfig.pool.token0,
-  tokenB: CurrentConfig.pool.token1,
-  fee: CurrentConfig.pool.fee,
-})
 
 // ethers
 const wallet = createWallet()
-const poolContract = new ethers.Contract(
-  poolAddress,
-  IUniswapV3PoolABI.abi,
-  wallet
-)
+
+// Pool
+
+async function getPool(): Promise<Pool> {
+  const provider = getProvider()
+
+  if (provider === null) {
+    throw new Error('Please connect a provider')
+  }
+
+  const pool = await Pool.initFromChain(
+    provider,
+    CurrentConfig.pool.token0,
+    CurrentConfig.pool.token1,
+    CurrentConfig.pool.fee
+  )
+  return pool
+}
 
 // Observation type
 export interface Observation {
@@ -32,7 +34,9 @@ export interface Observation {
 export async function increaseObservationCardinalityNext(
   observationCardinalityNext: number
 ) {
-  return poolContract['increaseObservationCardinalityNext'](
+  const pool = await getPool()
+  return pool.rpcIncreaseObservationCardinalityNext(
+    wallet,
     observationCardinalityNext
   )
 }
@@ -44,16 +48,7 @@ export async function getAverages(): Promise<{
   const secondsAgo = CurrentConfig.timeInterval
   const observations: Observation[] = await observe(secondsAgo)
 
-  const slot0 = await poolContract['slot0']()
-  const liquidity = await poolContract['liquidity']()
-  const pool = new Pool(
-    CurrentConfig.pool.token0,
-    CurrentConfig.pool.token1,
-    CurrentConfig.pool.fee,
-    slot0.sqrtPriceX96,
-    liquidity,
-    slot0.tick
-  )
+  const pool = await getPool()
 
   const twap = calculateTWAP(observations, pool)
   const twal = calculateTWAL(observations)
@@ -64,16 +59,16 @@ export async function getAverages(): Promise<{
 async function observe(secondsAgo: number): Promise<Observation[]> {
   const timestamps = [0, secondsAgo]
 
-  const [tickCumulatives, secondsPerLiquidityCumulatives] =
-    await poolContract.observe(timestamps)
+  const pool = await getPool()
+
+  const observeResponse = await pool.rpcObserve(timestamps)
 
   const observations: Observation[] = timestamps.map((time, i) => {
     return {
       secondsAgo: time,
-      tickCumulative: BigInt(tickCumulatives[i]),
-      secondsPerLiquidityCumulativeX128: BigInt(
-        secondsPerLiquidityCumulatives[i]
-      ),
+      tickCumulative: observeResponse.tickCumulatives[i],
+      secondsPerLiquidityCumulativeX128:
+        observeResponse.secondsPerLiquidityCumulativeX128s[i],
     }
   })
   return observations
