@@ -1,22 +1,13 @@
-import JSBI from 'jsbi'
-
-export function fromReadableAmount(amount: number, decimals: number): JSBI {
+export function fromReadableAmount(amount: number, decimals: number): bigint {
   const extraDigits = Math.pow(10, countDecimals(amount))
   const adjustedAmount = amount * extraDigits
-  return JSBI.divide(
-    JSBI.multiply(
-      JSBI.BigInt(adjustedAmount),
-      JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(decimals))
-    ),
-    JSBI.BigInt(extraDigits)
+  return (
+    (BigInt(adjustedAmount) * 10n ** BigInt(decimals)) / BigInt(extraDigits)
   )
 }
 
 export function toReadableAmount(rawAmount: number, decimals: number): string {
-  return JSBI.divide(
-    JSBI.BigInt(rawAmount),
-    JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(decimals))
-  ).toString()
+  return (BigInt(rawAmount) / 10n ** BigInt(decimals)).toString()
 }
 
 function countDecimals(x: number) {

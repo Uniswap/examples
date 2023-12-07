@@ -3,7 +3,6 @@
 import { Currency } from '@uniswap/sdk-core'
 import { BigNumber, ethers } from 'ethers'
 import { providers } from 'ethers'
-import JSBI from 'jsbi'
 
 import {
   ERC20_ABI,
@@ -54,9 +53,7 @@ export async function wrapETH(eth: number) {
 
   const transaction = {
     data: wethContract.interface.encodeFunctionData('deposit'),
-    value: BigNumber.from(Math.ceil(eth))
-      .mul(JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(18)).toString())
-      .toString(),
+    value: (BigInt(eth) * 10n ** 18n).toString(10),
     from: address,
     to: WETH_CONTRACT_ADDRESS,
     maxFeePerGas: MAX_FEE_PER_GAS,
@@ -82,9 +79,7 @@ export async function unwrapETH(eth: number) {
 
   const transaction = {
     data: wethContract.interface.encodeFunctionData('withdraw', [
-      BigNumber.from(Math.ceil(eth))
-        .mul(JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(18)).toString())
-        .toString(),
+      BigNumber.from((BigInt(eth) * 10n ** 18n).toString(10)),
     ]),
     from: address,
     to: WETH_CONTRACT_ADDRESS,

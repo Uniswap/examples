@@ -16,7 +16,7 @@ import {
   RemoveLiquidityOptions,
   tickToPrice,
 } from '@uniswap/v3-sdk'
-import { getPoolInfo, getPrice } from './pool'
+import { getPrice } from './pool'
 import { CurrentConfig } from '../config'
 import { fromReadableAmount } from './conversion'
 import {
@@ -31,8 +31,7 @@ import {
   getWalletAddress,
   sendTransaction,
 } from './providers'
-import { getPositionInfo, getTokenTransferApproval } from './positions'
-import JSBI from 'jsbi'
+import { getTokenTransferApproval } from './positions'
 import { ethers } from 'ethers'
 
 export interface TakeProfitOrder {
@@ -46,42 +45,46 @@ export async function watchTakeProfitOrder(
   positionId: number,
   order: TakeProfitOrder
 ): Promise<TransactionState | void> {
-  const poolInfo = await getPoolInfo()
-
-  const currentPositionInfo = await getPositionInfo(positionId)
-
-  if (currentPositionInfo.liquidity === ethers.BigNumber.from(0)) {
-    return
-  }
-
   const address = getWalletAddress()
   const provider = getProvider()
   if (!address || !provider) {
     return TransactionState.Failed
   }
+  const pool = await Pool.initFromChain(
+    provider,
+    CurrentConfig.tokens.token0,
+    CurrentConfig.tokens.token1,
+    CurrentConfig.tokens.poolFee
+  )
+  const currentPosition = await Position.fetchWithPositionId(
+    provider,
+    positionId
+  )
+
+  if (
+    currentPosition.tokensOwed0 === undefined ||
+    currentPosition.tokensOwed1 === undefined
+  ) {
+    throw new Error('Could not fetch owed fees')
+  }
+
+  if (currentPosition._liquidity === 0n) {
+    return
+  }
 
   if (
     order.zeroForOne
-      ? poolInfo.tick > currentPositionInfo.tickUpper
-      : poolInfo.tick < currentPositionInfo.tickLower
+      ? pool.tickCurrent > currentPosition.tickUpper
+      : pool.tickCurrent < currentPosition.tickLower
   ) {
-    const pool = new Pool(
-      CurrentConfig.tokens.token0,
-      CurrentConfig.tokens.token1,
-      poolInfo.fee,
-      poolInfo.sqrtPriceX96.toString(),
-      poolInfo.liquidity.toString(),
-      poolInfo.tick
-    )
-
     const collectOptions: Omit<CollectOptions, 'tokenId'> = {
       expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(
         CurrentConfig.tokens.token0,
-        JSBI.BigInt(currentPositionInfo.tokensOwed0.toString())
+        currentPosition.tokensOwed0
       ),
       expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(
         CurrentConfig.tokens.token1,
-        JSBI.BigInt(currentPositionInfo.tokensOwed1.toString())
+        currentPosition.tokensOwed1
       ),
       recipient: address,
     }
@@ -93,13 +96,6 @@ export async function watchTakeProfitOrder(
       liquidityPercentage: new Percent(1),
       collectOptions,
     }
-
-    const currentPosition = new Position({
-      pool,
-      liquidity: JSBI.BigInt(currentPositionInfo.liquidity.toString()),
-      tickLower: currentPositionInfo.tickLower,
-      tickUpper: currentPositionInfo.tickUpper,
-    })
 
     const { calldata, value } = NonfungiblePositionManager.removeCallParameters(
       currentPosition,
@@ -137,13 +133,13 @@ export async function mintTakeProfitOrder(
     NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
     CurrentConfig.tokens.token0,
     address,
-    JSBI.BigInt(amount0)
+    BigInt(amount0.toString())
   )
   const tokenOutApproval = await getTokenTransferApproval(
     NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
     CurrentConfig.tokens.token1,
     address,
-    JSBI.BigInt(amount1)
+    BigInt(amount1.toString())
   )
 
   // Fail if transfer approvals do not go through
@@ -191,14 +187,11 @@ export async function constructTakeProfitOrder(
   zeroForOne: boolean,
   amount: number
 ): Promise<TakeProfitOrder> {
-  const poolInfo = await getPoolInfo()
-  const configuredPool = new Pool(
+  const configuredPool = await Pool.initFromChain(
+    getProvider(),
     CurrentConfig.tokens.token0,
     CurrentConfig.tokens.token1,
-    poolInfo.fee,
-    poolInfo.sqrtPriceX96.toString(),
-    poolInfo.liquidity.toString(),
-    poolInfo.tick
+    CurrentConfig.tokens.poolFee
   )
 
   const current = await getPrice()
@@ -225,7 +218,7 @@ export async function constructTakeProfitOrder(
       )
   const targetTick = nearestUsableTick(
     priceToClosestTick(priceTarget),
-    poolInfo.tickSpacing
+    configuredPool.tickSpacing
   )
   const amount0 = zeroForOne
     ? CurrencyAmount.fromRawAmount(
@@ -282,26 +275,8 @@ async function constructRangeOrderPosition(
       pool: pool,
       tickLower: tickLower,
       tickUpper: tickUpper,
-      amount0: JSBI.BigInt(
-        token0Amount
-          .multiply(
-            JSBI.exponentiate(
-              JSBI.BigInt(10),
-              JSBI.BigInt(token0Amount.currency.decimals)
-            )
-          )
-          .toFixed(0)
-      ),
-      amount1: JSBI.BigInt(
-        token1Amount
-          .multiply(
-            JSBI.exponentiate(
-              JSBI.BigInt(10),
-              JSBI.BigInt(token1Amount.currency.decimals)
-            )
-          )
-          .toFixed(0)
-      ),
+      amount0: token0Amount.quotientBigInt,
+      amount1: token1Amount.quotientBigInt,
       useFullPrecision: true,
     })
   } else {
