@@ -1,25 +1,21 @@
 // This file stores web3 related constants such as addresses, token definitions, ETH currency references and ABI's
 
-import { Ether, SupportedChainId, Token } from '@uniswap/sdk-core'
+import { Ether, ChainId, Token } from '@uniswap/sdk-core'
 
 // Addresses
 
-export const POOL_FACTORY_CONTRACT_ADDRESS =
-  '0x1F98431c8aD98523631AE4a59f267346ea31F984'
 export const NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS =
   '0xC36442b4a4522E871399CD717aBDD847Ab11FE88'
 export const V3_SWAP_ROUTER_ADDRESS =
   '0xE592427A0AEce92De3Edee1F18E0157C05861564'
 export const WETH_CONTRACT_ADDRESS =
   '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
-export const QUOTER_CONTRACT_ADDRESS =
-  '0x61fFE014bA17989E743c5F6cB21bF9697530B21e'
 
 // Currencies and Tokens
-export const ETH = Ether.onChain(SupportedChainId.MAINNET)
+export const ETH = Ether.onChain(ChainId.MAINNET)
 
 export const WETH_TOKEN = new Token(
-  SupportedChainId.MAINNET,
+  ChainId.MAINNET,
   '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
   18,
   'WETH',
@@ -27,7 +23,7 @@ export const WETH_TOKEN = new Token(
 )
 
 export const USDT_TOKEN = new Token(
-  SupportedChainId.MAINNET,
+  ChainId.MAINNET,
   '0xdAC17F958D2ee523a2206206994597C13D831ec7',
   6,
   'USDT',
