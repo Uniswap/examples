@@ -1,133 +1,52 @@
-import { BigNumber, ethers } from 'ethers'
-import {
-  ERC20_ABI,
-  NONFUNGIBLE_POSITION_MANAGER_ABI,
-  MAX_FEE_PER_GAS,
-  MAX_PRIORITY_FEE_PER_GAS,
-  NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-} from './constants'
 import { TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER } from './constants'
-import { sendTransaction, TransactionState } from './providers'
+import { getWallet, TransactionState, waitForReceipt } from './providers'
 import {
   Pool,
   Position,
   nearestUsableTick,
   MintOptions,
   NonfungiblePositionManager,
-  CollectOptions,
+  approveTokenTransfer,
 } from '@uniswap/v3-sdk'
 import { CurrentConfig } from '../config'
-import { getPoolInfo } from './pool'
 import { getProvider, getWalletAddress } from './providers'
-import { Percent, CurrencyAmount, Token } from '@uniswap/sdk-core'
+import {
+  Percent,
+  CurrencyAmount,
+  Token,
+  NONFUNGIBLE_POSITION_MANAGER_ADDRESSES,
+  BigintIsh,
+} from '@uniswap/sdk-core'
 import { fromReadableAmount } from './conversion'
 
-export interface PositionInfo {
-  tickLower: number
-  tickUpper: number
-  liquidity: BigNumber
-  feeGrowthInside0LastX128: BigNumber
-  feeGrowthInside1LastX128: BigNumber
-  tokensOwed0: BigNumber
-  tokensOwed1: BigNumber
-}
-
 export async function collectFees(
-  positionId: number
+  positionId: BigintIsh
 ): Promise<TransactionState> {
   const address = getWalletAddress()
   const provider = getProvider()
+  const wallet = getWallet()
   if (!address || !provider) {
     return TransactionState.Failed
   }
 
-  const collectOptions: CollectOptions = {
-    tokenId: positionId,
-    expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token0,
-      fromReadableAmount(
-        CurrentConfig.tokens.token0AmountToCollect,
-        CurrentConfig.tokens.token0.decimals
-      )
-    ),
-    expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token1,
-      fromReadableAmount(
-        CurrentConfig.tokens.token1AmountToCollect,
-        CurrentConfig.tokens.token1.decimals
-      )
-    ),
-    recipient: address,
-  }
-
-  // get calldata for minting a position
-  const { calldata, value } =
-    NonfungiblePositionManager.collectCallParameters(collectOptions)
-
-  // build transaction
-  const transaction = {
-    data: calldata,
-    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    value: value,
-    from: address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  }
-
-  return sendTransaction(transaction)
+  const position = await Position.fetchWithPositionId(provider, positionId)
+  const transactionResponse = await position.collectFeesOnChain({
+    signer: wallet,
+    provider,
+    percentage: CurrentConfig.tokens.feePercentage,
+  })
+  return waitForReceipt(transactionResponse)
 }
 
-export async function getPositionIds(): Promise<number[]> {
+export async function getPositions(): Promise<Position[]> {
   const provider = getProvider()
   const address = getWalletAddress()
 
   if (!provider || !address) {
     throw new Error('No provider available')
   }
-
-  const positionContract = new ethers.Contract(
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    NONFUNGIBLE_POSITION_MANAGER_ABI,
-    provider
-  )
-
-  // Get number of positions
-  const balance: number = await positionContract.balanceOf(address)
-
   // Get all positions
-  const tokenIds = []
-  for (let i = 0; i < balance; i++) {
-    const tokenOfOwnerByIndex: number =
-      await positionContract.tokenOfOwnerByIndex(address, i)
-    tokenIds.push(tokenOfOwnerByIndex)
-  }
-
-  return tokenIds
-}
-
-export async function getPositionInfo(tokenId: number): Promise<PositionInfo> {
-  const provider = getProvider()
-  if (!provider) {
-    throw new Error('No provider available')
-  }
-
-  const positionContract = new ethers.Contract(
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    NONFUNGIBLE_POSITION_MANAGER_ABI,
-    provider
-  )
-
-  const position = await positionContract.positions(tokenId)
-
-  return {
-    tickLower: position.tickLower,
-    tickUpper: position.tickUpper,
-    liquidity: position.liquidity,
-    feeGrowthInside0LastX128: position.feeGrowthInside0LastX128,
-    feeGrowthInside1LastX128: position.feeGrowthInside1LastX128,
-    tokensOwed0: position.tokensOwed0,
-    tokensOwed1: position.tokensOwed1,
-  }
+  return Position.getAllPositionsForAddress(provider, address)
 }
 
 export async function getTokenTransferApproval(
@@ -140,24 +59,15 @@ export async function getTokenTransferApproval(
     return TransactionState.Failed
   }
 
-  try {
-    const tokenContract = new ethers.Contract(
-      token.address,
-      ERC20_ABI,
-      provider
-    )
-
-    const transaction = await tokenContract.populateTransaction.approve(
-      NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-      TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER
-    )
-
-    return sendTransaction({
-      ...transaction,
-      from: address,
-    })
-  } catch (e) {
-    console.error(e)
+  const receipt = await approveTokenTransfer(
+    NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[token.chainId],
+    token.address,
+    TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER,
+    getWallet()
+  )
+  if (receipt) {
+    return TransactionState.Sent
+  } else {
     return TransactionState.Failed
   }
 }
@@ -166,28 +76,28 @@ export async function constructPosition(
   token0Amount: CurrencyAmount<Token>,
   token1Amount: CurrencyAmount<Token>
 ): Promise<Position> {
-  // get pool info
-  const poolInfo = await getPoolInfo()
+  const provider = getProvider()
+  if (!provider) {
+    throw new Error('No Provider Found')
+  }
 
   // construct pool instance
-  const configuredPool = new Pool(
+  const pool = await Pool.initFromChain(
+    provider,
     token0Amount.currency,
     token1Amount.currency,
-    poolInfo.fee,
-    poolInfo.sqrtPriceX96.toString(),
-    poolInfo.liquidity.toString(),
-    poolInfo.tick
+    CurrentConfig.tokens.poolFee
   )
 
   // create position using the maximum liquidity from input amounts
   return Position.fromAmounts({
-    pool: configuredPool,
+    pool,
     tickLower:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
-      poolInfo.tickSpacing * 2,
+      nearestUsableTick(pool.tickCurrent, pool.tickSpacing) -
+      pool.tickSpacing * 2,
     tickUpper:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
-      poolInfo.tickSpacing * 2,
+      nearestUsableTick(pool.tickCurrent, pool.tickSpacing) +
+      pool.tickSpacing * 2,
     amount0: token0Amount.quotient,
     amount1: token1Amount.quotient,
     useFullPrecision: true,
@@ -238,21 +148,12 @@ export async function mintPosition(): Promise<TransactionState> {
     slippageTolerance: new Percent(50, 10_000),
   }
 
-  // get calldata for minting a position
-  const { calldata, value } = NonfungiblePositionManager.addCallParameters(
+  const txRes = await NonfungiblePositionManager.createPositionOnChain(
+    getWallet(),
+    provider,
     positionToMint,
     mintOptions
   )
 
-  // build transaction
-  const transaction = {
-    data: calldata,
-    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    value: value,
-    from: address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  }
-
-  return sendTransaction(transaction)
+  return waitForReceipt(txRes)
 }

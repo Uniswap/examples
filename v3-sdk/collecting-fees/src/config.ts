@@ -1,4 +1,4 @@
-import { Token } from '@uniswap/sdk-core'
+import { Fraction, Token } from '@uniswap/sdk-core'
 import { FeeAmount } from '@uniswap/v3-sdk'
 import { DAI_TOKEN, USDC_TOKEN } from './libs/constants'
 
@@ -26,8 +26,7 @@ export interface ExampleConfig {
     token1: Token
     token1Amount: number
     poolFee: FeeAmount
-    token0AmountToCollect: number
-    token1AmountToCollect: number
+    feePercentage: Fraction
   }
 }
 
@@ -50,7 +49,6 @@ export const CurrentConfig: ExampleConfig = {
     token1: DAI_TOKEN,
     token1Amount: 1000,
     poolFee: FeeAmount.LOW,
-    token0AmountToCollect: 10,
-    token1AmountToCollect: 10,
+    feePercentage: new Fraction(1),
   },
 }
