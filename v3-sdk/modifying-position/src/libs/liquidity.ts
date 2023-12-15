@@ -40,7 +40,6 @@ export async function addLiquidity(
   const provider = getProvider()
   const wallet = getWallet()
   if (!provider) {
-    console.log('provider')
     return TransactionState.Failed
   }
 
@@ -62,8 +61,6 @@ export async function addLiquidity(
 
     return TransactionState.Sent
   } catch (err) {
-    console.log('error')
-    console.log(err)
     return TransactionState.Failed
   }
 }
@@ -71,66 +68,38 @@ export async function addLiquidity(
 export async function removeLiquidity(
   positionId: number
 ): Promise<TransactionState> {
-  const address = getWalletAddress()
   const provider = getProvider()
-  if (!address || !provider) {
+  const wallet = getWallet()
+  if (!provider) {
     return TransactionState.Failed
   }
 
-  const currentPosition = await constructPosition(
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token0,
-      fromReadableAmount(
-        CurrentConfig.tokens.token0Amount,
-        CurrentConfig.tokens.token0.decimals
-      )
-    ),
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token1,
-      fromReadableAmount(
-        CurrentConfig.tokens.token1Amount,
-        CurrentConfig.tokens.token1.decimals
-      )
-    )
-  )
-
-  const collectOptions: Omit<CollectOptions, 'tokenId'> = {
-    expectedCurrencyOwed0: CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token0,
-      0
-    ),
-    expectedCurrencyOwed1: CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token1,
-      0
-    ),
-    recipient: address,
-  }
-
-  const removeLiquidityOptions: RemoveLiquidityOptions = {
+  const decreaseLiquidityOptions: Omit<
+    RemoveLiquidityOptions,
+    'liquidityPercentage' | 'collectOptions'
+  > = {
     deadline: Math.floor(Date.now() / 1000) + 60 * 20,
     slippageTolerance: new Percent(50, 10_000),
     tokenId: positionId,
-    // percentage of liquidity to remove
-    liquidityPercentage: new Percent(CurrentConfig.tokens.fractionToRemove),
-    collectOptions,
-  }
-  // get calldata for minting a position
-  const { calldata, value } = NonfungiblePositionManager.removeCallParameters(
-    currentPosition,
-    removeLiquidityOptions
-  )
-
-  // build transaction
-  const transaction = {
-    data: calldata,
-    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    value: value,
-    from: address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
   }
 
-  return sendTransaction(transaction)
+  const position = await Position.fetchWithPositionId(provider, positionId)
+
+  try {
+    await position.decreasePositionByPercentageOnChain({
+      signer: wallet,
+      provider: provider,
+      percentage: new Fraction(
+        CurrentConfig.tokens.fractionToRemove * 100,
+        100
+      ),
+      options: decreaseLiquidityOptions,
+    })
+
+    return TransactionState.Sent
+  } catch (err) {
+    return TransactionState.Failed
+  }
 }
 
 export async function getPositionIds(): Promise<number[]> {
