@@ -2,8 +2,5 @@
   "editor.codeActionsOnSave": {
     "source.fixAll": true
   },
-  "cSpell.words": [
-    "bips",
-    "exponentiate"
-  ],
+  "cSpell.words": ["bips", "exponentiate"],
 }

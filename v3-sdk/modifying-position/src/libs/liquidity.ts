@@ -7,21 +7,21 @@ import {
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
 } from './constants'
 import { TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER } from './constants'
-import { sendTransaction, TransactionState } from './providers'
+import { getWallet, sendTransaction, TransactionState } from './providers'
 import {
   Pool,
   Position,
-  nearestUsableTick,
   MintOptions,
   NonfungiblePositionManager,
   AddLiquidityOptions,
   RemoveLiquidityOptions,
   CollectOptions,
+  TickMath,
 } from '@uniswap/v3-sdk'
 import { CurrentConfig } from '../config'
 import { getPoolInfo } from './pool'
 import { getProvider, getWalletAddress } from './providers'
-import { Percent, CurrencyAmount, Token } from '@uniswap/sdk-core'
+import { Percent, CurrencyAmount, Token, Fraction } from '@uniswap/sdk-core'
 import { fromReadableAmount } from './conversion'
 
 export interface PositionInfo {
@@ -37,28 +37,12 @@ export interface PositionInfo {
 export async function addLiquidity(
   positionId: number
 ): Promise<TransactionState> {
-  const address = getWalletAddress()
   const provider = getProvider()
-  if (!address || !provider) {
+  const wallet = getWallet()
+  if (!provider) {
+    console.log('provider')
     return TransactionState.Failed
   }
-
-  const positionToIncreaseBy = await constructPosition(
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token0,
-      fromReadableAmount(
-        CurrentConfig.tokens.token0Amount * CurrentConfig.tokens.fractionToAdd,
-        CurrentConfig.tokens.token0.decimals
-      )
-    ),
-    CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.token1,
-      fromReadableAmount(
-        CurrentConfig.tokens.token1Amount * CurrentConfig.tokens.fractionToAdd,
-        CurrentConfig.tokens.token1.decimals
-      )
-    )
-  )
 
   const addLiquidityOptions: AddLiquidityOptions = {
     deadline: Math.floor(Date.now() / 1000) + 60 * 20,
@@ -66,23 +50,22 @@ export async function addLiquidity(
     tokenId: positionId,
   }
 
-  // get calldata for increasing a position
-  const { calldata, value } = NonfungiblePositionManager.addCallParameters(
-    positionToIncreaseBy,
-    addLiquidityOptions
-  )
+  const position = await Position.fetchWithPositionId(provider, positionId)
 
-  // build transaction
-  const transaction = {
-    data: calldata,
-    to: NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    value: value,
-    from: address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+  try {
+    await position.increasePositionByPercentageOnChain({
+      signer: wallet,
+      provider: provider,
+      percentage: new Fraction(CurrentConfig.tokens.fractionToAdd * 100, 100),
+      options: addLiquidityOptions,
+    })
+
+    return TransactionState.Sent
+  } catch (err) {
+    console.log('error')
+    console.log(err)
+    return TransactionState.Failed
   }
-
-  return sendTransaction(transaction)
 }
 
 export async function removeLiquidity(
@@ -255,12 +238,8 @@ export async function constructPosition(
   // create position using the maximum liquidity from input amounts
   return Position.fromAmounts({
     pool: configuredPool,
-    tickLower:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
-      poolInfo.tickSpacing * 2,
-    tickUpper:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
-      poolInfo.tickSpacing * 2,
+    tickLower: TickMath.MIN_TICK + 2,
+    tickUpper: TickMath.MAX_TICK - 2,
     amount0: token0Amount.quotient,
     amount1: token1Amount.quotient,
     useFullPrecision: true,
