@@ -15,7 +15,6 @@ import {
   NonfungiblePositionManager,
   AddLiquidityOptions,
   RemoveLiquidityOptions,
-  CollectOptions,
   TickMath,
 } from '@uniswap/v3-sdk'
 import { CurrentConfig } from '../config'
