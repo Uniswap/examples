@@ -103,9 +103,12 @@ const Example = () => {
 
   return (
     <div className="App">
-      {CurrentConfig.rpc.mainnet === '' && (
-        <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>
-      )}
+      {CurrentConfig.rpc.mainnet === '' &&
+        CurrentConfig.env === Environment.MAINNET && (
+          <h2 className="error">
+            Please set your mainnet RPC URL in config.ts
+          </h2>
+        )}
       {CurrentConfig.env === Environment.WALLET_EXTENSION &&
         getProvider() === null && (
           <h2 className="error">
@@ -133,7 +136,8 @@ const Example = () => {
         disabled={
           txState === TransactionState.Sending ||
           getProvider() === null ||
-          CurrentConfig.rpc.mainnet === ''
+          (CurrentConfig.env === Environment.MAINNET &&
+            CurrentConfig.rpc.mainnet === '')
         }>
         <p>Mint Position</p>
       </button>
@@ -145,7 +149,8 @@ const Example = () => {
         disabled={
           txState === TransactionState.Sending ||
           getProvider() === null ||
-          CurrentConfig.rpc.mainnet === '' ||
+          (CurrentConfig.env === Environment.MAINNET &&
+            CurrentConfig.rpc.mainnet === '') ||
           positionIds.length === 0
         }>
         <p>Add Liquidity to Position</p>
@@ -158,7 +163,8 @@ const Example = () => {
         disabled={
           txState === TransactionState.Sending ||
           getProvider() === null ||
-          CurrentConfig.rpc.mainnet === '' ||
+          (CurrentConfig.env === Environment.MAINNET &&
+            CurrentConfig.rpc.mainnet === '') ||
           positionIds.length === 0
         }>
         <p>Remove Liquidity from Position</p>
