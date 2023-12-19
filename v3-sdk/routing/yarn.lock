@@ -2740,7 +2740,22 @@
     "@uniswap/v3-core" "^1.0.0"
     base64-sol "1.0.1"
 
-"@uniswap/v3-sdk@npm:@florian-s-a-w/uniswap-v3-sdk@3.15.12", "@uniswap/v3-sdk@npm:@florian-s-a-w/uniswap-v3-sdk@^3.15.12":
+"@uniswap/v3-sdk@npm:@florian-s-a-w/uniswap-v3-sdk@4.0.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/@florian-s-a-w/uniswap-v3-sdk/-/uniswap-v3-sdk-4.0.0.tgz#627880d647a783bed2b779bd01cf64188e8c4eb5"
+  integrity sha512-ZMA8+cqp7OjSAG1ZKbk7x0NHudzb4Xxyi1/zV5Q7RbeJbQRqRrg3PbQHF+nQSHEYIvueohMTUlMnAXYq8IZ/Og==
+  dependencies:
+    "@ethersproject/abi" "^5.0.12"
+    "@ethersproject/solidity" "^5.0.9"
+    "@uniswap/sdk-core" "npm:@koraykoska/uniswap-sdk-core@^6.0.9"
+    "@uniswap/swap-router-contracts" "^1.2.1"
+    "@uniswap/v3-periphery" "^1.1.1"
+    "@uniswap/v3-staker" "1.0.2"
+    ethers-multicall "^0.2.3"
+    tiny-invariant "^1.1.0"
+    tiny-warning "^1.0.3"
+
+"@uniswap/v3-sdk@npm:@florian-s-a-w/uniswap-v3-sdk@^3.15.12":
   version "3.15.12"
   resolved "https://registry.yarnpkg.com/@florian-s-a-w/uniswap-v3-sdk/-/uniswap-v3-sdk-3.15.12.tgz#abb26e8f2e4380cef2ac96f391dad2c71e99eca3"
   integrity sha512-KtXUrsKY91EI8CLUpUdY+I41qpAbdcaXh8GsTdaoQdMBZpoo4anZ1WX3uweD3yeFNo/MjOYgunJ7jy4Rwjb40Q==
