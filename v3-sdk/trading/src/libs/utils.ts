@@ -12,7 +12,9 @@ export function fromReadableAmount(
 }
 
 export function toReadableAmount(rawAmount: number, decimals: number): string {
-  return ethers.utils.formatUnits(rawAmount, decimals).slice(0, MAX_DECIMALS)
+  const rawString = ethers.utils.formatUnits(rawAmount, decimals)
+  const parts = rawString.split('.')
+  return `${parts[0]}.${parts[1] ? parts[1].slice(0, MAX_DECIMALS) : ''}`
 }
 
 export function displayTrade(trade: Trade<Token, Token, TradeType>): string {
