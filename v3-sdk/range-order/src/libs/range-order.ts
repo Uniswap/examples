@@ -50,16 +50,16 @@ export async function watchTakeProfitOrder(
   if (!address || !provider) {
     return TransactionState.Failed
   }
-  const pool = await Pool.initFromChain(
+  const pool = await Pool.initFromChain({
     provider,
-    CurrentConfig.tokens.token0,
-    CurrentConfig.tokens.token1,
-    CurrentConfig.tokens.poolFee
-  )
-  const currentPosition = await Position.fetchWithPositionId(
+    tokenA: CurrentConfig.tokens.token0,
+    tokenB: CurrentConfig.tokens.token1,
+    fee: CurrentConfig.tokens.poolFee,
+  })
+  const currentPosition = await Position.fetchWithPositionId({
     provider,
-    positionId
-  )
+    positionId,
+  })
 
   if (
     currentPosition.tokensOwed0 === undefined ||
@@ -187,12 +187,12 @@ export async function constructTakeProfitOrder(
   zeroForOne: boolean,
   amount: number
 ): Promise<TakeProfitOrder> {
-  const configuredPool = await Pool.initFromChain(
-    getProvider(),
-    CurrentConfig.tokens.token0,
-    CurrentConfig.tokens.token1,
-    CurrentConfig.tokens.poolFee
-  )
+  const configuredPool = await Pool.initFromChain({
+    provider: getProvider(),
+    tokenA: CurrentConfig.tokens.token0,
+    tokenB: CurrentConfig.tokens.token1,
+    fee: CurrentConfig.tokens.poolFee,
+  })
 
   const current = await getPrice()
   const priceTarget = zeroForOne

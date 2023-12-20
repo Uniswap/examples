@@ -97,12 +97,12 @@ export async function constructPosition(
   token1Amount: CurrencyAmount<Token>
 ): Promise<Position> {
   // construct pool instance
-  const pool = await Pool.initFromChain(
-    getProvider(),
-    token0Amount.currency,
-    token1Amount.currency,
-    CurrentConfig.tokens.poolFee
-  )
+  const pool = await Pool.initFromChain({
+    provider: getProvider(),
+    tokenA: token0Amount.currency,
+    tokenB: token1Amount.currency,
+    fee: CurrentConfig.tokens.poolFee,
+  })
 
   // create position using the maximum liquidity from input amounts
   return Position.fromAmounts({
@@ -147,7 +147,7 @@ export async function getPositionIds(): Promise<number[]> {
 }
 
 export async function getPosition(positionId: number) {
-  return Position.fetchWithPositionId(getProvider(), positionId)
+  return Position.fetchWithPositionId({ provider: getProvider(), positionId })
 }
 
 export async function getTokenTransferApproval(
