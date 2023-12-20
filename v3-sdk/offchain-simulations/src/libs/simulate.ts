@@ -29,12 +29,12 @@ async function initializePool(poolIdentifier: PoolIdentifier): Promise<Pool> {
     throw new Error('No Provider')
   }
 
-  const pool = await Pool.initFromChain(
+  const pool = await Pool.initFromChain({
     provider,
-    poolIdentifier.tokenA,
-    poolIdentifier.tokenB,
-    poolIdentifier.fee
-  )
+    tokenA: poolIdentifier.tokenA,
+    tokenB: poolIdentifier.tokenB,
+    fee: poolIdentifier.fee,
+  })
 
   await pool.initializeTicks()
 
@@ -80,7 +80,10 @@ export async function executeTrade(
 
   while (response === null) {
     try {
-      response = await SwapRouter.executeTrade(trade, undefined, wallet)
+      response = await SwapRouter.executeTrade({
+        trades: trade,
+        signer: wallet,
+      })
 
       if (response === null) {
         continue
