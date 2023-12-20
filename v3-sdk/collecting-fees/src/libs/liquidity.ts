@@ -29,7 +29,7 @@ export async function collectFees(
     return TransactionState.Failed
   }
 
-  const position = await Position.fetchWithPositionId(provider, positionId)
+  const position = await Position.fetchWithPositionId({ provider, positionId })
   const transactionResponse = await position.collectFeesOnChain({
     signer: wallet,
     provider,
@@ -59,12 +59,12 @@ export async function getTokenTransferApproval(
     return TransactionState.Failed
   }
 
-  const receipt = await approveTokenTransfer(
-    NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[token.chainId],
-    token.address,
-    TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER,
-    getWallet()
-  )
+  const receipt = await approveTokenTransfer({
+    contractAddress: NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[token.chainId],
+    tokenAddress: token.address,
+    amount: TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER,
+    signer: getWallet(),
+  })
   if (receipt) {
     return TransactionState.Sent
   } else {
@@ -82,12 +82,12 @@ export async function constructPosition(
   }
 
   // construct pool instance
-  const pool = await Pool.initFromChain(
+  const pool = await Pool.initFromChain({
     provider,
-    token0Amount.currency,
-    token1Amount.currency,
-    CurrentConfig.tokens.poolFee
-  )
+    tokenA: token0Amount.currency,
+    tokenB: token1Amount.currency,
+    fee: CurrentConfig.tokens.poolFee,
+  })
 
   // create position using the maximum liquidity from input amounts
   return Position.fromAmounts({

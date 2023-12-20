@@ -17,12 +17,12 @@ export async function quote(): Promise<string> {
 
   const provider = getProvider()
 
-  const currencyAmountOut = await SwapQuoter.quoteExactInputSingle(
-    currencyAmountIn,
-    CurrentConfig.tokens.out,
-    CurrentConfig.tokens.poolFee,
-    provider
-  )
+  const currencyAmountOut = await SwapQuoter.quoteExactInputSingle({
+    amountIn: currencyAmountIn,
+    tokenOut: CurrentConfig.tokens.out,
+    poolFee: CurrentConfig.tokens.poolFee,
+    provider,
+  })
 
   return toReadableAmount(
     currencyAmountOut.quotientBigInt,

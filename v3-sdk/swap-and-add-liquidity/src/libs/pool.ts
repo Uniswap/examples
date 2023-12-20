@@ -8,10 +8,10 @@ export async function getPool(): Promise<Pool> {
     throw new Error('No provider')
   }
 
-  return Pool.initFromChain(
+  return Pool.initFromChain({
     provider,
-    CurrentConfig.tokens.token0,
-    CurrentConfig.tokens.token1,
-    CurrentConfig.tokens.poolFee
-  )
+    tokenA: CurrentConfig.tokens.token0,
+    tokenB: CurrentConfig.tokens.token1,
+    fee: CurrentConfig.tokens.poolFee,
+  })
 }

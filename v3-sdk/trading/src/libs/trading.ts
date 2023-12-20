@@ -34,12 +34,12 @@ export async function createTrade(): Promise<TokenTrade> {
     throw new Error('No network connection to fetch Pool metadata')
   }
 
-  const pool = await Pool.initFromChain(
+  const pool = await Pool.initFromChain({
     provider,
-    CurrentConfig.tokens.in,
-    CurrentConfig.tokens.out,
-    CurrentConfig.tokens.poolFee
-  )
+    tokenA: CurrentConfig.tokens.in,
+    tokenB: CurrentConfig.tokens.out,
+    fee: CurrentConfig.tokens.poolFee,
+  })
 
   const swapRoute = new Route(
     [pool],
@@ -87,7 +87,11 @@ export async function executeTrade(
 
   while (response === null) {
     try {
-      response = await SwapRouter.executeTrade(trade, options, wallet)
+      response = await SwapRouter.executeTrade({
+        trades: trade,
+        options,
+        signer: wallet,
+      })
 
       if (response === null) {
         continue
@@ -112,18 +116,18 @@ export async function getOutputQuote(route: Route<Currency, Currency>) {
     throw new Error('Provider required to get pool state')
   }
 
-  const outputQuote = await SwapQuoter.callQuoter(
+  const outputQuote = await SwapQuoter.callQuoter({
     route,
-    CurrencyAmount.fromRawAmount(
+    amount: CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.in,
       fromReadableAmount(
         CurrentConfig.tokens.amountIn,
         CurrentConfig.tokens.in.decimals
       ).toString()
     ),
-    TradeType.EXACT_INPUT,
-    provider
-  )
+    tradeType: TradeType.EXACT_INPUT,
+    provider,
+  })
 
   return outputQuote
 }

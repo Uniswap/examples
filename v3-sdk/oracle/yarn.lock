@@ -2575,10 +2575,10 @@
     "@uniswap/v3-core" "1.0.0"
     base64-sol "1.0.1"
 
-"@uniswap/v3-sdk@npm:@florian-s-a-w/uniswap-v3-sdk@3.15.13":
-  version "3.15.13"
-  resolved "https://registry.yarnpkg.com/@florian-s-a-w/uniswap-v3-sdk/-/uniswap-v3-sdk-3.15.13.tgz#d98398d3d1cb6e46c6bc075207f468591797db93"
-  integrity sha512-a+1Mp+dvzovRhXieU01HxNQDXw7E5XyrPI+K0d/Cd4ltAB5a+bnaIDA9+S3xwcspPYoA6AAxdyJy81UiD/AAsw==
+"@uniswap/v3-sdk@npm:@florian-s-a-w/uniswap-v3-sdk@4.0.1":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@florian-s-a-w/uniswap-v3-sdk/-/uniswap-v3-sdk-4.0.1.tgz#25c3ad8ee80c88192166caeb649aef1dc433fd6a"
+  integrity sha512-wQ0HGzhiJ39zIlrp8iyRMyYUzY8b6R1yQ/siqa1M1BImTpZnwvH9q87lHRhHhjt8qd05EMogoCxkdFDMhrIw4A==
   dependencies:
     "@ethersproject/abi" "^5.0.12"
     "@ethersproject/solidity" "^5.0.9"

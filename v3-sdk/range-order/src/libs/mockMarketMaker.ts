@@ -24,27 +24,26 @@ export async function buyWETH() {
         CurrentConfig.mockMarketMakerPool.token0.decimals
       )
     )
-    const pool = await Pool.initFromChain(
-      getProvider(),
-      CurrentConfig.tokens.token0,
-      CurrentConfig.tokens.token1,
-      CurrentConfig.tokens.poolFee
-    )
+    const pool = await Pool.initFromChain({
+      provider: getProvider(),
+      tokenA: CurrentConfig.tokens.token0,
+      tokenB: CurrentConfig.tokens.token1,
+      fee: CurrentConfig.tokens.poolFee,
+    })
 
     const options: SwapOptions = {
       slippageTolerance: new Percent(50, 10_000), // 50 bips, or 0.50%
       deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from the current Unix time
       recipient: CurrentConfig.mockMarketMakerWallet.address,
     }
-    console.log('Constructed Pool')
 
-    await SwapRouter.executeQuotedSwapOnPool(
+    await SwapRouter.executeQuotedSwapOnPool({
       pool,
-      ethAmount,
-      TradeType.EXACT_OUTPUT,
-      options,
-      getMMMWallet()
-    )
+      amount: ethAmount,
+      tradeType: TradeType.EXACT_OUTPUT,
+      swapOptions: options,
+      signer: getMMMWallet(),
+    })
     return TransactionState.Sent
   } catch (err) {
     console.log(err)
@@ -57,12 +56,12 @@ export async function sellWETH() {
   try {
     const ethAmount = CurrentConfig.mockMarketMakerPool.sellAmount
 
-    const pool = await Pool.initFromChain(
-      getProvider(),
-      CurrentConfig.tokens.token0,
-      CurrentConfig.tokens.token1,
-      CurrentConfig.tokens.poolFee
-    )
+    const pool = await Pool.initFromChain({
+      provider: getProvider(),
+      tokenA: CurrentConfig.tokens.token0,
+      tokenB: CurrentConfig.tokens.token1,
+      fee: CurrentConfig.tokens.poolFee,
+    })
 
     const swapRoute = new Route(
       [pool],
@@ -134,17 +133,16 @@ export async function getToken1FromMockPool(sellETHAmount: number) {
     CurrentConfig.mockMarketMakerWallet.address,
     CurrentConfig.mockMarketMakerPool.token0
   )
-  console.log('Balance 0: ' + balance0)
   if (Number(balance0) < sellETHAmount) {
     await wrapETHMMM(sellETHAmount)
   }
 
-  const pool = await Pool.initFromChain(
-    getProvider(),
-    CurrentConfig.mockMarketMakerPool.token0,
-    CurrentConfig.mockMarketMakerPool.token1,
-    CurrentConfig.mockMarketMakerPool.poolFee
-  )
+  const pool = await Pool.initFromChain({
+    provider: getProvider(),
+    tokenA: CurrentConfig.mockMarketMakerPool.token0,
+    tokenB: CurrentConfig.mockMarketMakerPool.token1,
+    fee: CurrentConfig.mockMarketMakerPool.poolFee,
+  })
 
   const currencyAmount = CurrencyAmount.fromRawAmount(
     CurrentConfig.mockMarketMakerPool.token0,
@@ -154,13 +152,12 @@ export async function getToken1FromMockPool(sellETHAmount: number) {
     )
   )
 
-  await SwapRouter.executeQuotedSwapOnPool(
+  await SwapRouter.executeQuotedSwapOnPool({
     pool,
-    currencyAmount,
-    TradeType.EXACT_INPUT,
-    undefined,
-    getMMMWallet()
-  )
+    amount: currencyAmount,
+    tradeType: TradeType.EXACT_INPUT,
+    signer: getMMMWallet(),
+  })
 }
 
 function getMMMWallet(): ethers.Wallet {

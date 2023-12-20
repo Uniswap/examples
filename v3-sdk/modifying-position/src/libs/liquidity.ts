@@ -48,7 +48,7 @@ export async function addLiquidity(
     tokenId: positionId,
   }
 
-  const position = await Position.fetchWithPositionId(provider, positionId)
+  const position = await Position.fetchWithPositionId({ provider, positionId })
 
   try {
     await position.increasePositionByPercentageOnChain({
@@ -82,7 +82,7 @@ export async function removeLiquidity(
     tokenId: positionId,
   }
 
-  const position = await Position.fetchWithPositionId(provider, positionId)
+  const position = await Position.fetchWithPositionId({ provider, positionId })
 
   try {
     await position.decreasePositionByPercentageOnChain({

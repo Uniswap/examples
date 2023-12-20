@@ -154,12 +154,12 @@ export async function getTokenTransferApproval(
     return TransactionState.Failed
   }
 
-  const receipt = await approveTokenTransfer(
+  const receipt = await approveTokenTransfer({
     contractAddress,
-    token.address,
-    rawAmount,
-    getWallet()
-  )
+    tokenAddress: token.address,
+    amount: rawAmount,
+    signer: getWallet(),
+  })
   if (receipt) {
     return TransactionState.Sent
   } else {

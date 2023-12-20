@@ -15,12 +15,12 @@ async function getPool(): Promise<Pool> {
     throw new Error('Please connect a provider')
   }
 
-  const pool = await Pool.initFromChain(
+  const pool = await Pool.initFromChain({
     provider,
-    CurrentConfig.pool.token0,
-    CurrentConfig.pool.token1,
-    CurrentConfig.pool.fee
-  )
+    tokenA: CurrentConfig.pool.token0,
+    tokenB: CurrentConfig.pool.token1,
+    fee: CurrentConfig.pool.fee,
+  })
   return pool
 }
 
@@ -35,10 +35,10 @@ export async function increaseObservationCardinalityNext(
   observationCardinalityNext: number
 ) {
   const pool = await getPool()
-  return pool.rpcIncreaseObservationCardinalityNext(
-    wallet,
-    observationCardinalityNext
-  )
+  return pool.rpcIncreaseObservationCardinalityNext({
+    signer: wallet,
+    observationCardinalityNext,
+  })
 }
 
 export async function getAverages(): Promise<{
@@ -61,7 +61,7 @@ async function observe(secondsAgo: number): Promise<Observation[]> {
 
   const pool = await getPool()
 
-  const observeResponse = await pool.rpcObserve(timestamps)
+  const observeResponse = await pool.rpcObserve({ secondsAgo: timestamps })
 
   const observations: Observation[] = timestamps.map((time, i) => {
     return {
