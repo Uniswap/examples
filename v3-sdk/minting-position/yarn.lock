@@ -2474,10 +2474,10 @@
   resolved "https://registry.yarnpkg.com/@uniswap/lib/-/lib-4.0.1-alpha.tgz#2881008e55f075344675b3bca93f020b028fbd02"
   integrity sha512-f6UIliwBbRsgVLxIaBANF6w09tYqc6Y/qXdsrbEmXHyFA7ILiKrIwRFXe1yOg8M3cksgVsO9N7yuL2DdCGQKBA==
 
-"@uniswap/sdk-core@npm:@koraykoska/uniswap-sdk-core@^6.0.9":
-  version "6.0.9"
-  resolved "https://registry.yarnpkg.com/@koraykoska/uniswap-sdk-core/-/uniswap-sdk-core-6.0.9.tgz#720b149daef422f5cecf2967882482df8e40a879"
-  integrity sha512-dSaO7zKRpoN6U3N2uYYHPAHB3rOTiTnhFqBSWatCYcgzI2znnHc+M/fL0EU99+H6MyOFeb6b53qgWUC9VMahYQ==
+"@uniswap/sdk-core@npm:@uniswapfoundation/sdk-core@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@uniswapfoundation/sdk-core/-/sdk-core-5.0.0.tgz#314d1c191167f6bfe6bb5a98736e1f9e13b7e652"
+  integrity sha512-fAB3ekjG86tw85ZEMlShiqQw3dc6ENBNTRifXw8NJbf7rDGT27Cd93v/JOr85OXWRaUeR6G5fBKQkQ3FCCmNtg==
   dependencies:
     "@ethersproject/address" "^5.0.2"
     big.js "^5.2.2"
@@ -2531,17 +2531,18 @@
     "@uniswap/v3-core" "1.0.0"
     base64-sol "1.0.1"
 
-"@uniswap/v3-sdk@npm:@florian-s-a-w/uniswap-v3-sdk@4.0.1":
+"@uniswap/v3-sdk@npm:@uniswapfoundation/v3-sdk@4.0.1":
   version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@florian-s-a-w/uniswap-v3-sdk/-/uniswap-v3-sdk-4.0.1.tgz#25c3ad8ee80c88192166caeb649aef1dc433fd6a"
-  integrity sha512-wQ0HGzhiJ39zIlrp8iyRMyYUzY8b6R1yQ/siqa1M1BImTpZnwvH9q87lHRhHhjt8qd05EMogoCxkdFDMhrIw4A==
+  resolved "https://registry.yarnpkg.com/@uniswapfoundation/v3-sdk/-/v3-sdk-4.0.1.tgz#3c296be898700937ca8c1de5967b3259e7f49d55"
+  integrity sha512-U9BH+gSp92uVNU9g+OUBaEAO/bnIqaSqU6qistzSDNZla3r65zapIhvEFbo3NxmkjoRdmqFF3WwYX4JsB0qvNg==
   dependencies:
     "@ethersproject/abi" "^5.0.12"
     "@ethersproject/solidity" "^5.0.9"
-    "@uniswap/sdk-core" "npm:@koraykoska/uniswap-sdk-core@^6.0.9"
+    "@uniswap/sdk-core" "npm:@uniswapfoundation/sdk-core@^5.0.0"
     "@uniswap/swap-router-contracts" "^1.2.1"
     "@uniswap/v3-periphery" "^1.1.1"
     "@uniswap/v3-staker" "1.0.2"
+    ethers "^5.7.2"
     ethers-multicall "^0.2.3"
     tiny-invariant "^1.1.0"
     tiny-warning "^1.0.3"
