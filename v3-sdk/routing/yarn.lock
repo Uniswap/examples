@@ -2756,6 +2756,21 @@
     tiny-invariant "^1.1.0"
     tiny-warning "^1.0.3"
 
+"@uniswap/v3-sdk@npm:@uniswapfoundation/v3-sdk@^4.0.2":
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/@uniswapfoundation/v3-sdk/-/v3-sdk-4.0.2.tgz#7dfb2308ae606cef9049ebea0bc78b3b65eac18f"
+  integrity sha512-0GhAMFx0yi4+gyjjf42pWTXqgcbz4zBcEdB+hGJ9Eohm4In3oelIGh2djirS/wDjYZXkolxxoWu0LwyusqKcfg==
+  dependencies:
+    "@ethersproject/abi" "^5.0.12"
+    "@ethersproject/solidity" "^5.0.9"
+    "@uniswap/sdk-core" "npm:@uniswapfoundation/sdk-core@^5.0.0"
+    "@uniswap/swap-router-contracts" "^1.2.1"
+    "@uniswap/v3-periphery" "^1.1.1"
+    "@uniswap/v3-staker" "1.0.2"
+    ethers "^5.7.2"
+    tiny-invariant "^1.1.0"
+    tiny-warning "^1.0.3"
+
 "@uniswap/v3-staker@1.0.2":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@uniswap/v3-staker/-/v3-staker-1.0.2.tgz#febad4905903032bb114ab58138c2d5200c87a3c"

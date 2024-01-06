@@ -49,7 +49,7 @@ const Example = () => {
           </h2>
         )}
       <h3>{`Block Number: ${blockNumber + 1}`}</h3>
-      <h3>Time weighted average liqudity:</h3>
+      <h3>Time weighted average liquidity:</h3>
       <p>{TWAL === undefined ? 'Fetching...' : TWAL.toString()}</p>
       <h3>Time weighted average Price:</h3>
       <div>
