@@ -2646,10 +2646,10 @@
     "@uniswap/v3-core" "^1.0.0"
     base64-sol "1.0.1"
 
-"@uniswap/v3-sdk@npm:@uniswapfoundation/v3-sdk@4.0.1":
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/@uniswapfoundation/v3-sdk/-/v3-sdk-4.0.1.tgz#3c296be898700937ca8c1de5967b3259e7f49d55"
-  integrity sha512-U9BH+gSp92uVNU9g+OUBaEAO/bnIqaSqU6qistzSDNZla3r65zapIhvEFbo3NxmkjoRdmqFF3WwYX4JsB0qvNg==
+"@uniswap/v3-sdk@npm:@uniswapfoundation/v3-sdk@^4.0.2":
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/@uniswapfoundation/v3-sdk/-/v3-sdk-4.0.2.tgz#7dfb2308ae606cef9049ebea0bc78b3b65eac18f"
+  integrity sha512-0GhAMFx0yi4+gyjjf42pWTXqgcbz4zBcEdB+hGJ9Eohm4In3oelIGh2djirS/wDjYZXkolxxoWu0LwyusqKcfg==
   dependencies:
     "@ethersproject/abi" "^5.0.12"
     "@ethersproject/solidity" "^5.0.9"
@@ -2658,7 +2658,6 @@
     "@uniswap/v3-periphery" "^1.1.1"
     "@uniswap/v3-staker" "1.0.2"
     ethers "^5.7.2"
-    ethers-multicall "^0.2.3"
     tiny-invariant "^1.1.0"
     tiny-warning "^1.0.3"
 
@@ -4806,14 +4805,7 @@ etag@~1.8.1:
   resolved "https://registry.yarnpkg.com/etag/-/etag-1.8.1.tgz#41ae2eeb65efa62268aebfea83ac7d79299b0887"
   integrity sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==
 
-ethers-multicall@^0.2.3:
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/ethers-multicall/-/ethers-multicall-0.2.3.tgz#872b5ad7d6b5d4d7f2960c33bf36bd46d034ac41"
-  integrity sha512-RaWQuLy+HzeKOibptlc9RZ6j7bT1H6VnkdAKTHiLx2t/lpyfS2ckXHdQhhRbCaXNc1iu6CgoisgMejxKHg84tg==
-  dependencies:
-    ethers "^5.0.0"
-
-ethers@^5.0.0, ethers@^5.7.2:
+ethers@^5.7.2:
   version "5.7.2"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.7.2.tgz#3a7deeabbb8c030d4126b24f84e525466145872e"
   integrity sha512-wswUsmWo1aOK8rR7DIKiWSw9DbLWe6x98Jrn8wcTflTVvaXhAMaB5zGAXy0GYQEQp9iO1iSHWVyARQm11zUtyg==
