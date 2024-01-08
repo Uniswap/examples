@@ -1,6 +1,12 @@
+# Offchain Simulations
+
 ## Overview
 
 This is an example of initializing Pools with tickdata and simulating trades offchain.
+This example makes an extremely high amount of requests and needs a very fast RPC endpoint to work properly.
+Be aware of the costs associated.
+
+If the example does not seem to work, you are most likely ratelimited by your RPC provider.
 
 ## Configuration
 

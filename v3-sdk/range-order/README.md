@@ -41,7 +41,7 @@ The [configuration](./src/config.ts) includes control of the environment as well
 
 ### Run your local chain
 
-1. Run `yarn start:chain` in a separate terminal session to start up a copy of the mainnet blockchain locally
+1. Run `yarn start:chain <provider_API_URL>` in a separate terminal session to start up a copy of the mainnet blockchain locally
 
 ### Setup your wallet
 

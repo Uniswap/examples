@@ -36,6 +36,8 @@ const Example = () => {
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
+  const [fetching, setFetching] = useState<boolean>()
+
   // Listen for new blocks and update the wallet
   useOnBlockUpdated(async (blockNumber: number) => {
     refreshBalances()
@@ -67,7 +69,9 @@ const Example = () => {
   }, [refreshBalances])
 
   const onInitializePools = useCallback(async () => {
+    setFetching(true)
     setPools(await initializePools())
+    setFetching(false)
   }, [])
 
   const onCreateTrade = useCallback(async () => {
@@ -87,9 +91,12 @@ const Example = () => {
 
   return (
     <div className="App">
-      {CurrentConfig.rpc.mainnet === '' && (
-        <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>
-      )}
+      {CurrentConfig.rpc.mainnet === '' &&
+        CurrentConfig.env === Environment.MAINNET && (
+          <h2 className="error">
+            Please set your mainnet RPC URL in config.ts
+          </h2>
+        )}
       {CurrentConfig.env === Environment.WALLET_EXTENSION &&
         getProvider() === null && (
           <h2 className="error">
@@ -110,10 +117,12 @@ const Example = () => {
       </button>
       {pools === undefined && <h3>{`Initialize Pools to simulate trade`}</h3>}
       {pools !== undefined && <h3>{`Pools initialized successfully`}</h3>}
-      <button onClick={onInitializePools} disabled={getProvider() === null}>
-        <p>Initialize Pools</p>
-      </button>
-
+      {!fetching && (
+        <button onClick={onInitializePools} disabled={getProvider() === null}>
+          <p>Initialize Pools</p>
+        </button>
+      )}
+      {fetching && <h3>Fetching...</h3>}
       <button onClick={onCreateTrade} disabled={pools === undefined}>
         <p>Create Trade offchain</p>
       </button>

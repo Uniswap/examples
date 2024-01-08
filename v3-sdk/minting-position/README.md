@@ -6,6 +6,9 @@ This is an example of minting a position in a liquidity pool that includes runni
 
 The core functionality of this example can be found in [`mintPosition`](./src/libs/positions.ts#L27).
 
+Make sure your wallet holds enough of each required currency.
+If you are using a local chain, you can use the trading examples to quickly get the tokens required.
+
 ## Configuration
 
 This application can be configured to interact with:

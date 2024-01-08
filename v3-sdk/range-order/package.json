@@ -19,7 +19,7 @@
     "build": "react-scripts build",
     "lint": "yarn eslint .",
     "install:chain": "curl -L https://foundry.paradigm.xyz | bash && clear && echo $0 | exec && foundryup",
-    "start:chain": "anvil --fork-url https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721"
+    "start:chain": "anvil --chain-id 1 --fork-url"
   },
   "eslintConfig": {
     "extends": [

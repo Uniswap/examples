@@ -92,9 +92,12 @@ const Example = () => {
 
   return (
     <div className="App">
-      {CurrentConfig.rpc.mainnet === '' && (
-        <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>
-      )}
+      {CurrentConfig.rpc.mainnet === '' &&
+        CurrentConfig.env === Environment.PRODUCTION && (
+          <h2 className="error">
+            Please set your mainnet RPC URL in config.ts
+          </h2>
+        )}
       {CurrentConfig.env === Environment.WALLET_EXTENSION &&
         getProvider() === null && (
           <h2 className="error">
@@ -122,7 +125,8 @@ const Example = () => {
         disabled={
           txState === TransactionState.Sending ||
           getProvider() === null ||
-          CurrentConfig.rpc.mainnet === ''
+          (CurrentConfig.rpc.mainnet === '' &&
+            CurrentConfig.env === Environment.PRODUCTION)
         }>
         <p>Mint Position</p>
       </button>
