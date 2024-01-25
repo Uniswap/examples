@@ -1,5 +1,9 @@
 # Routing
 
+## Deprecated
+
+This example no longer works with recent versions of the smart order router package and can be considered deprecated.
+
 ## Overview
 
 This is an example of finding an ideal swapping route that includes running against mainnet, locally, and using a wallet connection.
