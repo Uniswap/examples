@@ -1,95 +1,35 @@
-import {
-  computePoolAddress,
-  Pool,
-  Route,
-  SwapOptions,
-  SwapQuoter,
-  SwapRouter,
-  Trade,
-} from '@uniswap/v3-sdk'
+import { Pool, Route, SwapOptions, SwapRouter, Trade } from '@uniswap/v3-sdk'
 import { CurrentConfig } from '../config'
 import {
   ERC20_ABI,
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
-  POOL_FACTORY_CONTRACT_ADDRESS,
-  QUOTER_CONTRACT_ADDRESS,
   V3_SWAP_ROUTER_ADDRESS,
   WETH_ABI,
   WETH_CONTRACT_ADDRESS,
 } from './constants'
 import { BigNumber, ethers } from 'ethers'
 import { getProvider, TransactionState } from './providers'
-import IUniswapV3PoolABI from '@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json'
 import { CurrencyAmount, Percent, Token, TradeType } from '@uniswap/sdk-core'
 import { fromReadableAmount } from './conversion'
-import { getPoolInfo } from './pool'
-import JSBI from 'jsbi'
 import { getCurrencyBalance } from './balance'
 
 // MMM buys WETH on the observed Pool every time this function is called. For use on local chain only.
 export async function buyWETH() {
   try {
-    const ethAmount = CurrentConfig.mockMarketMakerPool.buyAmount
-
-    const poolInfo = await getPoolInfo()
-
-    const pool = new Pool(
-      CurrentConfig.tokens.token0,
-      CurrentConfig.tokens.token1,
-      CurrentConfig.tokens.poolFee,
-      poolInfo.sqrtPriceX96.toString(),
-      poolInfo.liquidity.toString(),
-      poolInfo.tick
+    const ethAmount = CurrencyAmount.fromRawAmount(
+      CurrentConfig.mockMarketMakerPool.token0,
+      fromReadableAmount(
+        CurrentConfig.mockMarketMakerPool.buyAmount,
+        CurrentConfig.mockMarketMakerPool.token0.decimals
+      )
     )
-
-    const swapRoute = new Route(
-      [pool],
-      CurrentConfig.tokens.token1,
-      CurrentConfig.tokens.token0
-    )
-
-    const { calldata } = SwapQuoter.quoteCallParameters(
-      swapRoute,
-      CurrencyAmount.fromRawAmount(
-        CurrentConfig.tokens.token1,
-        fromReadableAmount(ethAmount, CurrentConfig.tokens.token0.decimals)
-      ),
-      TradeType.EXACT_OUTPUT,
-      {
-        useQuoterV2: true,
-      }
-    )
-
-    const quoteCallReturnData = await getProvider().call({
-      to: QUOTER_CONTRACT_ADDRESS,
-      data: calldata,
+    const pool = await Pool.initFromChain({
+      provider: getProvider(),
+      tokenA: CurrentConfig.tokens.token0,
+      tokenB: CurrentConfig.tokens.token1,
+      fee: CurrentConfig.tokens.poolFee,
     })
-
-    const quotedAmountIn = ethers.utils.defaultAbiCoder.decode(
-      ['uint256'],
-      quoteCallReturnData
-    )
-
-    // We swap locally, so we do not care about frontrunning - never use outputAmount 0 in production
-    const uncheckedTrade = Trade.createUncheckedTrade({
-      route: swapRoute,
-      inputAmount: CurrencyAmount.fromRawAmount(
-        CurrentConfig.tokens.token1,
-        JSBI.BigInt(quotedAmountIn)
-      ),
-      outputAmount: CurrencyAmount.fromRawAmount(
-        CurrentConfig.tokens.token0,
-        fromReadableAmount(ethAmount, CurrentConfig.tokens.token0.decimals)
-      ),
-      tradeType: TradeType.EXACT_OUTPUT,
-    })
-    await getTokenTransferApproval(
-      V3_SWAP_ROUTER_ADDRESS,
-      CurrentConfig.tokens.token1,
-      CurrentConfig.mockMarketMakerWallet.address,
-      JSBI.BigInt(quotedAmountIn)
-    )
 
     const options: SwapOptions = {
       slippageTolerance: new Percent(50, 10_000), // 50 bips, or 0.50%
@@ -97,22 +37,14 @@ export async function buyWETH() {
       recipient: CurrentConfig.mockMarketMakerWallet.address,
     }
 
-    const methodParameters = SwapRouter.swapCallParameters(
-      [uncheckedTrade],
-      options
-    )
-
-    const tx = {
-      data: methodParameters.calldata,
-      to: V3_SWAP_ROUTER_ADDRESS,
-      value: methodParameters.value,
-      from: CurrentConfig.mockMarketMakerWallet.address,
-      maxFeePerGas: MAX_FEE_PER_GAS,
-      maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-      gasLimit: '1000000',
-    }
-
-    return sendTransactionViaMockWallet(tx)
+    await SwapRouter.executeQuotedSwapOnPool({
+      pool,
+      amount: ethAmount,
+      tradeType: TradeType.EXACT_OUTPUT,
+      swapOptions: options,
+      signer: getMMMWallet(),
+    })
+    return TransactionState.Sent
   } catch (err) {
     console.log(err)
     return TransactionState.Rejected
@@ -124,16 +56,12 @@ export async function sellWETH() {
   try {
     const ethAmount = CurrentConfig.mockMarketMakerPool.sellAmount
 
-    const poolInfo = await getPoolInfo()
-
-    const pool = new Pool(
-      CurrentConfig.tokens.token0,
-      CurrentConfig.tokens.token1,
-      CurrentConfig.tokens.poolFee,
-      poolInfo.sqrtPriceX96.toString(),
-      poolInfo.liquidity.toString(),
-      poolInfo.tick
-    )
+    const pool = await Pool.initFromChain({
+      provider: getProvider(),
+      tokenA: CurrentConfig.tokens.token0,
+      tokenB: CurrentConfig.tokens.token1,
+      fee: CurrentConfig.tokens.poolFee,
+    })
 
     const swapRoute = new Route(
       [pool],
@@ -163,11 +91,9 @@ export async function sellWETH() {
       V3_SWAP_ROUTER_ADDRESS,
       CurrentConfig.tokens.token0,
       CurrentConfig.mockMarketMakerWallet.address,
-      JSBI.BigInt(
-        fromReadableAmount(
-          ethAmount,
-          CurrentConfig.mockMarketMakerPool.token0.decimals
-        )
+      fromReadableAmount(
+        ethAmount,
+        CurrentConfig.mockMarketMakerPool.token0.decimals
       )
     )
 
@@ -189,7 +115,6 @@ export async function sellWETH() {
       from: CurrentConfig.mockMarketMakerWallet.address,
       maxFeePerGas: MAX_FEE_PER_GAS,
       maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-      gasLimit: '1000000',
     }
 
     return sendTransactionViaMockWallet(tx)
@@ -212,88 +137,27 @@ export async function getToken1FromMockPool(sellETHAmount: number) {
     await wrapETHMMM(sellETHAmount)
   }
 
-  const mockPoolAddress = computePoolAddress({
-    factoryAddress: POOL_FACTORY_CONTRACT_ADDRESS,
+  const pool = await Pool.initFromChain({
+    provider: getProvider(),
     tokenA: CurrentConfig.mockMarketMakerPool.token0,
     tokenB: CurrentConfig.mockMarketMakerPool.token1,
     fee: CurrentConfig.mockMarketMakerPool.poolFee,
   })
 
-  const poolContract = new ethers.Contract(
-    mockPoolAddress,
-    IUniswapV3PoolABI.abi,
-    getProvider()
-  )
-
-  const [liquidity, slot0] = await Promise.all([
-    poolContract.liquidity(),
-    poolContract.slot0(),
-  ])
-
-  const pool = new Pool(
+  const currencyAmount = CurrencyAmount.fromRawAmount(
     CurrentConfig.mockMarketMakerPool.token0,
-    CurrentConfig.mockMarketMakerPool.token1,
-    CurrentConfig.mockMarketMakerPool.poolFee,
-    slot0.sqrtPriceX96.toString(),
-    liquidity.toString(),
-    slot0.tick
-  )
-
-  const swapRoute = new Route(
-    [pool],
-    CurrentConfig.mockMarketMakerPool.token0,
-    CurrentConfig.mockMarketMakerPool.token1
-  )
-
-  const uncheckedTrade = Trade.createUncheckedTrade({
-    route: swapRoute,
-    inputAmount: CurrencyAmount.fromRawAmount(
-      CurrentConfig.mockMarketMakerPool.token0,
-      fromReadableAmount(
-        sellETHAmount,
-        CurrentConfig.mockMarketMakerPool.token0.decimals
-      )
-    ),
-    outputAmount: CurrencyAmount.fromRawAmount(
-      CurrentConfig.mockMarketMakerPool.token1,
-      1000000000000
-    ),
-    tradeType: TradeType.EXACT_INPUT,
-  })
-  await getTokenTransferApproval(
-    V3_SWAP_ROUTER_ADDRESS,
-    CurrentConfig.tokens.token0,
-    CurrentConfig.mockMarketMakerWallet.address,
-    JSBI.BigInt(
-      fromReadableAmount(
-        sellETHAmount,
-        CurrentConfig.mockMarketMakerPool.token0.decimals
-      )
+    fromReadableAmount(
+      sellETHAmount,
+      CurrentConfig.mockMarketMakerPool.token0.decimals
     )
   )
 
-  const options: SwapOptions = {
-    slippageTolerance: new Percent(50, 10_000), // 50 bips, or 0.50%
-    deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from the current Unix time
-    recipient: CurrentConfig.mockMarketMakerWallet.address,
-  }
-
-  const methodParameters = SwapRouter.swapCallParameters(
-    [uncheckedTrade],
-    options
-  )
-
-  const tx = {
-    data: methodParameters.calldata,
-    to: V3_SWAP_ROUTER_ADDRESS,
-    value: methodParameters.value,
-    from: CurrentConfig.mockMarketMakerWallet.address,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-    gasLimit: '1000000',
-  }
-
-  return sendTransactionViaMockWallet(tx)
+  await SwapRouter.executeQuotedSwapOnPool({
+    pool,
+    amount: currencyAmount,
+    tradeType: TradeType.EXACT_INPUT,
+    signer: getMMMWallet(),
+  })
 }
 
 function getMMMWallet(): ethers.Wallet {
@@ -360,9 +224,7 @@ async function wrapETHMMM(eth: number) {
 
   const transaction = {
     data: wethContract.interface.encodeFunctionData('deposit'),
-    value: BigNumber.from(Math.ceil(eth))
-      .mul(JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(18)).toString())
-      .toString(),
+    value: (BigInt(eth) * 10n ** 18n).toString(10),
     from: address,
     to: WETH_CONTRACT_ADDRESS,
     maxFeePerGas: MAX_FEE_PER_GAS,
@@ -387,7 +249,7 @@ async function getTokenTransferApproval(
   contractAddress: string,
   token: Token,
   address: string,
-  amount: JSBI
+  amount: bigint
 ): Promise<TransactionState> {
   const provider = getProvider()
   if (!provider || !address) {

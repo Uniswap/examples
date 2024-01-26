@@ -29,7 +29,7 @@ export interface ExampleConfig {
 // Example Configuration
 
 export const CurrentConfig: ExampleConfig = {
-  env: Environment.LOCAL,
+  env: Environment.MAINNET,
   rpc: {
     local: 'http://localhost:8545',
     mainnet: '',

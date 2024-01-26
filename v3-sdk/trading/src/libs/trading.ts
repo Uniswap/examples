@@ -13,22 +13,12 @@ import {
   SwapRouter,
   Trade,
 } from '@uniswap/v3-sdk'
-import { ethers } from 'ethers'
-import JSBI from 'jsbi'
 
 import { CurrentConfig } from '../config'
 import {
-  ERC20_ABI,
-  QUOTER_CONTRACT_ADDRESS,
-  SWAP_ROUTER_ADDRESS,
-  TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER,
-} from './constants'
-import { MAX_FEE_PER_GAS, MAX_PRIORITY_FEE_PER_GAS } from './constants'
-import { getPoolInfo } from './pool'
-import {
   getProvider,
+  getWallet,
   getWalletAddress,
-  sendTransaction,
   TransactionState,
 } from './providers'
 import { fromReadableAmount } from './utils'
@@ -38,16 +28,18 @@ export type TokenTrade = Trade<Token, Token, TradeType>
 // Trading Functions
 
 export async function createTrade(): Promise<TokenTrade> {
-  const poolInfo = await getPoolInfo()
+  const provider = getProvider()
 
-  const pool = new Pool(
-    CurrentConfig.tokens.in,
-    CurrentConfig.tokens.out,
-    CurrentConfig.tokens.poolFee,
-    poolInfo.sqrtPriceX96.toString(),
-    poolInfo.liquidity.toString(),
-    poolInfo.tick
-  )
+  if (provider === null) {
+    throw new Error('No network connection to fetch Pool metadata')
+  }
+
+  const pool = await Pool.initFromChain({
+    provider,
+    tokenA: CurrentConfig.tokens.in,
+    tokenB: CurrentConfig.tokens.out,
+    fee: CurrentConfig.tokens.poolFee,
+  })
 
   const swapRoute = new Route(
     [pool],
@@ -66,10 +58,7 @@ export async function createTrade(): Promise<TokenTrade> {
         CurrentConfig.tokens.in.decimals
       ).toString()
     ),
-    outputAmount: CurrencyAmount.fromRawAmount(
-      CurrentConfig.tokens.out,
-      JSBI.BigInt(amountOut)
-    ),
+    outputAmount: amountOut as CurrencyAmount<Token>,
     tradeType: TradeType.EXACT_INPUT,
   })
 
@@ -86,99 +75,59 @@ export async function executeTrade(
     throw new Error('Cannot execute a trade without a connected wallet')
   }
 
-  // Give approval to the router to spend the token
-  const tokenApproval = await getTokenTransferApproval(CurrentConfig.tokens.in)
-
-  // Fail if transfer approvals do not go through
-  if (tokenApproval !== TransactionState.Sent) {
-    return TransactionState.Failed
-  }
-
   const options: SwapOptions = {
     slippageTolerance: new Percent(50, 10_000), // 50 bips, or 0.50%
     deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from the current Unix time
     recipient: walletAddress,
   }
 
-  const methodParameters = SwapRouter.swapCallParameters([trade], options)
+  const wallet = getWallet()
 
-  const tx = {
-    data: methodParameters.calldata,
-    to: SWAP_ROUTER_ADDRESS,
-    value: methodParameters.value,
-    from: walletAddress,
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
+  let response = null
+
+  while (response === null) {
+    try {
+      response = await SwapRouter.executeTrade({
+        trades: trade,
+        options,
+        signer: wallet,
+      })
+
+      if (response === null) {
+        continue
+      }
+    } catch (e) {
+      console.log(`Response error: `, e)
+      break
+    }
   }
 
-  const res = await sendTransaction(tx)
-
-  return res
+  if (response) {
+    return TransactionState.Sent
+  } else {
+    return TransactionState.Failed
+  }
 }
 
-// Helper Quoting and Pool Functions
-
-async function getOutputQuote(route: Route<Currency, Currency>) {
+export async function getOutputQuote(route: Route<Currency, Currency>) {
   const provider = getProvider()
 
   if (!provider) {
     throw new Error('Provider required to get pool state')
   }
 
-  const { calldata } = await SwapQuoter.quoteCallParameters(
+  const outputQuote = await SwapQuoter.callQuoter({
     route,
-    CurrencyAmount.fromRawAmount(
+    amount: CurrencyAmount.fromRawAmount(
       CurrentConfig.tokens.in,
       fromReadableAmount(
         CurrentConfig.tokens.amountIn,
         CurrentConfig.tokens.in.decimals
       ).toString()
     ),
-    TradeType.EXACT_INPUT,
-    {
-      useQuoterV2: true,
-    }
-  )
-
-  const quoteCallReturnData = await provider.call({
-    to: QUOTER_CONTRACT_ADDRESS,
-    data: calldata,
+    tradeType: TradeType.EXACT_INPUT,
+    provider,
   })
 
-  return ethers.utils.defaultAbiCoder.decode(['uint256'], quoteCallReturnData)
-}
-
-export async function getTokenTransferApproval(
-  token: Token
-): Promise<TransactionState> {
-  const provider = getProvider()
-  const address = getWalletAddress()
-  if (!provider || !address) {
-    console.log('No Provider Found')
-    return TransactionState.Failed
-  }
-
-  try {
-    const tokenContract = new ethers.Contract(
-      token.address,
-      ERC20_ABI,
-      provider
-    )
-
-    const transaction = await tokenContract.populateTransaction.approve(
-      SWAP_ROUTER_ADDRESS,
-      fromReadableAmount(
-        TOKEN_AMOUNT_TO_APPROVE_FOR_TRANSFER,
-        token.decimals
-      ).toString()
-    )
-
-    return sendTransaction({
-      ...transaction,
-      from: address,
-    })
-  } catch (e) {
-    console.error(e)
-    return TransactionState.Failed
-  }
+  return outputQuote
 }

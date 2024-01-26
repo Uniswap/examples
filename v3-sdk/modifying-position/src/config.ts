@@ -45,9 +45,9 @@ export const CurrentConfig: ExampleConfig = {
       '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
   },
   tokens: {
-    token0: USDC_TOKEN,
+    token0: DAI_TOKEN,
     token0Amount: 1000,
-    token1: DAI_TOKEN,
+    token1: USDC_TOKEN,
     token1Amount: 1000,
     poolFee: FeeAmount.LOW,
     fractionToRemove: 1,

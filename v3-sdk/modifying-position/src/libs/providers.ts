@@ -6,6 +6,9 @@ import { BaseProvider } from '@ethersproject/providers'
 const mainnetProvider = new ethers.providers.JsonRpcProvider(
   CurrentConfig.rpc.mainnet
 )
+const localProvider = new ethers.providers.JsonRpcProvider(
+  CurrentConfig.rpc.local
+)
 const wallet = createWallet()
 
 const browserExtensionProvider = createBrowserExtensionProvider()
@@ -27,10 +30,25 @@ export function getMainnetProvider(): BaseProvider {
   return mainnetProvider
 }
 
-export function getProvider(): providers.Provider | null {
-  return CurrentConfig.env === Environment.WALLET_EXTENSION
-    ? browserExtensionProvider
-    : wallet.provider
+export function getProvider():
+  | providers.JsonRpcProvider
+  | providers.Web3Provider
+  | null {
+  if (CurrentConfig.env === Environment.WALLET_EXTENSION) {
+    return browserExtensionProvider
+  } else if (CurrentConfig.env === Environment.MAINNET) {
+    return mainnetProvider
+  } else {
+    return localProvider
+  }
+}
+
+export function getWallet(): ethers.providers.JsonRpcSigner {
+  const provider = getProvider()
+  if (provider === null) {
+    throw new Error('Cannot get wallet without connected provider')
+  }
+  return provider.getSigner()
 }
 
 export function getWalletAddress(): string | null {

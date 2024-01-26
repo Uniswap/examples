@@ -1,3 +1,8 @@
+## Deprecated Example
+
+This Example accompanied a guide that is no longer present in the Uniswap docs.
+The functionality demonstrated here can be considered out of date.
+
 ## Overview
 
 This is an example of:

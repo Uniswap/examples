@@ -1,10 +1,13 @@
-import { ethers, providers, BigNumber } from 'ethers'
+import { ethers, providers } from 'ethers'
 import { Environment, CurrentConfig } from '../config'
 import { BaseProvider } from '@ethersproject/providers'
 
 // Single copies of provider and wallet
 const mainnetProvider = new ethers.providers.JsonRpcProvider(
   CurrentConfig.rpc.mainnet
+)
+const localProvider = new ethers.providers.JsonRpcProvider(
+  CurrentConfig.rpc.local
 )
 const wallet = createWallet()
 
@@ -27,26 +30,31 @@ export function getMainnetProvider(): BaseProvider {
   return mainnetProvider
 }
 
-export function getProvider(): providers.Provider | null {
-  return CurrentConfig.env === Environment.WALLET_EXTENSION
-    ? browserExtensionProvider
-    : wallet.provider
+export function getProvider():
+  | providers.JsonRpcProvider
+  | providers.Web3Provider
+  | null {
+  if (CurrentConfig.env === Environment.WALLET_EXTENSION) {
+    return browserExtensionProvider
+  } else if (CurrentConfig.env === Environment.PRODUCTION) {
+    return mainnetProvider
+  } else {
+    return localProvider
+  }
+}
+
+export function getWallet(): ethers.providers.JsonRpcSigner {
+  const provider = getProvider()
+  if (provider === null) {
+    throw new Error('Cannot get wallet without connected provider')
+  }
+  return provider.getSigner()
 }
 
 export function getWalletAddress(): string | null {
   return CurrentConfig.env === Environment.WALLET_EXTENSION
     ? walletExtensionAddress
     : wallet.address
-}
-
-export async function sendTransaction(
-  transaction: ethers.providers.TransactionRequest
-): Promise<TransactionState> {
-  if (CurrentConfig.env === Environment.WALLET_EXTENSION) {
-    return sendTransactionViaExtension(transaction)
-  } else {
-    return sendTransactionViaWallet(transaction)
-  }
 }
 
 export async function connectBrowserExtensionWallet() {
@@ -85,34 +93,9 @@ function createBrowserExtensionProvider(): ethers.providers.Web3Provider | null 
   }
 }
 
-// Transacting with a wallet extension via a Web3 Provider
-async function sendTransactionViaExtension(
-  transaction: ethers.providers.TransactionRequest
+export async function waitForReceipt(
+  txRes: ethers.providers.TransactionResponse
 ): Promise<TransactionState> {
-  try {
-    const receipt = await browserExtensionProvider?.send(
-      'eth_sendTransaction',
-      [transaction]
-    )
-    if (receipt) {
-      return TransactionState.Sent
-    } else {
-      return TransactionState.Failed
-    }
-  } catch (e) {
-    console.log(e)
-    return TransactionState.Rejected
-  }
-}
-
-async function sendTransactionViaWallet(
-  transaction: ethers.providers.TransactionRequest
-): Promise<TransactionState> {
-  if (transaction.value) {
-    transaction.value = BigNumber.from(transaction.value)
-  }
-  const txRes = await wallet.sendTransaction(transaction)
-
   let receipt = null
   const provider = getProvider()
   if (!provider) {

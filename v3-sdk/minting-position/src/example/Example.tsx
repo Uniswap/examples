@@ -2,18 +2,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import './Example.css'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/balance'
-import {
-  getPositionIds,
-  getPositionInfo,
-  mintPosition,
-  PositionInfo,
-} from '../libs/positions'
+import { getPositions, mintPosition } from '../libs/positions'
 import {
   connectBrowserExtensionWallet,
   getProvider,
   TransactionState,
   getWalletAddress,
 } from '../libs/providers'
+import { Position } from '@uniswap/v3-sdk'
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   useEffect(() => {
@@ -27,8 +23,7 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 const Example = () => {
   const [token0Balance, setToken0Balance] = useState<string>()
   const [token1Balance, setToken1Balance] = useState<string>()
-  const [positionIds, setPositionIds] = useState<number[]>([])
-  const [positionsInfo, setPositionsInfo] = useState<PositionInfo[]>([])
+  const [positions, setPositions] = useState<Position[]>([])
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
@@ -54,10 +49,8 @@ const Example = () => {
       await getCurrencyBalance(provider, address, CurrentConfig.tokens.token1)
     )
 
-    // Set Position Info
-    const ids = await getPositionIds()
-    setPositionIds(ids)
-    setPositionsInfo(await Promise.all(ids.map(getPositionInfo)))
+    // Set Positions
+    setPositions(await getPositions())
   }, [])
 
   // Event Handlers
@@ -75,25 +68,24 @@ const Example = () => {
 
   // Formatted Data
 
-  const positionInfoStrings: string[] = useMemo(() => {
-    if (positionIds.length !== positionsInfo.length) {
-      return []
-    }
-
-    return positionIds
-      .map((id, index) => [id, positionsInfo[index]])
-      .map((info) => {
-        const id = info[0]
-        const posInfo = info[1] as PositionInfo
-        return `${id}: ${posInfo.liquidity.toString()} liquidity, owed ${posInfo.tokensOwed0.toString()} and ${posInfo.tokensOwed1.toString()}`
-      })
-  }, [positionIds, positionsInfo])
+  const positionStrings: string[] = useMemo(() => {
+    return positions.map((pos) => {
+      return `${
+        pos.positionId ? pos.positionId : 'No id'
+      }: ${pos.amount0.toSignificant()} and ${pos.amount1.toSignificant()} liquidity , owed ${
+        pos.tokensOwed0 ? pos.tokensOwed0.toString() : '0'
+      } and ${pos.tokensOwed1 ? pos.tokensOwed1.toString() : '0'}`
+    })
+  }, [positions])
 
   return (
     <div className="App">
-      {CurrentConfig.rpc.mainnet === '' && (
-        <h2 className="error">Please set your mainnet RPC URL in config.ts</h2>
-      )}
+      {CurrentConfig.rpc.mainnet === '' &&
+        CurrentConfig.env === Environment.MAINNET && (
+          <h2 className="error">
+            Please set your mainnet RPC URL in config.ts
+          </h2>
+        )}
       {CurrentConfig.env === Environment.WALLET_EXTENSION &&
         getProvider() === null && (
           <h2 className="error">
@@ -117,16 +109,14 @@ const Example = () => {
       <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${token1Balance}`}</h3>
       <div>
         Positions:{' '}
-        {positionInfoStrings.map((s, i) => (
+        {positionStrings.map((s, i) => (
           <p key={i}>{s}</p>
         ))}
       </div>
       <button
         onClick={() => onMintPosition()}
         disabled={
-          txState === TransactionState.Sending ||
-          getProvider() === null ||
-          CurrentConfig.rpc.mainnet === ''
+          txState === TransactionState.Sending || getProvider() === null
         }>
         <p>Mint Position</p>
       </button>

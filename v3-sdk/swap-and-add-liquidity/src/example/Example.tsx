@@ -3,10 +3,8 @@ import './Example.css'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/wallet'
 import {
-  getPositionIds,
-  getPositionInfo,
+  getPositions,
   mintPosition,
-  PositionInfo,
   swapAndAddLiquidity,
 } from '../libs/liquidity'
 import {
@@ -15,6 +13,7 @@ import {
   TransactionState,
   getWalletAddress,
 } from '../libs/providers'
+import { Position } from '@uniswap/v3-sdk'
 
 const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
   useEffect(() => {
@@ -28,8 +27,7 @@ const useOnBlockUpdated = (callback: (blockNumber: number) => void) => {
 const Example = () => {
   const [token0Balance, setToken0Balance] = useState<string>()
   const [token1Balance, setToken1Balance] = useState<string>()
-  const [positionIds, setPositionIds] = useState<number[]>([])
-  const [positionsInfo, setPositionsInfo] = useState<PositionInfo[]>([])
+  const [positions, setPositions] = useState<Position[]>([])
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
 
@@ -55,10 +53,8 @@ const Example = () => {
       await getCurrencyBalance(provider, address, CurrentConfig.tokens.token1)
     )
 
-    // Set Position Info
-    const ids = await getPositionIds()
-    setPositionIds(ids)
-    setPositionsInfo(await Promise.all(ids.map(getPositionInfo)))
+    // Set Positions
+    setPositions(await getPositions())
   }, [])
 
   // Event Handlers
@@ -74,26 +70,28 @@ const Example = () => {
     setTxState(await mintPosition())
   }, [])
 
-  const onSwapAndAddLiquidity = useCallback(async (position: number) => {
-    setTxState(TransactionState.Sending)
-    setTxState(await swapAndAddLiquidity(position))
-  }, [])
+  const onSwapAndAddLiquidity = useCallback(
+    async (positionId: bigint | undefined) => {
+      if (positionId === undefined) {
+        throw new Error('Positions not fetched correctly!')
+      }
+      setTxState(TransactionState.Sending)
+      setTxState(await swapAndAddLiquidity(positionId))
+    },
+    []
+  )
 
   // Formatted Data
 
-  const positionInfoStrings: string[] = useMemo(() => {
-    if (positionIds.length !== positionsInfo.length) {
-      return []
-    }
-
-    return positionIds
-      .map((id, index) => [id, positionsInfo[index]])
-      .map((info) => {
-        const id = info[0]
-        const posInfo = info[1] as PositionInfo
-        return `${id}: ${posInfo.liquidity.toString()} liquidity, owed ${posInfo.tokensOwed0.toString()} and ${posInfo.tokensOwed1.toString()}`
-      })
-  }, [positionIds, positionsInfo])
+  const positionStrings: string[] = useMemo(() => {
+    return positions.map((pos) => {
+      return `${
+        pos.positionId ? pos.positionId : 'No id'
+      }: ${pos.liquidity.toString()} liquidity, owed ${
+        pos.tokensOwed0 ? pos.tokensOwed0.toString() : '0'
+      } and ${pos.tokensOwed1 ? pos.tokensOwed1.toString() : '0'}`
+    })
+  }, [positions])
 
   return (
     <div className="App">
@@ -117,7 +115,7 @@ const Example = () => {
       <h3>{`${CurrentConfig.tokens.token1.symbol} Balance: ${token1Balance}`}</h3>
       <div>
         Positions:{' '}
-        {positionInfoStrings.map((s, i) => (
+        {positionStrings.map((s, i) => (
           <p key={i}>{s}</p>
         ))}
       </div>
@@ -137,13 +135,13 @@ const Example = () => {
           if (!token0Balance || !token1Balance) {
             return
           }
-          onSwapAndAddLiquidity(positionIds[positionIds.length - 1])
+          onSwapAndAddLiquidity(positions[positions.length - 1].positionId)
         }}
         disabled={
           txState === TransactionState.Sending ||
           getProvider() === null ||
           CurrentConfig.rpc.mainnet === '' ||
-          positionIds.length === 0
+          positions.length === 0
         }>
         <p>Swap and Add Liquidity</p>
       </button>

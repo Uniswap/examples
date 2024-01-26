@@ -1,5 +1,9 @@
 # Swap and Add Liquidity
 
+## Deprecated
+
+This example no longer works with recent versions of the smart order router package and can be considered deprecated.
+
 ## Overview
 
 This is an example that demonstrates how to swap between currencies and add those currencies to a liquidity pool in the same transaction that includes running against mainnet, locally, and using a wallet connection.

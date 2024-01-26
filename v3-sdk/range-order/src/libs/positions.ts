@@ -6,7 +6,6 @@ import {
   Pool,
   Position,
 } from '@uniswap/v3-sdk'
-import { BigNumber, ethers } from 'ethers'
 import { CurrentConfig } from '../config'
 import {
   ERC20_ABI,
@@ -16,7 +15,6 @@ import {
   NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
 } from './constants'
 import { fromReadableAmount } from './conversion'
-import { getPoolInfo } from './pool'
 import {
   getProvider,
   getWalletAddress,
@@ -24,17 +22,7 @@ import {
   TransactionState,
 } from './providers'
 import { CollectOptions, RemoveLiquidityOptions } from '@uniswap/v3-sdk'
-import JSBI from 'jsbi'
-
-export interface PositionInfo {
-  tickLower: number
-  tickUpper: number
-  liquidity: BigNumber
-  feeGrowthInside0LastX128: BigNumber
-  feeGrowthInside1LastX128: BigNumber
-  tokensOwed0: BigNumber
-  tokensOwed1: BigNumber
-}
+import { ethers } from 'ethers'
 
 export async function mintPosition(): Promise<TransactionState> {
   const address = getWalletAddress()
@@ -43,8 +31,8 @@ export async function mintPosition(): Promise<TransactionState> {
     return TransactionState.Failed
   }
 
-  const amount0 = JSBI.BigInt(CurrentConfig.tokens.token0Amount)
-  const amount1 = JSBI.BigInt(CurrentConfig.tokens.token1Amount)
+  const amount0 = BigInt(CurrentConfig.tokens.token0Amount)
+  const amount1 = BigInt(CurrentConfig.tokens.token1Amount)
 
   // Give approval to the contract to transfer tokens
   const tokenInApproval = await getTokenTransferApproval(
@@ -108,28 +96,23 @@ export async function constructPosition(
   token0Amount: CurrencyAmount<Token>,
   token1Amount: CurrencyAmount<Token>
 ): Promise<Position> {
-  // get pool info
-  const poolInfo = await getPoolInfo()
-
   // construct pool instance
-  const configuredPool = new Pool(
-    token0Amount.currency,
-    token1Amount.currency,
-    poolInfo.fee,
-    poolInfo.sqrtPriceX96.toString(),
-    poolInfo.liquidity.toString(),
-    poolInfo.tick
-  )
+  const pool = await Pool.initFromChain({
+    provider: getProvider(),
+    tokenA: token0Amount.currency,
+    tokenB: token1Amount.currency,
+    fee: CurrentConfig.tokens.poolFee,
+  })
 
   // create position using the maximum liquidity from input amounts
   return Position.fromAmounts({
-    pool: configuredPool,
+    pool: pool,
     tickLower:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) -
-      poolInfo.tickSpacing * 2,
+      nearestUsableTick(pool.tickCurrent, pool.tickSpacing) -
+      pool.tickSpacing * 2,
     tickUpper:
-      nearestUsableTick(poolInfo.tick, poolInfo.tickSpacing) +
-      poolInfo.tickSpacing * 2,
+      nearestUsableTick(pool.tickCurrent, pool.tickSpacing) +
+      pool.tickSpacing * 2,
     amount0: token0Amount.quotient,
     amount1: token1Amount.quotient,
     useFullPrecision: true,
@@ -163,36 +146,15 @@ export async function getPositionIds(): Promise<number[]> {
   return tokenIds
 }
 
-export async function getPositionInfo(tokenId: number): Promise<PositionInfo> {
-  const provider = getProvider()
-  if (!provider) {
-    throw new Error('No provider available')
-  }
-
-  const positionContract = new ethers.Contract(
-    NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS,
-    NONFUNGIBLE_POSITION_MANAGER_ABI,
-    provider
-  )
-
-  const position = await positionContract.positions(tokenId)
-
-  return {
-    tickLower: position.tickLower,
-    tickUpper: position.tickUpper,
-    liquidity: position.liquidity,
-    feeGrowthInside0LastX128: position.feeGrowthInside0LastX128,
-    feeGrowthInside1LastX128: position.feeGrowthInside1LastX128,
-    tokensOwed0: position.tokensOwed0,
-    tokensOwed1: position.tokensOwed1,
-  }
+export async function getPosition(positionId: number) {
+  return Position.fetchWithPositionId({ provider: getProvider(), positionId })
 }
 
 export async function getTokenTransferApproval(
   contractAddress: string,
   token: Token,
   address: string,
-  amount: JSBI
+  amount: bigint
 ): Promise<TransactionState> {
   const provider = getProvider()
   if (!provider || !address) {

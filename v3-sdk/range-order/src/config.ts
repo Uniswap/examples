@@ -5,8 +5,6 @@ import { USDT_TOKEN, WETH_TOKEN } from './libs/constants'
 // Sets if the example should run locally or on chain
 export enum Environment {
   LOCAL,
-  WALLET_EXTENSION,
-  MAINNET,
 }
 
 // Inputs that configure this example to run
@@ -14,7 +12,6 @@ export interface ExampleConfig {
   env: Environment
   rpc: {
     local: string
-    mainnet: string
   }
   wallet: {
     address: string
@@ -47,7 +44,6 @@ export const CurrentConfig: ExampleConfig = {
   env: Environment.LOCAL,
   rpc: {
     local: 'http://localhost:8545',
-    mainnet: 'https://mainnet.infura.io/v3/0ac57a06f2994538829c14745750d721',
   },
   wallet: {
     address: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
@@ -68,8 +64,8 @@ export const CurrentConfig: ExampleConfig = {
       '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
   },
   mockMarketMakerPool: {
-    buyAmount: 250,
-    sellAmount: 250,
+    buyAmount: 1,
+    sellAmount: 1,
     token0: WETH_TOKEN,
     token1: USDT_TOKEN,
     poolFee: FeeAmount.LOW,

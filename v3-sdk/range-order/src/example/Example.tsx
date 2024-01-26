@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import './Example.css'
 import { Environment, CurrentConfig } from '../config'
 import { getCurrencyBalance } from '../libs/balance'
-import { getPositionInfo, PositionInfo } from '../libs/positions'
+import { getPosition } from '../libs/positions'
 import {
   getProvider,
   TransactionState,
@@ -10,7 +10,7 @@ import {
 } from '../libs/providers'
 import { WETH_TOKEN } from '../libs/constants'
 import { wrapETH } from '../libs/wallet'
-import { FeeAmount } from '@uniswap/v3-sdk'
+import { FeeAmount, Position } from '@uniswap/v3-sdk'
 import { Ether, Price, Token } from '@uniswap/sdk-core'
 import { getPrice } from '../libs/pool'
 import {
@@ -40,7 +40,7 @@ const Example = () => {
   const [mmmBalance1, setMMMBalance1] = useState<string>()
   const [mmmBalance0, setMMMBalance0] = useState<string>()
   const [positionId, setPositionId] = useState<number>()
-  const [positionInfo, setPositionInfo] = useState<PositionInfo>()
+  const [position, setPosition] = useState<Position>()
   const [rangeOrder, setRangeOrder] = useState<TakeProfitOrder>()
   const [txState, setTxState] = useState<TransactionState>(TransactionState.New)
   const [blockNumber, setBlockNumber] = useState<number>(0)
@@ -94,7 +94,7 @@ const Example = () => {
   const refreshPosition = useCallback(async () => {
     // Set Position Info
     if (positionId !== undefined) {
-      setPositionInfo(await getPositionInfo(positionId))
+      setPosition(await getPosition(positionId))
     }
   }, [positionId])
 
@@ -114,6 +114,7 @@ const Example = () => {
       const provider = getProvider()
       const address = CurrentConfig.mockMarketMakerWallet.address
       if (!provider || !address) {
+        console.log('Couldnt find provider or address')
         return
       }
 
@@ -152,7 +153,7 @@ const Example = () => {
     } else {
       setRangeOrder(order)
       setPositionId(orderId)
-      setPositionInfo(await getPositionInfo(orderId))
+      setPosition(await getPosition(orderId))
       setTxState(TransactionState.Sent)
     }
   }, [price, token0Balance])
@@ -235,11 +236,11 @@ const Example = () => {
           <div className="positions">
             <h2>Range Orders:</h2>
             {positionId === undefined && <p>No active order</p>}
-            {positionId && positionInfo && rangeOrder && (
+            {positionId && position && rangeOrder && (
               <div>
                 Active Order:
                 <p>
-                  {positionId}: {positionInfo.liquidity.toString()} liquidity
+                  {positionId}: {position._liquidity.toString()} liquidity
                 </p>
                 <p>
                   Target price: 1 {rangeOrder.position.amount0.currency.symbol}{' '}

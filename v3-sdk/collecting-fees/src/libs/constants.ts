@@ -1,6 +1,6 @@
 // This file stores web3 related constants such as addresses, token definitions, ETH currency references and ABI's
 
-import { SupportedChainId, Token } from '@uniswap/sdk-core'
+import { ChainId, Token } from '@uniswap/sdk-core'
 
 // Addresses
 
@@ -12,7 +12,7 @@ export const NONFUNGIBLE_POSITION_MANAGER_CONTRACT_ADDRESS =
 // Currencies and Tokens
 
 export const USDC_TOKEN = new Token(
-  SupportedChainId.MAINNET,
+  ChainId.MAINNET,
   '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
   6,
   'USDC',
@@ -20,7 +20,7 @@ export const USDC_TOKEN = new Token(
 )
 
 export const DAI_TOKEN = new Token(
-  SupportedChainId.MAINNET,
+  ChainId.MAINNET,
   '0x6B175474E89094C44Da98b954EedeAC495271d0F',
   18,
   'DAI',
@@ -47,13 +47,4 @@ export const ERC20_ABI = [
 
   // Events
   'event Transfer(address indexed from, address indexed to, uint amount)',
-]
-
-export const NONFUNGIBLE_POSITION_MANAGER_ABI = [
-  // Read-Only Functions
-  'function balanceOf(address _owner) view returns (uint256)',
-  'function tokenOfOwnerByIndex(address _owner, uint256 _index) view returns (uint256)',
-  'function tokenURI(uint256 tokenId) view returns (string memory)',
-
-  'function positions(uint256 tokenId) external view returns (uint96 nonce, address operator, address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, uint128 tokensOwed0, uint128 tokensOwed1)',
 ]

@@ -1,11 +1,16 @@
 import {
   AlphaRouter,
-  ChainId,
   SwapOptionsSwapRouter02,
   SwapRoute,
   SwapType,
 } from '@uniswap/smart-order-router'
-import { TradeType, CurrencyAmount, Percent, Token } from '@uniswap/sdk-core'
+import {
+  TradeType,
+  CurrencyAmount,
+  Percent,
+  Token,
+  ChainId,
+} from '@uniswap/sdk-core'
 import { CurrentConfig } from '../config'
 import {
   getMainnetProvider,
