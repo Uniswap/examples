@@ -10,7 +10,7 @@ export function fromReadableAmount(
 }
 
 export function toReadableAmount(rawAmount: number, decimals: number): string {
-  return ethers.utils
-    .formatUnits(rawAmount, decimals)
-    .slice(0, READABLE_FORM_LEN)
+  return (+ethers.utils.formatUnits(rawAmount, decimals).toString()).toFixed(
+    READABLE_FORM_LEN
+  )
 }
