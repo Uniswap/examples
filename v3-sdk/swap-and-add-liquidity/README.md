@@ -4,7 +4,7 @@
 
 This is an example that demonstrates how to swap between currencies and add those currencies to a liquidity pool in the same transaction that includes running against mainnet, locally, and using a wallet connection.
 
-The core functionality of this example can be found in [`swapAndAddLiquidity`](./src/libs/liquidity.ts#L36).
+The core functionality of this example can be found in [`swapAndAddLiquidity`](./src/libs/liquidity.ts#L48).
 
 ## Configuration
 
