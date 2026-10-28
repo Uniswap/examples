@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "devDependencies": {
+    "turbo": "^2.1.2"
+  },
+  "workspaces": [
+    "v3-sdk/*",
+    "web3-react"
+  ]
+}

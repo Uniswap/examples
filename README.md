@@ -2,6 +2,15 @@
 
 This repository contains example integrations with Uniswap SDK's and various Web3 environments. More detailed guides walking through the core parts of an example can be found on the [Uniswap docs site](https://docs.uniswap.org/). Currently this examples set only covers the [Uniswap V3 SDK](https://docs.uniswap.org/sdk/v3/overview).
 
+## Getting Started
+
+This repository uses Yarn Workspaces to manage dependencies across multiple examples. To get started:
+
+1. Clone the repository
+2. Run `yarn install` from the root directory
+
+This will install all dependencies for all examples in the monorepo.
+
 ## Adding New Examples
 
 To create a new guide, consider starting with an available template. Currently the react template supports core functionality as well as:
